@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import VanIcon from "@/components/VanIconComponent";
 import { ArrowRight, Phone, Menu, X } from "lucide-react";
@@ -18,11 +19,13 @@ export default function Header({ sticky = true }: HeaderProps) {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <VanIcon
-              width={200}
-              height={32}
-              className="text-white flex-shrink-0 w-48 h-10 sm:w-56 sm:h-12 md:w-64 md:h-14 lg:w-72 lg:h-16 xl:w-80 xl:h-18"
-            />
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <VanIcon
+                width={200}
+                height={32}
+                className="text-white flex-shrink-0 w-48 h-10 sm:w-56 sm:h-12 md:w-64 md:h-14 lg:w-72 lg:h-16 xl:w-80 xl:h-18"
+              />
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -67,11 +70,15 @@ export default function Header({ sticky = true }: HeaderProps) {
             >
               INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <div className="flex items-center space-x-2 text-sm">
-              <Phone className="h-4 w-4" />
-              <div>
-                <div className="font-bold">+441604279880</div>
-                <div className="text-xs opacity-90">7 days a week 7AM-9PM</div>
+            <div className="flex items-center">
+              <div className="flex items-center space-x-3">
+                <div className="bg-accent-400 p-2 rounded-full">
+                  <Phone className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-white">
+                  <div className="font-bold text-sm tracking-wide">+44 1604 279 880</div>
+                  <div className="text-xs opacity-90 font-medium">7 days a week • 9AM-5PM</div>
+                </div>
               </div>
             </div>
           </div>
@@ -135,12 +142,14 @@ export default function Header({ sticky = true }: HeaderProps) {
                 <Button className="bg-black hover:bg-black/90 text-white px-6 py-2 rounded-md font-medium w-full mb-4">
                   INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <div className="flex items-center space-x-2 text-sm">
-                  <Phone className="h-4 w-4" />
-                  <div>
-                    <div className="font-bold">+441604279880</div>
-                    <div className="text-xs opacity-90">
-                      7 days a week 7AM-9PM
+                <div className="flex items-center">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-accent-400 p-2 rounded-full">
+                      <Phone className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="text-white">
+                      <div className="font-bold text-sm tracking-wide">+44 1604 279 880</div>
+                      <div className="text-xs opacity-90 font-medium">7 days a week • 9AM-5PM</div>
                     </div>
                   </div>
                 </div>
