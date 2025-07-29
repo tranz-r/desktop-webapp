@@ -14,6 +14,7 @@ import CostCalculator from "@/components/CostCalculator";
 import ServiceCategories from "@/components/ServiceCategories";
 import BookingForm from "@/components/BookingForm";
 import Footer from "@/components/Footer";
+import VanIcon from "@/components/VanIconComponent";
 import {
   ArrowRight,
   Star,
@@ -39,25 +40,26 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-white rounded-full flex items-center justify-center">
-                <Truck className="w-5 h-5 lg:w-6 lg:h-6 text-primary-500" />
-              </div>
-              <div className="text-lg lg:text-xl font-bold">
-                <span className="block leading-tight">TRANZR</span>
-                <span className="block leading-tight text-sm lg:text-base">
-                  MOVES
-                </span>
-                <span className="block leading-tight text-xs opacity-90">
-                  MOVING & STORAGE
-                </span>
+            <div className="flex items-center space-x-4">
+              <VanIcon
+                width={256}
+                height={64}
+                className="text-white flex-shrink-0 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24"
+              />
+              <div className="text-white font-bold">
+                <div className="text-xl sm:text-2xl md:text-3xl leading-tight tracking-wide">
+                  TRANZR MOVES
+                </div>
+                <div className="text-sm opacity-90 leading-tight tracking-widest mt-1">
+                  REMOVAL & STORAGE
+                </div>
               </div>
             </div>
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               <Link
-                href="#"
+                href="/moving"
                 className="hover:text-primary-200 transition-colors font-medium"
               >
                 MOVING
@@ -67,12 +69,6 @@ export default function HomePage() {
                 className="hover:text-primary-200 transition-colors font-medium"
               >
                 STORAGE
-              </Link>
-              <Link
-                href="#"
-                className="hover:text-primary-200 transition-colors font-medium"
-              >
-                MOVING LOCATIONS
               </Link>
               <Link
                 href="#"
@@ -128,7 +124,7 @@ export default function HomePage() {
             <div className="lg:hidden py-4 border-t border-primary-400">
               <nav className="flex flex-col space-y-4">
                 <Link
-                  href="#"
+                  href="/moving"
                   className="hover:text-primary-200 transition-colors font-medium"
                 >
                   MOVING
