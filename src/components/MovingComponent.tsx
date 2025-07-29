@@ -165,7 +165,7 @@ export default function MovingComponent() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80')",
+              "url('/images/truck_on_road.jpg?w=1920&q=80&h=1000')",
           }}
         />
         <div className="absolute inset-0 bg-black/40" />
@@ -187,10 +187,10 @@ export default function MovingComponent() {
           </div>
 
           {/* Right Quote Form */}
-          <div className="bg-white rounded-lg p-6 lg:p-8 shadow-2xl">
+          <div className="bg-white rounded-lg p-6 lg:p-8 shadow-2xl mb-10">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Your piece of cake move starts with a{" "}
+                Your Tranzr Moves starts with a{" "}
                 <span className="text-primary">free quote</span>
               </h3>
               <p className="text-gray-600 text-sm">
