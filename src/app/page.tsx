@@ -44,7 +44,7 @@ export default function HomePage() {
             </div>
 
             {/* Quote Form */}
-            <div className="space-y-4 max-w-md">
+            <div className="space-y-4 max-w-md pb-10">
               <Input
                 type="text"
                 placeholder="Moving from address"
