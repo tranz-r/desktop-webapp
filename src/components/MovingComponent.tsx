@@ -53,12 +53,6 @@ export default function MovingComponent() {
                 href="#"
                 className="text-white hover:text-primary-200 transition-colors font-medium"
               >
-                MOVING LOCATIONS
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
-              >
                 SERVICES
               </a>
               <a
