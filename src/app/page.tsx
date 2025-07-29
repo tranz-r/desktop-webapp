@@ -3,16 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import CostCalculator from "@/components/CostCalculator";
-import ServiceCategories from "@/components/ServiceCategories";
-import BookingForm from "@/components/BookingForm";
 import Footer from "@/components/Footer";
 import VanIcon from "@/components/VanIconComponent";
 import {
@@ -84,7 +75,10 @@ export default function HomePage() {
 
             {/* Desktop CTA Buttons */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Button variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white">
+              <Button
+                variant="default"
+                className="bg-secondary-400 hover:bg-secondary-500 text-white"
+              >
                 INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-2 text-sm">
@@ -154,7 +148,10 @@ export default function HomePage() {
                   COMPANY
                 </Link>
                 <div className="pt-4 border-t border-primary-400">
-                  <Button variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white w-full mb-4">
+                  <Button
+                    variant="default"
+                    className="bg-secondary-400 hover:bg-secondary-500 text-white w-full mb-4"
+                  >
                     INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <div className="flex items-center space-x-2 text-sm">
@@ -208,7 +205,11 @@ export default function HomePage() {
                 className="bg-white text-gray-900 placeholder-gray-500 border-0 h-12 text-base"
               />
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1">
+                <Button
+                  size="lg"
+                  variant="default"
+                  className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1"
+                >
                   GET QUOTE <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button
