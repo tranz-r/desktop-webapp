@@ -85,7 +85,7 @@ const CostCalculator = ({
 
   return (
     <Card className="w-full max-w-3xl mx-auto bg-white shadow-lg rounded-xl border-0">
-      <CardHeader className="bg-primary/10 rounded-t-xl">
+      <CardHeader className="bg-accent-100 rounded-t-xl">
         <CardTitle className="text-2xl flex items-center gap-2">
           <DollarSign className="h-6 w-6" /> Moving Cost Calculator
         </CardTitle>
@@ -194,7 +194,7 @@ const CostCalculator = ({
           </div>
         </div>
 
-        <div className="bg-muted/30 p-4 rounded-lg">
+        <div className="bg-secondary-100 p-4 rounded-lg">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium">Estimated Cost</h3>
@@ -208,7 +208,7 @@ const CostCalculator = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end bg-muted/20 rounded-b-xl">
+      <CardFooter className="flex justify-end bg-accent-50 rounded-b-xl">
         <Button onClick={onProceedToBooking} className="gap-2">
           Proceed to Booking <ArrowRight className="h-4 w-4" />
         </Button>

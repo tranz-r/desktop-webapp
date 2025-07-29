@@ -93,11 +93,11 @@ const ServiceCategories = ({
           {categories.map((category) => (
             <Card
               key={category.id}
-              className="transition-all duration-300 hover:shadow-lg border-2 border-transparent hover:border-primary/20 cursor-pointer"
+              className="transition-all duration-300 hover:shadow-lg border-2 border-transparent hover:border-accent-300 cursor-pointer bg-white"
               onClick={() => onCategoryClick(category.id)}
             >
               <CardHeader>
-                <div className="p-2 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                <div className="p-2 w-14 h-14 rounded-full bg-secondary-100 flex items-center justify-center text-secondary-600 mb-4">
                   {category.icon}
                 </div>
                 <CardTitle>{category.title}</CardTitle>
