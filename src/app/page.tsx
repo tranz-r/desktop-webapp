@@ -84,13 +84,13 @@ export default function HomePage() {
 
             {/* Desktop CTA Buttons */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Button className="bg-accent-600 hover:bg-accent-700 text-white px-6 py-2 rounded-md font-medium">
+              <Button variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white">
                 INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-2 text-sm">
                 <Phone className="h-4 w-4" />
                 <div>
-                  <div className="font-bold">(212) 651 7273</div>
+                  <div className="font-bold">+441604279880</div>
                   <div className="text-xs opacity-90">
                     7 days a week 7AM-9PM
                   </div>
@@ -99,8 +99,10 @@ export default function HomePage() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden p-2"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
@@ -108,7 +110,7 @@ export default function HomePage() {
               ) : (
                 <Menu className="h-6 w-6" />
               )}
-            </button>
+            </Button>
           </div>
 
           {/* Mobile Menu */}
@@ -152,13 +154,13 @@ export default function HomePage() {
                   COMPANY
                 </Link>
                 <div className="pt-4 border-t border-primary-400">
-                  <Button className="bg-accent-600 hover:bg-accent-700 text-white px-6 py-2 rounded-md font-medium w-full mb-4">
+                  <Button variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white w-full mb-4">
                     INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <div className="flex items-center space-x-2 text-sm">
                     <Phone className="h-4 w-4" />
                     <div>
-                      <div className="font-bold">(212) 651 7273</div>
+                      <div className="font-bold">+441604279880</div>
                       <div className="text-xs opacity-90">
                         7 days a week 7AM-9PM
                       </div>
@@ -206,12 +208,13 @@ export default function HomePage() {
                 className="bg-white text-gray-900 placeholder-gray-500 border-0 h-12 text-base"
               />
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-accent-600 hover:bg-accent-700 text-white px-8 py-3 h-12 text-base font-semibold flex-1">
+                <Button size="lg" variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1">
                   GET QUOTE <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/10 px-6 py-3 h-12 text-base font-semibold flex items-center"
+                  variant="secondary"
+                  size="lg"
+                  className="bg-accent-400 hover:bg-accent-500 text-white flex items-center"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Or get a call from us

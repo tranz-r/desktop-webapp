@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -71,13 +73,13 @@ export default function MovingComponent() {
 
             {/* Desktop CTA Buttons */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Button className="bg-black hover:bg-black/90 text-white px-6 py-2 rounded-md font-medium">
+              <Button variant="default" className="bg-secondary-400 hover:bg-secondary-500 text-white">
                 INSTANT PRICE <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-2 text-sm">
                 <Phone className="h-4 w-4" />
                 <div>
-                  <div className="font-bold">(212) 651 7273</div>
+                  <div className="font-bold">+441604279880</div>
                   <div className="text-xs opacity-90">
                     7 days a week 7AM-9PM
                   </div>
@@ -86,8 +88,10 @@ export default function MovingComponent() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden p-2"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
@@ -95,7 +99,7 @@ export default function MovingComponent() {
               ) : (
                 <Menu className="h-6 w-6" />
               )}
-            </button>
+            </Button>
           </div>
 
           {/* Mobile Menu */}
@@ -145,7 +149,7 @@ export default function MovingComponent() {
                   <div className="flex items-center space-x-2 text-sm">
                     <Phone className="h-4 w-4" />
                     <div>
-                      <div className="font-bold">(212) 651 7273</div>
+                      <div className="font-bold">+441604279880</div>
                       <div className="text-xs opacity-90">
                         7 days a week 7AM-9PM
                       </div>
@@ -187,40 +191,40 @@ export default function MovingComponent() {
           </div>
 
           {/* Right Quote Form */}
-          <div className="bg-white rounded-lg p-6 lg:p-8 shadow-2xl mb-10">
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+          <Card className="bg-white rounded-lg shadow-2xl mb-10">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-gray-900">
                 Your Tranzr Moves starts with a{" "}
                 <span className="text-primary">free quote</span>
-              </h3>
+              </CardTitle>
               <p className="text-gray-600 text-sm">
                 Fill out the form below for a quick flat price quote
               </p>
-            </div>
-
-            <div className="space-y-4">
+            </CardHeader>
+            <CardContent className="space-y-4">
               {/* Move Date and Type Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="moveDate" className="text-foreground">
                     Estimated move date: *
-                  </label>
+                  </Label>
                   <div className="relative">
                     <Input
+                      id="moveDate"
                       type="date"
                       value={moveDate}
                       onChange={(e) => setMoveDate(e.target.value)}
                       className="w-full pl-10"
                     />
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="moveType" className="text-foreground">
                     Type of move: *
-                  </label>
+                  </Label>
                   <Select value={moveType} onValueChange={setMoveType}>
-                    <SelectTrigger>
+                    <SelectTrigger id="moveType">
                       <SelectValue placeholder="Choose an option" />
                     </SelectTrigger>
                     <SelectContent>
@@ -236,11 +240,12 @@ export default function MovingComponent() {
               </div>
 
               {/* Moving From */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <Label htmlFor="movingFrom" className="text-foreground">
                   Moving from address: *
-                </label>
+                </Label>
                 <Input
+                  id="movingFrom"
                   type="text"
                   placeholder="Enter a location"
                   value={movingFrom}
@@ -250,11 +255,12 @@ export default function MovingComponent() {
               </div>
 
               {/* Moving To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <Label htmlFor="movingTo" className="text-foreground">
                   Moving to address: *
-                </label>
+                </Label>
                 <Input
+                  id="movingTo"
                   type="text"
                   placeholder="Enter a location"
                   value={movingTo}
@@ -265,19 +271,20 @@ export default function MovingComponent() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 font-semibold flex-1">
+                <Button className="flex-1" size="lg" variant="default">
                   GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="text-primary hover:bg-primary/10 px-6 py-3 font-semibold flex items-center justify-center border border-primary"
+                  variant="secondary"
+                  size="lg"
+                  className="flex items-center justify-center bg-accent-400 hover:bg-accent-500 text-white"
                 >
                   <Phone className="mr-2 h-4 w-4" />
                   Or get a call from us
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>
