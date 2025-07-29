@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import VanIcon from "@/components/VanIconComponent";
 import { ArrowRight, Phone, Menu, X } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+  sticky?: boolean;
+}
+
+export default function Header({ sticky = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-primary text-white sticky top-0 z-50">
+    <header className={`bg-gradient-to-r from-primary-500 to-primary-600 text-white z-50 ${sticky ? 'sticky top-0' : ''}`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
@@ -24,8 +28,8 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
             <a
-              href="#"
-              className="text-white hover:text-primary-200 transition-colors font-medium border-b-2 border-white pb-1"
+              href="/moving"
+              className="text-white hover:text-primary-200 transition-colors font-medium"
             >
               MOVING
             </a>
@@ -92,8 +96,8 @@ export default function Header() {
           <div className="lg:hidden py-4 border-t border-primary-400">
             <nav className="flex flex-col space-y-4">
               <a
-                href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium border-b border-white pb-1"
+                href="/moving"
+                className="text-white hover:text-primary-200 transition-colors font-medium"
               >
                 MOVING
               </a>
