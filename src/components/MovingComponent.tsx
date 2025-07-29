@@ -27,20 +27,12 @@ export default function MovingComponent() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
               <VanIcon
-                width={64}
-                height={64}
-                className="text-white flex-shrink-0 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24"
+                width={200}
+                height={32}
+                className="text-white flex-shrink-0 w-48 h-10 sm:w-56 sm:h-12 md:w-64 md:h-14 lg:w-72 lg:h-16 xl:w-80 xl:h-18"
               />
-              <div className="text-white font-bold">
-                <div className="text-xl sm:text-2xl md:text-3xl leading-tight tracking-wide">
-                  TRANZR MOVES
-                </div>
-                <div className="text-sm opacity-90 leading-tight tracking-widest mt-1">
-                  REMOVAL & STORAGE
-                </div>
-              </div>
             </div>
 
             {/* Desktop Navigation */}
