@@ -20,7 +20,7 @@ export default function PromotionalSection({
 }: PromotionalSectionProps) {
   // Split the title to highlight the specified text
   const titleParts = title.split(highlightedText);
-  
+
   return (
     <section className={`py-16 bg-white ${className}`}>
       <div className="container mx-auto px-4">
@@ -37,21 +37,24 @@ export default function PromotionalSection({
             </p>
           </div>
 
-          {/* Right Section - Image with Offset Background */}
+          {/* Right Section - Image with Pink Frame Design */}
           <div className="relative">
-            {/* Offset Background - positioned behind and offset */}
-            <div className="absolute top-4 right-4 w-full h-full bg-primary-500 rounded-3xl -z-10"></div>
-            
-            {/* Main Image Container - positioned on top */}
-            <div className="relative rounded-3xl overflow-hidden border-8 border-primary-500 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-300 bg-white">
-              <div className="relative w-full h-[400px] lg:h-[500px] xl:h-[600px]">
-                <Image
-                  src={imageSrc}
-                  alt={imageAlt}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+            {/* Pink decorative frame background */}
+            <div className="absolute -inset-4 bg-primary-500 rounded-3xl transform rotate-2"></div>
+
+            {/* White frame container */}
+            <div className="relative bg-white p-6 rounded-3xl shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+              {/* Inner image container with rounded corners */}
+              <div className="relative rounded-2xl overflow-hidden">
+                <div className="relative w-full h-[400px] lg:h-[500px] xl:h-[600px]">
+                  <Image
+                    src={imageSrc}
+                    alt={imageAlt}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -59,4 +62,4 @@ export default function PromotionalSection({
       </div>
     </section>
   );
-} 
+}
