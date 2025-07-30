@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StorageSection from "@/components/StorageSection";
 import {
   ArrowRight,
   Star,
@@ -407,6 +408,17 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Storage Section */}
+      <StorageSection
+        title="Make space with our flexible short and long term "
+        highlightedText="storage"
+        description="We will pick up your items from your doorstep and deliver them to our secure storage facility, where they will be safely stored for as little or as long as you like. Just let us know when you need your items back and we will drop them off at a time that suits you."
+        buttonText="GET A STORAGE QUOTE"
+        imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
+        imageAlt="Professional storage service with moving boxes"
+        onButtonClick={() => console.log("Storage quote requested")}
+      />
 
       {/* Footer */}
       <Footer />
