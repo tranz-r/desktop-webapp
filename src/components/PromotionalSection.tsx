@@ -43,7 +43,7 @@ export default function PromotionalSection({
             <div className="absolute -inset-4 bg-primary-500 rounded-3xl transform rotate-2"></div>
 
             {/* White frame container */}
-            <div className="relative bg-white p-6 rounded-3xl shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+            <div className="relative bg-white p-2 rounded-3xl shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-300">
               {/* Inner image container with rounded corners */}
               <div className="relative rounded-2xl overflow-hidden">
                 <div className="relative w-full h-[400px] lg:h-[500px] xl:h-[600px]">
