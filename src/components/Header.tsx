@@ -3,15 +3,96 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import VanIcon from "@/components/VanIconComponent";
-import { ArrowRight, Phone, Menu, X } from "lucide-react";
+import { ArrowRight, Phone, Menu, X, ChevronDown } from "lucide-react";
 
 interface HeaderProps {
   sticky?: boolean;
 }
 
+interface MovingService {
+  name: string;
+  href: string;
+}
+
+interface ServiceItem {
+  name: string;
+  href: string;
+}
+
+interface ResourceItem {
+  name: string;
+  href: string;
+}
+
+interface CompanyItem {
+  name: string;
+  href: string;
+}
+
 export default function Header({ sticky = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const movingServices: MovingService[] = [
+    { name: "General Moving Services", href: "/moving" },
+    { name: "Local Residential Moves", href: "/moving/local-residential" },
+    { name: "Office & Commercial Moves", href: "/moving/commercial" },
+    { name: "Long Distance Moves", href: "/moving/long-distance" },
+    { name: "Events & Special Moves", href: "/moving/events" },
+    { name: "Small Moves", href: "/moving/small-moves" },
+    { name: "24/7/365 Moves", href: "/moving/24-7" },
+    { name: "Last Minute Moves", href: "/moving/last-minute" },
+    { name: "Hourly Moves", href: "/moving/hourly" },
+    { name: "Apartment Moves", href: "/moving/apartment" },
+    { name: "House Moves", href: "/moving/house" },
+    { name: "Same Building Moves", href: "/moving/same-building" },
+    { name: "Student Moves", href: "/moving/student" }
+  ];
+
+  const serviceItems: ServiceItem[] = [
+    { name: "COI Services", href: "/services/coi" },
+    { name: "Full Packing", href: "/services/full-packing" },
+    { name: "White Glove Moving", href: "/services/white-glove" },
+    { name: "Box and Material Delivery", href: "/services/box-delivery" },
+    { name: "Plastic Bin Rental", href: "/services/plastic-bin-rental" },
+    { name: "Wooden Crate Packing", href: "/services/wooden-crate-packing" },
+    { name: "Fitness Equipment Movers", href: "/services/fitness-equipment" },
+    { name: "Valuable Items", href: "/services/valuable-items" },
+    { name: "Piano Moving", href: "/services/piano-moving" },
+    { name: "Furniture Assembly", href: "/services/furniture-assembly" },
+  ];
+
+  const resourceItems: ResourceItem[] = [
+    { name: "Moving Cost Calculator", href: "/resources/cost-calculator" },
+    { name: "Packing tutorial videos", href: "/resources/packing-videos" },
+    { name: "FAQ", href: "/resources/faq" },
+    { name: "What is a flat fee move?", href: "/resources/flat-fee-move" },
+    { name: "How to Pack", href: "/resources/how-to-pack" },
+    { name: "Move day checklist", href: "/resources/move-day-checklist" },
+    { name: "Move day guide", href: "/resources/move-day-guide" },
+    { name: "Reviews", href: "/resources/reviews" },
+    { name: "Claims", href: "/resources/claims" },
+    { name: "Referral Program", href: "/resources/referral-program" },
+    { name: "Blogs", href: "/resources/blogs" },
+  ];
+
+  const companyItems: CompanyItem[] = [
+    { name: "About us", href: "/company/about" },
+    { name: "Quality Assurance", href: "/company/quality-assurance" },
+    { name: "Our moving experience", href: "/company/experience" },
+    { name: "Our Movers", href: "/company/movers" },
+    { name: "Our Truck Fleet", href: "/company/truck-fleet" },
+    { name: "Insurance and credentials", href: "/company/licenses" },
+    { name: "Safety", href: "/company/safety" },
+    { name: "Press & News", href: "/company/press-news" },
+    { name: "Contact us", href: "/company/contact" },
+  ];
 
   return (
     <header className={`bg-gradient-to-r from-primary-500 to-primary-600 text-white z-50 ${sticky ? 'sticky top-0' : ''}`}>
@@ -30,36 +111,104 @@ export default function Header({ sticky = true }: HeaderProps) {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
-            <a
-              href="/moving"
-              className="text-white hover:text-primary-200 transition-colors font-medium"
-            >
-              MOVING
-            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                >
+                  MOVING
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 bg-white text-gray-900 border-0 shadow-lg rounded-lg">
+                {movingServices.map((service, index) => (
+                  <DropdownMenuItem key={index} asChild>
+                    <Link 
+                      href={service.href} 
+                      className="px-4 py-3 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                    >
+                      {service.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                >
+                  SERVICES
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 bg-white text-gray-900 border-0 shadow-lg rounded-lg">
+                {serviceItems.map((service, index) => (
+                  <DropdownMenuItem key={index} asChild>
+                    <Link 
+                      href={service.href} 
+                      className="px-4 py-3 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                    >
+                      {service.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <a
               href="#"
               className="text-white hover:text-primary-200 transition-colors font-medium"
             >
               STORAGE
             </a>
-            <a
-              href="#"
-              className="text-white hover:text-primary-200 transition-colors font-medium"
-            >
-              SERVICES
-            </a>
-            <a
-              href="#"
-              className="text-white hover:text-primary-200 transition-colors font-medium"
-            >
-              RESOURCES
-            </a>
-            <a
-              href="#"
-              className="text-white hover:text-primary-200 transition-colors font-medium"
-            >
-              COMPANY
-            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                >
+                  RESOURCES
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 bg-white text-gray-900 border-0 shadow-lg rounded-lg">
+                {resourceItems.map((resource, index) => (
+                  <DropdownMenuItem key={index} asChild>
+                    <Link 
+                      href={resource.href} 
+                      className="px-4 py-3 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                    >
+                      {resource.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                >
+                  COMPANY
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 bg-white text-gray-900 border-0 shadow-lg rounded-lg">
+                {companyItems.map((item, index) => (
+                  <DropdownMenuItem key={index} asChild>
+                    <Link 
+                      href={item.href} 
+                      className="px-4 py-3 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                    >
+                      {item.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Desktop CTA Buttons */}
@@ -102,41 +251,73 @@ export default function Header({ sticky = true }: HeaderProps) {
         {isMenuOpen && (
           <div className="lg:hidden py-4 border-t border-primary-400">
             <nav className="flex flex-col space-y-4">
-              <a
-                href="/moving"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
-              >
-                MOVING
-              </a>
+              <div className="space-y-2">
+                <div className="text-white font-medium">MOVING</div>
+                <div className="ml-4 space-y-1">
+                  {movingServices.map((service, index) => (
+                    <Link
+                      key={index}
+                      href={service.href}
+                      className="block text-white/80 hover:text-white transition-colors text-sm py-1"
+                    >
+                      {service.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-white font-medium">SERVICES</div>
+                <div className="ml-4 space-y-1">
+                  {serviceItems.map((service, index) => (
+                    <Link
+                      key={index}
+                      href={service.href}
+                      className="block text-white/80 hover:text-white transition-colors text-sm py-1"
+                    >
+                      {service.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
               <a
                 href="#"
                 className="text-white hover:text-primary-200 transition-colors font-medium"
               >
                 STORAGE
               </a>
+              <div className="space-y-2">
+                <div className="text-white font-medium">RESOURCES</div>
+                <div className="ml-4 space-y-1">
+                  {resourceItems.map((resource, index) => (
+                    <Link
+                      key={index}
+                      href={resource.href}
+                      className="block text-white/80 hover:text-white transition-colors text-sm py-1"
+                    >
+                      {resource.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-white font-medium">COMPANY</div>
+                <div className="ml-4 space-y-1">
+                  {companyItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="block text-white/80 hover:text-white transition-colors text-sm py-1"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
               <a
                 href="#"
                 className="text-white hover:text-primary-200 transition-colors font-medium"
               >
                 MOVING LOCATIONS
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
-              >
-                SERVICES
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
-              >
-                RESOURCES
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
-              >
-                COMPANY
               </a>
               <div className="pt-4 border-t border-primary-400">
                 <Button className="bg-black hover:bg-black/90 text-white px-6 py-2 rounded-md font-medium w-full mb-4">

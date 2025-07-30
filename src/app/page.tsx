@@ -82,9 +82,9 @@ export default function HomePage() {
           {/* Right Image */}
           <div className="relative order-1 lg:order-2">
             <img
-              src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&q=80"
-              alt="Happy couple with moving boxes"
-              className="w-full h-[300px] lg:h-[500px] object-cover rounded-lg shadow-2xl"
+              src="/images/best-movers.jpg"
+              alt="Best movers in Northamptonshire"
+              className="w-full h-[300px] lg:h-[600px] object-cover rounded-lg shadow-2xl"
             />
           </div>
         </div>
