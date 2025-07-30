@@ -36,7 +36,7 @@ export default function HomePage() {
           <div className="text-white space-y-6 lg:space-y-8 order-2 lg:order-1">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
               The best movers in Northamptonshire and the UK with the best
-              reviews.
+              reviews and customer satisfaction.
             </h1>
             <div className="space-y-2">
               <p className="text-lg lg:text-xl opacity-90">

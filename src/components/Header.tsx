@@ -115,7 +115,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                  className="text-white text hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
                 >
                   MOVING
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -138,7 +138,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
                 >
                   SERVICES
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -159,7 +159,7 @@ export default function Header({ sticky = true }: HeaderProps) {
             </DropdownMenu>
             <a
               href="#"
-              className="text-white hover:text-primary-200 transition-colors font-medium"
+              className="text-white hover:text-primary-200 transition-colors font-extrabold"
             >
               STORAGE
             </a>
@@ -167,7 +167,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
                 >
                   RESOURCES
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -190,7 +190,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-medium p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
                 >
                   COMPANY
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -252,7 +252,7 @@ export default function Header({ sticky = true }: HeaderProps) {
           <div className="lg:hidden py-4 border-t border-primary-400">
             <nav className="flex flex-col space-y-4">
               <div className="space-y-2">
-                <div className="text-white font-medium">MOVING</div>
+                <div className="text-white font-extrabold">MOVING</div>
                 <div className="ml-4 space-y-1">
                   {movingServices.map((service, index) => (
                     <Link
@@ -266,7 +266,7 @@ export default function Header({ sticky = true }: HeaderProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-white font-medium">SERVICES</div>
+                <div className="text-white font-extrabold">SERVICES</div>
                 <div className="ml-4 space-y-1">
                   {serviceItems.map((service, index) => (
                     <Link
@@ -286,7 +286,7 @@ export default function Header({ sticky = true }: HeaderProps) {
                 STORAGE
               </a>
               <div className="space-y-2">
-                <div className="text-white font-medium">RESOURCES</div>
+                <div className="text-white font-extrabold">RESOURCES</div>
                 <div className="ml-4 space-y-1">
                   {resourceItems.map((resource, index) => (
                     <Link
@@ -300,7 +300,7 @@ export default function Header({ sticky = true }: HeaderProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-white font-medium">COMPANY</div>
+                <div className="text-white font-extrabold">COMPANY</div>
                 <div className="ml-4 space-y-1">
                   {companyItems.map((item, index) => (
                     <Link
@@ -315,7 +315,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               </div>
               <a
                 href="#"
-                className="text-white hover:text-primary-200 transition-colors font-medium"
+                className="text-white hover:text-primary-200 transition-colors font-extrabold"
               >
                 MOVING LOCATIONS
               </a>
