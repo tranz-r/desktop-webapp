@@ -27,7 +27,7 @@ export default function PromotionalSection({
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Section - Text */}
           <div className="space-y-6">
-            <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-4xl lg:text-5xl xl:text-4xl font-bold text-gray-900 leading-tight">
               {titleParts[0]}
               <span className="text-primary-500">{highlightedText}</span>
               {titleParts[1]}
@@ -46,7 +46,7 @@ export default function PromotionalSection({
             <div className="relative bg-white p-2 rounded-3xl shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-300">
               {/* Inner image container with rounded corners */}
               <div className="relative rounded-2xl overflow-hidden">
-                <div className="relative w-full h-[400px] lg:h-[500px] xl:h-[600px]">
+                <div className="relative w-full h-[300px] lg:h-[350px] xl:h-[400px]">
                   <Image
                     src={imageSrc}
                     alt={imageAlt}
