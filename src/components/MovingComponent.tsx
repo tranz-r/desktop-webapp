@@ -12,11 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon, ArrowRight, Phone } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Header from "@/components/Header";
-import { Calendar, ArrowRight, Phone } from "lucide-react";
 
 export default function MovingComponent() {
-  const [moveDate, setMoveDate] = useState("");
+  const [moveDate, setMoveDate] = useState<Date>();
   const [moveType, setMoveType] = useState("");
   const [movingFrom, setMovingFrom] = useState("");
   const [movingTo, setMovingTo] = useState("");
@@ -71,16 +79,28 @@ export default function MovingComponent() {
                   <Label htmlFor="moveDate" className="text-foreground">
                     Estimated move date: *
                   </Label>
-                  <div className="relative">
-                    <Input
-                      id="moveDate"
-                      type="date"
-                      value={moveDate}
-                      onChange={(e) => setMoveDate(e.target.value)}
-                      className="w-full pl-10"
-                    />
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !moveDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {moveDate ? format(moveDate, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={moveDate}
+                        onSelect={setMoveDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="moveType" className="text-foreground">
@@ -113,7 +133,6 @@ export default function MovingComponent() {
                   placeholder="Enter a location"
                   value={movingFrom}
                   onChange={(e) => setMovingFrom(e.target.value)}
-                  className="w-full"
                 />
               </div>
 
@@ -128,7 +147,6 @@ export default function MovingComponent() {
                   placeholder="Enter a location"
                   value={movingTo}
                   onChange={(e) => setMovingTo(e.target.value)}
-                  className="w-full"
                 />
               </div>
 
