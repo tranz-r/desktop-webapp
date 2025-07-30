@@ -32,7 +32,7 @@ export default function StorageSection({
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Section - Image */}
-          <div className="relative order-2 lg:order-1">
+          <div className="relative order-2 lg:order-1 ml-8">
             {/* Navy blue decorative frame background */}
             <div className="absolute -inset-4 bg-primary-500 rounded-3xl transform rotate-2"></div>
 
