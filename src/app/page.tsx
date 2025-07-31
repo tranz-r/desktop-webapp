@@ -34,7 +34,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <div className="text-white space-y-6 lg:space-y-8 order-2 lg:order-1">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-relaxed tracking-wide font-serif">
               The best movers in Northamptonshire and the UK with the best
               reviews and customer satisfaction.
             </h1>
