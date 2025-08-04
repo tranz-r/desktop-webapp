@@ -119,16 +119,16 @@ export default function HomePage() {
 
           {/* Services Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {/* 24/7/365 Moving */}
+                        {/* 24/7/365 Moving */}
             <div className="text-left">
-              <div className="mb-4">
-                  <Svg247Moving 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-                </div>
+              <div className="mb-4 flex justify-center sm:justify-start">
+                <Svg247Moving 
+                  width={150} 
+                  height={113} 
+                  className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
+              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 24/7/365 Moving
               </h3>
@@ -144,7 +144,7 @@ export default function HomePage() {
 
             {/* Local Residential Moving */}
             <div className="text-left">
-            <div className="mb-4">
+            <div className="mb-4 flex justify-center sm:justify-start">
                   <PeoplePackingSVG 
                     width={150} 
                     height={113} 
@@ -167,7 +167,7 @@ export default function HomePage() {
 
             {/* Long Distance Moving */}
             <div className="text-left">
-              <div className="mb-4">
+              <div className="mb-4 flex justify-center sm:justify-start">
                   <SvgLongDistanceSVG 
                     width={150} 
                     height={113} 
@@ -190,7 +190,7 @@ export default function HomePage() {
 
             {/* Office and Commercial Moves */}
             <div className="text-left">
-              <div className="mb-4">
+              <div className="mb-4 flex justify-center sm:justify-start">
                   <SvgOfficeMoveSVG 
                     width={150} 
                     height={113} 
@@ -213,7 +213,7 @@ export default function HomePage() {
 
             {/* Small Moves */}
             <div className="text-left">
-              <div className="mb-4">
+              <div className="mb-4 flex justify-center sm:justify-start">
                   <SvgSmallMoveSVG 
                     width={150} 
                     height={113} 
@@ -236,7 +236,7 @@ export default function HomePage() {
 
             {/* Last Minute Moves */}
             <div className="text-left">
-              <div className="mb-4">
+              <div className="mb-4 flex justify-center sm:justify-start">
                   <SvgLastMinuteMove 
                     width={150} 
                     height={113} 

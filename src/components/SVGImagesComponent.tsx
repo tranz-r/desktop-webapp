@@ -85,7 +85,7 @@ const SVGImagesComponent = ({
             <div key={service.id} className="text-left">
                             {/* SVG Component */}
               <div className="mb-6">
-                <div className="mb-4">
+                <div className="mb-4 flex justify-center sm:justify-start">
                   <service.svgComponent 
                     width={150} 
                     height={113} 
