@@ -110,7 +110,7 @@ export default function Footer() {
             <h3 className="text-lg lg:text-xl font-bold mb-4">Contact</h3>
             <div className="flex flex-col space-y-2 text-gray-300 text-sm lg:text-base">
               <p>123 Moving Street</p>
-              <p>New York, NY 10001</p>
+              <p>Northampton, NN1 5QT</p>
               <p>Phone: +44 1604 279 880</p>
               <p>Email: info@tranzrmoves.com</p>
             </div>

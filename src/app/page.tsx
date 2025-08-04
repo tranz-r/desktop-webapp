@@ -94,7 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Complete Moving Services */}
+            {/* Complete Moving Services */}
       <section className="py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -102,7 +102,7 @@ export default function HomePage() {
               Keep moving forward with our
             </h2>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-              complete moving services
+              comprehensive moving services
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Whatever you need to move from point A to B, we will get it there
@@ -123,7 +123,7 @@ export default function HomePage() {
                 24/7/365 Moving
               </h3>
               <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                The only moving company in NYC that offers any day and time
+                The only moving company in Northamptonshire that offers any day and time
                 moving services. No matter how big or small your move is we will
                 move it.
               </p>
@@ -143,9 +143,9 @@ export default function HomePage() {
                 Local Residential Moving Services
               </h3>
               <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We specialize in local residential NYC and New York State moves.
-                We can move you across all of New York City's Five Boroughs and
-                surrounding Tri-State locations.
+                We specialize in local residential Northamptonshire and UK moves.
+                We can move you across all of the London Area and
+                surrounding UK locations.
               </p>
               <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
                 Learn More <ArrowRight className="ml-1 h-4 w-4" />
@@ -163,8 +163,8 @@ export default function HomePage() {
                 Long Distance Moving Services
               </h3>
               <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                From NYC to Miami, California and Seattle we can move you to any
-                state in the USA. With on time long distance delivery dates and
+                From Northamptonshire to Edinburgh, Manchester and Cardiff we can move you to any
+                location in the UK. With on time long distance delivery dates and
                 safe packing we will get you settled into your new home quickly.
               </p>
               <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
@@ -235,182 +235,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Flat Fee Pricing Section */}
-      <section className="py-12 lg:py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-                Our <span className="text-accent-600">flat fee</span> pricing
-                means no hidden surprises, ever.
-              </h2>
-            </div>
-
-            {/* Right Image */}
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
-                alt="Moving team with truck"
-                className="w-full h-[400px] object-cover rounded-lg shadow-lg"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Complete Packing Experience Section */}
-      <section className="py-12 lg:py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-            {/* Left Content */}
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-                Put your feet up with our{" "}
-                <span className="text-secondary-600">complete packing</span>{" "}
-                experience
-              </h2>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                We can pack your whole home, a few boxes or your most valuable
-                items. Our packing methods and the high-quality packing
-                materials we use are matched specifically to each of your items.
-              </p>
-            </div>
-
-            {/* Right Image */}
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&q=80"
-                alt="Professional movers packing items"
-                className="w-full h-[400px] object-cover rounded-lg shadow-lg"
-              />
-            </div>
-          </div>
-
-          {/* Packing Services Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Full Packing */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Full Packing
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We remove the hassle of packing up all of your valuable items
-                safely. You can decide what you want us to pack, there is no
-                minimum limit to our packing service. You can use us to pack
-                just your kitchen or your entire house.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Platinum Packing */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="w-8 h-8 text-primary-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Platinum Packing
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We will not only pack up all of your items, we will unpack all
-                of your belongings into your new address. You just tell us what
-                and where you want everything placed.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Plastic Bin Hire */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Plastic Bin Hire
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                Our eco friendly plastic moving bins are delivered to your door
-                with no assembly required. Once you're done we will pick them up
-                and sanitize them so that they can be used again.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Box and Material Delivery */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Box and Material Delivery
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We have made it easy by bundling important moving supplies into
-                packages that suit your lifestyle. Delivered to your door before
-                you move date.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Valuable Item Packing */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="w-8 h-8 text-primary-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Valuable Item Packing
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                Your valuable furniture pieces, antiques and artwork will be
-                safely handled with the utmost care. We will build custom crates
-                for your items, wrap them with durable packing material and
-                ensure the appropriate lifting resources.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Pianos */}
-            <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Pianos</h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                It takes specialized skills, equipment and training to move a
-                piano safely, especially in NYC. We have experience moving
-                upright, horizontal and all piano styles in between.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
       <PromotionalSection
         title="Put your feet up with our complete packing experience"
         highlightedText="complete packing"
@@ -418,6 +242,14 @@ export default function HomePage() {
         imageSrc="/images/feet-up.jpg"
         imageAlt="Professional movers packing furniture with care"
       />
+
+
+
+      {/* SVG Images Component */}
+      <SVGImagesComponent />
+
+      {/* Guarantee Section */}
+      <GuaranteeComponent />
 
       {/* Storage Section */}
       <StorageSection
@@ -429,12 +261,6 @@ export default function HomePage() {
         imageAlt="Professional storage service with moving boxes"
         onButtonClick={() => console.log("Storage quote requested")}
       />
-
-      {/* SVG Images Component */}
-      <SVGImagesComponent />
-
-      {/* Guarantee Section */}
-      <GuaranteeComponent />
 
       {/* Footer */}
       <Footer />

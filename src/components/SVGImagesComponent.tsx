@@ -59,7 +59,7 @@ const SVGImagesComponent = ({
       id: "pianos",
       title: "Pianos",
       description:
-        "It takes specialized skills, equipment and training to move a piano safely, especially in NYC. We have experience moving upright, horizontal and all piano styles in between.",
+        "It takes specialized skills, equipment and training to move a piano safely, especially in the London Area. We have experience moving upright, horizontal and all piano styles in between.",
       svgPlaceholder: "🎹",
     },
   ],
