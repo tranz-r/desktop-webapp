@@ -111,8 +111,8 @@ export default function Footer() {
             <div className="flex flex-col space-y-2 text-gray-300 text-sm lg:text-base">
               <p>123 Moving Street</p>
               <p>New York, NY 10001</p>
-              <p>Phone: +441604279880</p>
-              <p>Email: info@pieceofcakemove.com</p>
+              <p>Phone: +44 1604 279 880</p>
+              <p>Email: info@tranzrmoves.com</p>
             </div>
             <div className="flex space-x-4 mt-4">
               <Link
