@@ -109,8 +109,9 @@ export default function Footer() {
           <div>
             <h3 className="text-lg lg:text-xl font-bold mb-4">Contact</h3>
             <div className="flex flex-col space-y-2 text-gray-300 text-sm lg:text-base">
-              <p>123 Moving Street</p>
-              <p>Northampton, NN1 5QT</p>
+              <p>27 Elliot Close</p>
+              <p>Kettering, NN16 9XR</p>
+              <p>United Kingdom</p>
               <p>Phone: +44 1604 279 880</p>
               <p>Email: info@tranzrmoves.com</p>
             </div>

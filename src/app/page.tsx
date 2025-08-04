@@ -19,7 +19,14 @@ import {
   Shield,
   Phone,
 } from "lucide-react";
+import Svg247Moving from "@/components/247Moving";
+import SvgLocalMovesSVG from "@/components/LocalMovesSVG";
 import PromotionalSection from "@/components/PromotionalSection";
+import SvgLongDistanceSVG from "@/components/LongDistanceSVG";
+import SvgOfficeMoveSVG from "@/components/OfficeMoveSVG";
+import SvgSmallMoveSVG from "@/components/SmallMoveSVG";
+import SvgLastMinuteMove from "@/components/LastMinuteMove";
+import PeoplePackingSVG from "@/components/PeoplePacking";
 
 export default function HomePage() {
   const [movingFrom, setMovingFrom] = useState("");
@@ -115,10 +122,13 @@ export default function HomePage() {
             {/* 24/7/365 Moving */}
             <div className="text-left">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Calendar className="w-8 h-8 text-accent-600" />
+                  <Svg247Moving 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
                 </div>
-              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 24/7/365 Moving
               </h3>
@@ -134,11 +144,14 @@ export default function HomePage() {
 
             {/* Local Residential Moving */}
             <div className="text-left">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <Home className="w-8 h-8 text-primary-600" />
+            <div className="mb-4">
+                  <PeoplePackingSVG 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
                 </div>
-              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Local Residential Moving Services
               </h3>
@@ -155,9 +168,12 @@ export default function HomePage() {
             {/* Long Distance Moving */}
             <div className="text-left">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-secondary-100 rounded-lg flex items-center justify-center mb-4">
-                  <Truck className="w-8 h-8 text-secondary-600" />
-                </div>
+                  <SvgLongDistanceSVG 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Long Distance Moving Services
@@ -175,9 +191,12 @@ export default function HomePage() {
             {/* Office and Commercial Moves */}
             <div className="text-left">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
+                  <SvgOfficeMoveSVG 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Office and Commercial Moves
@@ -195,9 +214,12 @@ export default function HomePage() {
             {/* Small Moves */}
             <div className="text-left">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-8 h-8 text-accent-600" />
-                </div>
+                  <SvgSmallMoveSVG 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Small Moves
@@ -215,9 +237,12 @@ export default function HomePage() {
             {/* Last Minute Moves */}
             <div className="text-left">
               <div className="mb-4">
-                <div className="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
-                  <Calendar className="w-8 h-8 text-accent-600" />
-                </div>
+                  <SvgLastMinuteMove 
+                    width={150} 
+                    height={113} 
+                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Last Minute Moves
