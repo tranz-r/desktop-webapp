@@ -31,7 +31,7 @@
 
 ### **📦 Inventory Building Implementation**
 - **Search Interface**: 
-  - Autocomplete search with item database
+  - Autocomplete search with item database using the /public/data/Tranzr_goods_enriched_dimensions-Depth.json file
   - Real-time filtering and suggestions
   - Use shadcn Command component for search
 - **Item Selection**:
