@@ -1,0 +1,430 @@
+# Development Rules for NextJS Moving Service Webapp
+
+## 📋 **Complete Moving Service Flows (Excluding AI Smart Detection)**
+
+### **🔄 Core User Flows:**
+
+#### **1. Manual Inventory Building Flow**
+- Landing page → Build Inventory → Add items manually → Set quantities → Calculate volume
+
+#### **2. Van Selection Flow**
+- Inventory complete → Van size selection → Volume-based recommendations → Confirm van
+
+#### **3. Origin & Destination Flow**
+- Van selected → Enter pickup address → Enter delivery address → Validate addresses → Calculate distance
+
+#### **4. Pricing & Service Selection Flow**
+- Addresses set → Service tier selection → Additional services → Real-time pricing → Review quote
+
+#### **5. Payment & Booking Flow**
+- Quote accepted → Payment method selection → Stripe payment → Booking confirmation
+
+---
+
+## 🎯 **DETAILED IMPLEMENTATION GUIDANCE**
+
+### **📱 Quotation Page Implementation**
+- **Hero Section**: Tranzr logo, value propositions, "Get Started" CTA
+- **Service Highlights**: Key benefits and features
+- **Navigation**: Direct to `/inventory` without authentication
+- **Components**: Use shadcn Hero and Card components
+
+### **📦 Inventory Building Implementation**
+- **Search Interface**: 
+  - Autocomplete search with item database
+  - Real-time filtering and suggestions
+  - Use shadcn Command component for search
+- **Item Selection**:
+  - Item cards with add/remove controls
+  - Quantity adjustment (+/- buttons)
+  - Volume calculation display
+- **Cart Management**:
+  - Persistent cart using React Context + localStorage
+  - Cart modal for overview
+  - Edit item dimensions and quantities
+- **Data Structure**:
+  ```typescript
+  interface CartItem {
+    id: string;
+    name: string;
+    height: number;
+    width: number;
+    length: number;
+    volume: number;
+    quantity: number;
+  }
+  ```
+
+### **🚐 Van Selection Implementation**
+- **Van Cards**: 
+  - Display van types with capacity, dimensions, pricing
+  - Volume-based recommendations
+  - Selection state management
+- **Driver Options**:
+  - Driver count selection (1 or 2)
+  - Additional cost calculation
+- **Components**: Use shadcn Card and RadioGroup components
+
+### **📍 Origin & Destination Implementation**
+- **Address Input**:
+  - Autocomplete with address validation
+  - Floor selection dropdown
+  - Elevator availability toggle
+- **Cost Calculation**:
+  - Distance-based pricing
+  - Floor-based adjustments
+  - Elevator/no-elevator costs
+- **Components**: Use shadcn Input, Select, and Switch components
+
+### **💰 Pricing & Service Selection Implementation**
+- **Pricing Tiers**:
+  - Feature comparison table
+  - Popular tier highlighting
+  - Collection/delivery dates
+- **Service Features**:
+  - Detailed feature list per tier
+  - Included/excluded indicators
+  - Additional service options
+- **Components**: Use shadcn Table, Badge, and Card components
+
+### **💳 Payment & Booking Implementation**
+- **Order Summary**:
+  - Complete booking details
+  - Cost breakdown
+  - Service specifications
+- **Payment Processing**:
+  - Stripe integration
+  - Payment method selection
+  - Secure transaction handling
+- **Confirmation**:
+  - Booking confirmation details
+  - Next steps information
+  - Booking reference number
+
+### **📊 State Management Implementation**
+- **Cart Context**:
+  ```typescript
+  interface CartContextType {
+    items: CartItem[];
+    addItem: (item: Omit<CartItem, "quantity">) => void;
+    removeItem: (id: string) => void;
+    updateQuantity: (id: string, quantity: number) => void;
+    getTotalItems: () => number;
+    getTotalVolume: () => number;
+    clearCart: () => void;
+  }
+  ```
+- **Booking Context**:
+  ```typescript
+  interface BookingContextType {
+    vanSelection: VanType;
+    origin: Address;
+    destination: Address;
+    pricingTier: PricingTier;
+    totalCost: number;
+  }
+  ```
+
+### **🔄 Navigation Flow**
+- `/` → Landing page
+- `/inventory` → Inventory building
+- `/van-selection` → Van selection
+- `/origin-destination` → Address input
+- `/pricing` → Service selection
+- `/payment` → Payment processing
+- `/confirmation` → Booking confirmation
+
+---
+
+## 🏗️ **STRICT RULES FOR NEXTJS WEBAPP DEVELOPMENT**
+
+### **🏗️ ARCHITECTURE RULES**
+
+#### **Rule 1: Component Structure**
+```
+✅ DO:
+- Create reusable components for each flow step
+- Use TypeScript interfaces for all data structures
+- Implement proper error boundaries
+- Follow atomic design principles (atoms → molecules → organisms → templates → pages)
+
+❌ DON'T:
+- Create monolithic components
+- Use any types without proper interfaces
+- Skip error handling
+- Mix concerns in single components
+```
+
+#### **Rule 2: State Management**
+```
+✅ DO:
+- Use React Context for global state (cart, booking)
+- Use local state for component-specific data
+- Implement proper loading states
+- Persist critical data in localStorage/sessionStorage
+
+❌ DON'T:
+- Use global state for local component data
+- Skip loading states
+- Lose user progress on page refresh
+- Mix server and client state incorrectly
+```
+
+#### **Rule 3: Routing & Navigation**
+```
+✅ DO:
+- Use Next.js App Router with file-based routing
+- Use dynamic routes for booking IDs
+- Maintain breadcrumb navigation
+
+❌ DON'T:
+- Use client-side routing for critical flows
+- Create deep nested routes unnecessarily
+- Lose user context during navigation
+```
+
+### **🎨 UI/UX RULES**
+
+#### **Rule 4: Design System**
+```
+✅ DO:
+- Use consistent Tailwind CSS classes
+- Use shadcn component where ever possible. When using Shadn , always use the MCP server.
+- Use the Shadcn whole block where ever possible (e.g Calendar, login page)
+- Before using shadcn component, always call the demo tool to see how it is used, and then implement it for bug free implementations.
+- Create reusable UI components (buttons, inputs, cards)
+- Implement responsive design for all screen sizes
+- Use proper color scheme and typography
+
+❌ DON'T:
+- Use inline styles
+- Create inconsistent component styling
+- Skip mobile responsiveness
+- Use hardcoded colors or fonts
+```
+
+#### **Rule 5: User Experience**
+```
+✅ DO:
+- Show progress indicators for multi-step flows
+- Implement proper form validation
+- Provide clear error messages
+- Use loading skeletons for better UX
+
+❌ DON'T:
+- Skip progress tracking
+- Use generic error messages
+- Show blank screens during loading
+- Create confusing navigation
+```
+
+### **🔐 SECURITY & AUTHENTICATION RULES**
+
+#### **Rule 6: Authentication**
+```
+✅ DO:
+- Implement proper JWT token management
+- Use secure HTTP-only cookies
+- Validate user permissions on both client and server
+
+❌ DON'T:
+- Store tokens in localStorage
+- Skip server-side validation
+- Allow unauthorized access to protected routes
+- Trust client-side role checks only
+```
+
+#### **Rule 7: Data Validation**
+```
+✅ DO:
+- Validate all user inputs on both client and server
+- Sanitize data before processing
+- Use proper TypeScript types for all data
+- Implement rate limiting for API calls
+
+❌ DON'T:
+- Trust client-side validation only
+- Skip input sanitization
+- Use any types for user data
+- Allow unlimited API calls
+```
+
+### **📱 RESPONSIVE DESIGN RULES**
+
+#### **Rule 8: Mobile-First Approach**
+```
+✅ DO:
+- Design for mobile first, then enhance for desktop
+- Use Tailwind's responsive prefixes (sm:, md:, lg:, xl:)
+- Test on multiple screen sizes
+- Optimize touch targets for mobile
+
+❌ DON'T:
+- Design desktop first
+- Skip mobile testing
+- Use fixed pixel values
+- Create tiny touch targets
+```
+
+### **🔧 DEVELOPMENT RULES**
+
+#### **Rule 9: Code Quality**
+```
+✅ DO:
+- Use ESLint and Prettier for code formatting
+- Write meaningful component and function names
+- Add proper JSDoc comments for complex functions
+- Follow React best practices
+
+❌ DON'T:
+- Skip linting rules
+- Use generic names (Component, handleClick)
+- Skip documentation
+- Use deprecated React patterns
+```
+
+#### **Rule 10: Performance**
+```
+✅ DO:
+- Implement proper image optimization
+- Use Next.js built-in optimizations
+- Lazy load non-critical components
+- Optimize bundle size
+
+❌ DON'T:
+- Use unoptimized images
+- Skip code splitting
+- Load everything on initial page load
+- Ignore bundle size
+```
+
+### **📊 DATA FLOW RULES**
+
+#### **Rule 11: API Integration**
+```
+✅ DO:
+- Use proper API error handling
+- Implement retry logic for failed requests
+- Cache frequently accessed data
+- Use proper HTTP status codes
+
+❌ DON'T:
+- Skip error handling
+- Retry indefinitely
+- Skip caching strategies
+- Use generic error responses
+```
+
+#### **Rule 12: State Persistence**
+```
+✅ DO:
+- Persist cart data across sessions
+- Save user preferences
+- Maintain form data during navigation
+- Clear sensitive data on logout
+
+❌ DON'T:
+- Lose user progress
+- Store sensitive data in localStorage
+- Skip data cleanup
+- Mix persistent and temporary data
+```
+
+### **🧪 TESTING RULES**
+
+#### **Rule 13: Testing Strategy**
+```
+✅ DO:
+- Write unit tests for utility functions
+- Test critical user flows
+- Mock external dependencies
+- Test error scenarios
+
+❌ DON'T:
+- Skip testing entirely
+- Only test happy paths
+- Test implementation details
+- Skip error case testing
+```
+
+### **🚀 DEPLOYMENT RULES**
+
+#### **Rule 14: Environment Management**
+```
+✅ DO:
+- Use environment variables for configuration
+- Separate development, staging, and production configs
+- Validate environment variables at startup
+- Use proper secrets management
+
+❌ DON'T:
+- Hardcode configuration values
+- Use production configs in development
+- Skip environment validation
+- Expose sensitive data in client code
+```
+
+---
+
+## 🎯 **IMPLEMENTATION PRIORITY ORDER**
+
+1. **Manual Inventory Building**
+2. **Van Selection Logic**
+3. **Address Input & Validation**
+4. **Pricing & Service Selection**
+5. **Payment Integration**
+6. **Booking Management**
+
+---
+
+## 📁 **PROJECT STRUCTURE GUIDELINES**
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   └── globals.css        # Global styles
+├── components/            # Reusable components
+│   ├── ui/               # Base UI components
+│   ├── forms/            # Form components
+│   ├── layout/           # Layout components
+│   └── features/         # Feature-specific components
+├── lib/                  # Utility functions and configurations
+├── hooks/                # Custom React hooks
+├── types/                # TypeScript type definitions
+├── contexts/             # React Context providers
+└── utils/                # Helper functions
+```
+
+---
+
+## 🔄 **DEVELOPMENT WORKFLOW**
+
+1. **Plan**: Define component structure and data flow
+2. **Design**: Create UI components following design system
+3. **Implement**: Build functionality following rules
+4. **Test**: Verify functionality and responsive design
+5. **Review**: Check against all rules and best practices
+6. **Deploy**: Deploy to staging/production
+
+---
+
+## 📝 **CHECKLIST FOR EACH FEATURE**
+
+- [ ] TypeScript interfaces defined
+- [ ] Responsive design implemented
+- [ ] Error handling in place
+- [ ] Loading states added
+- [ ] Form validation complete
+- [ ] Accessibility considerations
+- [ ] Performance optimized
+- [ ] Tests written
+- [ ] Documentation updated
+
+---
+
+*This document should be referenced before starting any new feature development to ensure consistency and quality across the application.*
+description:
+globs:
+alwaysApply: false
+---
