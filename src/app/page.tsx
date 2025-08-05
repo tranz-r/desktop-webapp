@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/Footer";
@@ -10,23 +9,16 @@ import StorageSection from "@/components/StorageSection";
 import GuaranteeComponent from "@/components/GuaranteeComponent";
 import SVGImagesComponent from "@/components/SVGImagesComponent";
 import {
-  ArrowRight,
-  Star,
-  Truck,
-  Package,
-  Home,
-  Calendar,
-  Shield,
-  Phone,
+  ArrowRight,   Phone,
 } from "lucide-react";
 import Svg247Moving from "@/components/247Moving";
-import SvgLocalMovesSVG from "@/components/LocalMovesSVG";
 import PromotionalSection from "@/components/PromotionalSection";
 import SvgLongDistanceSVG from "@/components/LongDistanceSVG";
 import SvgOfficeMoveSVG from "@/components/OfficeMoveSVG";
 import SvgSmallMoveSVG from "@/components/SmallMoveSVG";
 import SvgLastMinuteMove from "@/components/LastMinuteMove";
 import PeoplePackingSVG from "@/components/PeoplePacking";
+import TileInfoSVGComponent from "@/components/TileInfoSVGComponent";
 
 export default function HomePage() {
   const [movingFrom, setMovingFrom] = useState("");
@@ -119,143 +111,59 @@ export default function HomePage() {
 
           {/* Services Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                        {/* 24/7/365 Moving */}
-            <div className="text-left">
-              <div className="mb-4 flex justify-center sm:justify-start">
-                <Svg247Moving 
-                  width={150} 
-                  height={113} 
-                  className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                  style={{ maxWidth: '100%', height: 'auto' }}
-                />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                24/7/365 Moving
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                The only moving company in Northamptonshire that offers any day and time
-                moving services. No matter how big or small your move is we will
-                move it.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            {/* 24/7/365 Moving */}
+            <TileInfoSVGComponent
+              id="247-moving"
+              title="24/7/365 Moving"
+              description="The only moving company in Northamptonshire that offers any day and time moving services. No matter how big or small your move is we will move it."
+              svgComponent={Svg247Moving}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
 
             {/* Local Residential Moving */}
-            <div className="text-left">
-            <div className="mb-4 flex justify-center sm:justify-start">
-                  <PeoplePackingSVG 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-                </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Local Residential Moving Services
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We specialize in local residential Northamptonshire and UK moves.
-                We can move you across all of the London Area and
-                surrounding UK locations.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              id="local-residential-moving"
+              title="Local Residential Moving Services"
+              description="We specialize in local residential Northamptonshire and UK moves. We can move you across all of the London Area and surrounding UK locations."
+              svgComponent={PeoplePackingSVG}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
 
             {/* Long Distance Moving */}
-            <div className="text-left">
-              <div className="mb-4 flex justify-center sm:justify-start">
-                  <SvgLongDistanceSVG 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Long Distance Moving Services
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                From Northamptonshire to Edinburgh, Manchester and Cardiff we can move you to any
-                location in the UK. With on time long distance delivery dates and
-                safe packing we will get you settled into your new home quickly.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              id="long-distance-moving"
+              title="Long Distance Moving Services"
+              description="From Northamptonshire to Edinburgh, Manchester and Cardiff we can move you to any location in the UK. With on time long distance delivery dates and safe packing we will get you settled into your new home quickly."
+              svgComponent={SvgLongDistanceSVG}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
 
             {/* Office and Commercial Moves */}
-            <div className="text-left">
-              <div className="mb-4 flex justify-center sm:justify-start">
-                  <SvgOfficeMoveSVG 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Office and Commercial Moves
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                We can move your office overnight, on the weekend and during
-                holidays to minimize your downtime. With full office packing and
-                unpacking our staff will be up and running the next morning.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              id="office-commercial-moves"
+              title="Office and Commercial Moves"
+              description="We can move your office overnight, on the weekend and during holidays to minimize your downtime. With full office packing and unpacking our staff will be up and running the next morning."
+              svgComponent={SvgOfficeMoveSVG}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
 
             {/* Small Moves */}
-            <div className="text-left">
-              <div className="mb-4 flex justify-center sm:justify-start">
-                  <SvgSmallMoveSVG 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Small Moves
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                Need to move a few small items or moving out of a studio with
-                minimal furniture? Do not lift a finger with our small move
-                service.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              id="small-moves"
+              title="Small Moves"
+              description="Need to move a few small items or moving out of a studio with minimal furniture? Do not lift a finger with our small move service."
+              svgComponent={SvgSmallMoveSVG}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
 
             {/* Last Minute Moves */}
-            <div className="text-left">
-              <div className="mb-4 flex justify-center sm:justify-start">
-                  <SvgLastMinuteMove 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Last Minute Moves
-              </h3>
-              <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                Need to move urgently, our last minute moving service will help
-                you the day you get you into your new address asap! We also
-                offer emergency packing and storage services.
-              </p>
-              <button className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              id="last-minute-moves"
+              title="Last Minute Moves"
+              description="Need to move urgently, our last minute moving service will help you the day you get you into your new address asap! We also offer emergency packing and storage services."
+              svgComponent={SvgLastMinuteMove}
+              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+            />
           </div>
         </div>
       </section>

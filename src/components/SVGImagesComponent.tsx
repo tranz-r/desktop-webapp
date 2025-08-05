@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { ArrowRight } from "lucide-react";
 import SvgFullPackingMove from "@/components/FullPackingMove";
 import SvgBoxMaterialMove from "@/components/BoxMaterialMove";
 import ValuableItemMoveSVG from "@/components/ValuableItemMove";
 import PianoMoveSVG from "@/components/PianoMoveSVG";
 import SvgLocalMovesSVG from "@/components/LocalMovesSVG";
+import TileInfoSVGComponent from "@/components/TileInfoSVGComponent";
 
 interface ServiceItem {
   id: string;
@@ -82,34 +82,17 @@ const SVGImagesComponent = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
-            <div key={service.id} className="text-left">
-                            {/* SVG Component */}
-              <div className="mb-6">
-                <div className="mb-4 flex justify-center sm:justify-start">
-                  <service.svgComponent 
-                    width={150} 
-                    height={113} 
-                    className="text-accent-600 mb-4 w-36 h-28 sm:w-44 sm:h-33 md:w-56 md:h-42 lg:w-72 lg:h-54 xl:w-80 xl:h-60" 
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-                </div>
-              </div>
-
-              <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
-                {service.title}
-              </h3>
-
-              <p className="text-gray-600 mb-6 text-sm lg:text-base leading-relaxed">
-                {service.description}
-              </p>
-
-              <button
-                onClick={() => onLearnMore(service.id)}
-                className="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center transition-colors duration-200"
-              >
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+            <TileInfoSVGComponent
+              key={service.id}
+              id={service.id}
+              title={service.title}
+              description={service.description}
+              svgComponent={service.svgComponent}
+              onLearnMore={onLearnMore}
+              titleClassName="text-xl lg:text-2xl font-bold text-gray-900 mb-4"
+              descriptionClassName="text-gray-600 mb-6 text-sm lg:text-base leading-relaxed"
+              buttonClassName="text-primary-600 font-medium text-sm hover:text-primary-700 flex items-center transition-colors duration-200"
+            />
           ))}
         </div>
       </div>
