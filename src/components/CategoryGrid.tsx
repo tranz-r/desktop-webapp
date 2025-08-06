@@ -58,32 +58,27 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
       </div>
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
         {filteredCategories.map((category) => (
           <Card 
             key={category.id} 
-            className="hover:shadow-md transition-shadow cursor-pointer group"
+            className="hover:shadow-lg transition-all duration-200 cursor-pointer group border-0 shadow-sm"
             onClick={() => onCategorySelect?.(category.id, category.name)}
           >
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-6 text-center">
               {/* Icon Container */}
-              <div className="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
+              <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl group-hover:from-primary-100 group-hover:to-primary-200 transition-all duration-200 shadow-sm">
                 <CategoryIcon
                   categoryName={category.name}
                   iconUrl={category.icon}
-                  className="w-8 h-8 text-primary-600"
+                  className="w-20 h-20 text-primary-700"
                 />
               </div>
               
               {/* Category Name */}
-              <h3 className="text-sm font-medium text-gray-900 leading-tight">
+              <h3 className="text-sm font-semibold text-gray-900 leading-tight">
                 {category.name}
               </h3>
-              
-              {/* Category ID (for debugging) */}
-              <p className="text-xs text-gray-500 mt-1">
-                ID: {category.id}
-              </p>
             </CardContent>
           </Card>
         ))}
