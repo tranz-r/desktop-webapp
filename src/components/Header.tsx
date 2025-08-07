@@ -115,7 +115,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white text hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
+                  className="text-white text hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                 >
                   MOVING
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -138,7 +138,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                 >
                   SERVICES
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                 >
                   RESOURCES
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -190,7 +190,7 @@ export default function Header({ sticky = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto"
+                  className="text-white hover:text-primary-200 hover:bg-transparent font-extrabold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                 >
                   COMPANY
                   <ChevronDown className="ml-1 h-4 w-4" />
