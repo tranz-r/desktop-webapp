@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -137,25 +138,13 @@ export default function FAQPage() {
     <div className="min-h-screen bg-background">
       <Header sticky={true} />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[400px] flex items-center bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/images/tranzr-van-express.png)' }}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center text-white space-y-6">
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
-              Frequently Asked Questions
-            </Badge>
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight drop-shadow-2xl">
-              Find Answers to Common Questions
-            </h1>
-            <p className="text-xl opacity-95 drop-shadow-lg max-w-3xl mx-auto">
-              Everything you need to know about our moving and storage services. 
-              Can't find what you're looking for? Contact us directly.
-            </p>
-          </div>
-        </div>
-      </section>
+      <Hero
+        backgroundImage="/images/tranzr-van-express.png"
+        badge="Frequently Asked Questions"
+        title="Find Answers to Common Questions"
+        description="Everything you need to know about our moving and storage services. Can't find what you're looking for? Contact us directly."
+        minHeight="min-h-[400px]"
+      />
 
       {/* Search Section */}
       <section className="py-8 bg-white border-b">

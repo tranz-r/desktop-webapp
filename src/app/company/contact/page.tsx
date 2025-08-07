@@ -3,6 +3,7 @@
 import React from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,36 +16,20 @@ export default function ContactPage() {
     <div className="min-h-screen bg-background">
       <Header sticky={true} />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[500px] flex items-center bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/images/tranzr-van-express.png)' }}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 gap-8 items-center">
-            <div className="text-white space-y-6 text-center max-w-4xl mx-auto">
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
-                Contact Us
-              </Badge>
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight drop-shadow-2xl">
-                Get in Touch with Tranzr Moves
-              </h1>
-              <p className="text-xl opacity-95 drop-shadow-lg">
-                Ready to start your moving journey? Contact us today for a free quote 
-                or to discuss your moving needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-                  Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 backdrop-blur-sm">
-                  Call Us Now
-                </Button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      <Hero
+        backgroundImage="/images/tranzr-van-express.png"
+        badge="Contact Us"
+        title="Get in Touch with Tranzr Moves"
+        description="Ready to start your moving journey? Contact us today for a free quote or to discuss your moving needs."
+        primaryAction={{
+          text: "Get Free Quote",
+          onClick: () => console.log("Get quote clicked")
+        }}
+        secondaryAction={{
+          text: "Call Us Now",
+          onClick: () => console.log("Call us clicked")
+        }}
+      />
 
       {/* Contact Information */}
       <section className="py-16 bg-white">

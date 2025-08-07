@@ -3,6 +3,7 @@
 import React from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,36 +15,20 @@ export default function StoragePage() {
     <div className="min-h-screen bg-background">
       <Header sticky={true} />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[500px] flex items-center bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/images/tranzr-van-express.png)' }}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 gap-8 items-center">
-            <div className="text-white space-y-6 text-center max-w-4xl mx-auto">
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
-                Storage Solutions
-              </Badge>
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight drop-shadow-2xl">
-                Secure Storage Solutions in Northamptonshire
-              </h1>
-              <p className="text-xl opacity-95 drop-shadow-lg">
-                Flexible, secure, and affordable storage solutions for all your needs. 
-                From short-term to long-term storage, we've got you covered.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-                  Get Storage Quote <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 backdrop-blur-sm">
-                  View Storage Units
-                </Button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      <Hero
+        backgroundImage="/images/tranzr-van-express.png"
+        badge="Storage Solutions"
+        title="Secure Storage Solutions in Northamptonshire"
+        description="Flexible, secure, and affordable storage solutions for all your needs. From short-term to long-term storage, we've got you covered."
+        primaryAction={{
+          text: "Get Storage Quote",
+          onClick: () => console.log("Get storage quote clicked")
+        }}
+        secondaryAction={{
+          text: "View Storage Units",
+          onClick: () => console.log("View storage units clicked")
+        }}
+      />
 
       {/* Why Choose Us */}
       <section className="py-16 bg-white">
