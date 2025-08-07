@@ -92,7 +92,7 @@ export default function Hero({
                   </Button>
                 )}
                 
-                {secondaryAction && (
+                {/* {secondaryAction && (
                   <Button 
                     variant="outline" 
                     size="lg" 
@@ -108,7 +108,7 @@ export default function Hero({
                       secondaryAction.text
                     )}
                   </Button>
-                )}
+                )} */}
               </div>
             )}
           </div>

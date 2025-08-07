@@ -56,7 +56,6 @@ export default function Header({ sticky = true }: HeaderProps) {
   ];
 
   const serviceItems: ServiceItem[] = [
-    { name: "COI Services", href: "/services/coi" },
     { name: "Full Packing", href: "/services/full-packing" },
     { name: "White Glove Moving", href: "/services/white-glove" },
     { name: "Box and Material Delivery", href: "/services/box-delivery" },
