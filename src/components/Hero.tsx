@@ -55,11 +55,11 @@ export default function Hero({
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 gap-8 items-center">
           <div className="text-white space-y-6 text-center max-w-4xl mx-auto">
-            {badge && (
+            {/* {badge && (
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 {badge}
               </Badge>
-            )}
+            )} */}
             
             <h1 className="text-4xl lg:text-5xl font-bold leading-tight drop-shadow-2xl">
               {title}

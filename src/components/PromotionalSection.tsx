@@ -2,24 +2,24 @@ import React from "react";
 import Image from "next/image";
 
 interface PromotionalSectionProps {
-  title: string;
-  highlightedText: string;
-  description: string;
-  imageSrc: string;
-  imageAlt: string;
+  title?: string;
+  highlightedText?: string;
+  description?: string;
+  imageSrc?: string;
+  imageAlt?: string;
   className?: string;
 }
 
 export default function PromotionalSection({
-  title,
-  highlightedText,
-  description,
-  imageSrc,
-  imageAlt,
+  title = "Put your feet up with our complete packing experience",
+  highlightedText = "complete packing",
+  description = "We can pack your whole home, a few boxes or your most valuable items. Our packing methods and the high-quality packing materials we use are matched specifically to each of your items.",
+  imageSrc = "/images/feet-up.jpg",
+  imageAlt = "Professional movers packing furniture with care",
   className = "",
 }: PromotionalSectionProps) {
   // Split the title to highlight the specified text
-  const titleParts = title.split(highlightedText);
+  const titleParts = highlightedText ? title.split(highlightedText) : [title];
 
   return (
     <section className={`pt-16 pb-16 bg-white ${className}`}>
@@ -29,7 +29,7 @@ export default function PromotionalSection({
           <div className="space-y-6">
             <h2 className="text-4xl lg:text-5xl xl:text-4xl font-bold text-gray-900 leading-tight">
               {titleParts[0]}
-              <span className="text-primary-500">{highlightedText}</span>
+              {highlightedText && <span className="text-primary-500">{highlightedText}</span>}
               {titleParts[1]}
             </h2>
             <p className="text-lg lg:text-xl text-gray-700 leading-relaxed max-w-2xl">
