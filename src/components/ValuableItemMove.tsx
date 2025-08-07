@@ -5,7 +5,6 @@ const ValuableItemMoveSVG = (props: React.SVGProps<SVGSVGElement> ) => (
     xmlnsXlink="http://www.w3.org/1999/xlink"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 750 500",
     }}
     viewBox="0 0 750 500"
     {...props}

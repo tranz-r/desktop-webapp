@@ -53,7 +53,6 @@ const VanIcon = ({
       style={{
         fontSize: "77.4105px",
         textAlign: "start",
-        writingMode: "lr-tb",
         direction: "ltr",
         textAnchor: "start",
         fill: "#fff",
@@ -71,7 +70,6 @@ const VanIcon = ({
           fontStretch: "normal",
           fontSize: "77.4105px",
           fontFamily: "C059",
-          InkscapeFontSpecification: "&quot",
           fontVariantLigatures: "normal",
           fontVariantCaps: "normal",
           fontVariantNumeric: "normal",
@@ -90,7 +88,6 @@ const VanIcon = ({
       style={{
         fontSize: "38.4405px",
         textAlign: "start",
-        writingMode: "lr-tb",
         direction: "ltr",
         textAnchor: "start",
         fill: "#fff",
@@ -108,7 +105,6 @@ const VanIcon = ({
           fontStretch: "normal",
           fontSize: "38.4405px",
           fontFamily: "C059",
-          InkscapeFontSpecification: "&quot",
           fontVariantLigatures: "normal",
           fontVariantCaps: "normal",
           fontVariantNumeric: "normal",

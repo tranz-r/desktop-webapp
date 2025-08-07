@@ -4,7 +4,6 @@ const MoversIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 3691.067 1880",
     }}
     viewBox="0 0 3691.067 1880"
     {...props}

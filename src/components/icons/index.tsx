@@ -14,7 +14,6 @@ const VehiclePartsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 1024 1024",
     }}
     viewBox="0 0 1024 1024"
     {...props}
@@ -1968,7 +1967,6 @@ const BedroomFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      // enableBackground: "new 0 0 500 500",
     }}
     viewBox="0 0 500 500"
     {...props}
@@ -3745,7 +3743,6 @@ const LivingRoomFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 500 500",
     }}
     viewBox="0 0 500 500"
     {...props}
@@ -5981,7 +5978,6 @@ const StorageSolutionsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 289.989 328.552",
     }}
     viewBox="0 0 289.989 328.552"
     {...props}
@@ -7471,7 +7467,6 @@ const DiningFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlnsXlink="http://www.w3.org/1999/xlink"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 5200 3000",
     }}
     viewBox="0 0 5200 3000"
     {...props}
@@ -8470,7 +8465,6 @@ const DecorativeItemsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 4000 4000",
     }}
     viewBox="0 0 4000 4000"
     {...props}
@@ -9364,7 +9358,6 @@ const HomeAppliancesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 1920 1080",
     }}
     viewBox="0 0 1920 1080"
     {...props}
@@ -11941,7 +11934,6 @@ const BathroomItemsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 6000 4000",
     }}
     viewBox="0 0 6000 4000"
     {...props}
@@ -13418,7 +13410,6 @@ const OfficeFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 500 500",
     }}
     viewBox="0 0 500 500"
     {...props}
@@ -13825,7 +13816,6 @@ const SportingGoodsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 750 450",
     }}
     viewBox="0 0 750 450"
     {...props}
@@ -16427,7 +16417,6 @@ const OutdoorFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 6000 6000",
     }}
     viewBox="0 0 6000 6000"
     {...props}
@@ -20245,7 +20234,6 @@ const MusicalInstrumentsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 8530 4781",
     }}
     viewBox="0 0 8530 4781"
     {...props}
@@ -23829,7 +23817,6 @@ const KitchenFurnitureIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlnsXlink="http://www.w3.org/1999/xlink"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 425.2 425.2",
     }}
     viewBox="0 0 425.2 425.2"
     {...props}
@@ -25500,7 +25487,6 @@ const GardenToolsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 450 450",
     }}
     viewBox="0 0 450 450"
     {...props}
@@ -31384,7 +31370,6 @@ const CampingEquipmentIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlnsXlink="http://www.w3.org/1999/xlink"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 4500 3000",
     }}
     viewBox="0 0 4500 3000"
     {...props}
@@ -44455,7 +44440,6 @@ const PetSuppliesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 3710 3710",
     }}
     viewBox="0 0 3710 3710"
     {...props}
@@ -45440,7 +45424,6 @@ const BabyItemsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 8311.486 5918.842",
     }}
     viewBox="0 0 8311.486 5918.842"
     {...props}
@@ -46555,7 +46538,6 @@ const ElectronicsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 2000 2000",
     }}
     viewBox="0 0 2000 2000"
     {...props}
@@ -47859,7 +47841,6 @@ const CleaningEquipmentIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 400 341.435",
     }}
     viewBox="0 0 400 341.435"
     {...props}
@@ -48483,7 +48464,6 @@ const FitnessEquipmentIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
     style={{
-      enableBackground: "new 0 0 750 450",
     }}
     viewBox="0 0 750 450"
     {...props}

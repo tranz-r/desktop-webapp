@@ -118,7 +118,7 @@ export default function FAQPage() {
     }
   ];
 
-  const categories = [...new Set(faqData.map(item => item.category))];
+  const categories = Array.from(new Set(faqData.map(item => item.category)));
 
   const filteredFAQs = faqData.filter(item =>
     item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||

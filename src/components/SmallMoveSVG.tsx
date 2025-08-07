@@ -3,7 +3,6 @@ const SmallMoveSVG = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     xmlSpace="preserve"
-    style={{ enableBackground: "new 0 0 2800 2400" }}
     viewBox="0 0 2800 2400"
     {...props}
   >
