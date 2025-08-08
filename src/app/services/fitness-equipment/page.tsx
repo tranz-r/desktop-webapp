@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -25,7 +26,7 @@ export default function FitnessEquipmentPage() {
         description="Specialized moving services for all types of fitness equipment. From treadmills and weight machines to home gyms and commercial equipment, we handle it all with care."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "View Our Process",

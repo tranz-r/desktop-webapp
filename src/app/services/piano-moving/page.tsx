@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -25,7 +26,7 @@ export default function PianoMovingPage() {
         description="Specialized piano moving with expert care and precision. We handle all types of pianos - from uprights to grand pianos - with the utmost attention to detail and safety."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "View Our Process",

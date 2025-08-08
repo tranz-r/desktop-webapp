@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,9 +154,11 @@ export default function MovingComponent() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button className="flex-1" size="lg" variant="default">
-                  GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link href="/inventory" className="flex-1">
+                  <Button className="w-full" size="lg" variant="default">
+                    GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button
                   variant="secondary"
                   size="lg"

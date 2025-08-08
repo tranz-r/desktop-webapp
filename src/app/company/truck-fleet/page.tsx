@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -114,7 +115,7 @@ export default function TruckFleetPage() {
         }}
         secondaryAction={{
           text: "Get Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
       />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import TranzrTypeahead, { SearchResult } from '@/components/TranzrTypeahead';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Package } from 'lucide-react';
@@ -21,13 +22,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
     onSearchResult?.(result);
   };
 
-  const handleGetQuote = () => {
-    if (selectedItem) {
-      console.log('Getting quote for:', selectedItem);
-      // Here you would navigate to quote page or open quote modal
-      // navigate(`/quote?item=${selectedItem.id}&type=${selectedItem.type}`);
-    }
-  };
+
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -63,16 +58,17 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
       )}
 
       {/* Get Quote Button */}
-      <Button
-        size="lg"
-        variant="default"
-        className="w-full bg-secondary-400 hover:bg-secondary-500 text-white"
-        onClick={handleGetQuote}
-        disabled={!selectedItem}
-      >
-        {selectedItem ? 'GET QUOTE FOR THIS ITEM' : 'SELECT AN ITEM FIRST'}
-        <ArrowRight className="ml-2 h-5 w-5" />
-      </Button>
+      <Link href="/inventory">
+        <Button
+          size="lg"
+          variant="default"
+          className="w-full bg-secondary-400 hover:bg-secondary-500 text-white"
+          disabled={!selectedItem}
+        >
+          {selectedItem ? 'GET QUOTE FOR THIS ITEM' : 'SELECT AN ITEM FIRST'}
+          <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
+      </Link>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -25,7 +26,7 @@ export default function FlatFeeMovePage() {
         description="Discover the benefits of flat fee moving - transparent pricing, no hidden costs, and peace of mind knowing exactly what you'll pay before your move begins."
         primaryAction={{
           text: "Get Flat Fee Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "Learn More",

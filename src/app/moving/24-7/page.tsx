@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -28,7 +29,7 @@ export default function TwentyFourSevenMovingPage() {
         description="The only moving company in Northamptonshire that offers 24/7/365 moving services. No matter the time or day, we're here when you need us."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "Emergency Move",

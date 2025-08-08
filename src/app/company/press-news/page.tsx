@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -21,7 +22,7 @@ export default function PressNewsPage() {
         description="Stay updated with the latest news, press releases, and media coverage about Tranzr Moves and the moving industry."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "Latest News",
@@ -416,9 +417,11 @@ export default function PressNewsPage() {
             Follow us for the latest news, updates, and insights from the moving industry.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+            <Link href="/inventory">
+              <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
+            </Link>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
               Contact Media Team
             </Button>

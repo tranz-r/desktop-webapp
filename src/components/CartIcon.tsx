@@ -30,7 +30,7 @@ export function CartIcon({ onClick, className }: CartIconProps) {
       {totalItems > 0 && (
         <Badge 
           variant="destructive" 
-          className="absolute -top-1 -right-1 h-7 w-7 rounded-full p-0 flex items-center justify-center text-xs font-bold bg-red-500 shadow-lg border-2 border-white animate-pulse"
+          className="absolute -top-4 -right-4 h-7 w-7 rounded-full p-0 flex items-center justify-center text-xs font-bold bg-red-500 shadow-lg border-2 border-white animate-pulse sm:-top-2 sm:-right-2"
         >
           {totalItems > 99 ? '99+' : totalItems}
         </Badge>

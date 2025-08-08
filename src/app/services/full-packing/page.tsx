@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -25,7 +26,7 @@ export default function FullPackingPage() {
         description="Complete packing services from start to finish. Our expert packers handle everything with care, ensuring your belongings are safely packed and ready for transport."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "View Our Process",

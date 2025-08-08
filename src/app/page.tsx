@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/Footer";
@@ -63,13 +64,15 @@ export default function HomePage() {
                 className="bg-white text-gray-900 placeholder-gray-500 border-0 h-12 text-base"
               />
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  variant="default"
-                  className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1"
-                >
-                  GET QUOTE <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                <Link href="/inventory">
+                  <Button
+                    size="lg"
+                    variant="default"
+                    className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1"
+                  >
+                    GET QUOTE <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
                 <Button
                   variant="secondary"
                   size="lg"
