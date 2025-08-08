@@ -49,7 +49,7 @@ function InventoryPageContent() {
         <div className="md:hidden flex flex-col gap-6 h-[calc(100vh-14rem)]">
           {/* Categories - Horizontal on mobile */}
           <div className="flex-shrink-0">
-            <h2 className="text-xl text-primary-600 font-medium mb-4">Categories</h2>
+            {/* <h2 className="text-xl text-primary-600 font-medium mb-4">Categories</h2> */}
             <div className="bg-muted/50 rounded-lg p-4">
               <CategoryList
                 selectedCategory={selectedCategory}

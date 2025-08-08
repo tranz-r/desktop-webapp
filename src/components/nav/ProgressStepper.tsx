@@ -21,9 +21,9 @@ export default function ProgressStepper() {
 
   return (
     <div className="w-full bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm fixed top-16 lg:top-20 left-0 right-0 z-40">
-      <div className="container mx-auto px-4 py-3 lg:py-4">
+      <div className="container mx-auto px-2 sm:px-4 py-3 lg:py-4">
         {/* Progress Bar */}
-        <div className="relative mb-3 lg:mb-4">
+        {/* <div className="relative mb-3 lg:mb-4">
           <div className="h-1.5 lg:h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out"
@@ -42,10 +42,10 @@ export default function ProgressStepper() {
               />
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Steps */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-0.5 sm:gap-1 lg:gap-2">
           {STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isActive = idx === currentIndex;
@@ -53,10 +53,10 @@ export default function ProgressStepper() {
             const isUpcoming = idx > currentIndex;
 
             return (
-              <div key={step.path} className="flex flex-col items-center flex-1 relative">
+              <div key={step.path} className="flex flex-col items-center flex-1 relative min-w-0">
                 {/* Connector Line */}
                 {idx < STEPS.length - 1 && (
-                  <div className="absolute top-3 lg:top-4 left-1/2 w-full h-0.5 bg-gray-200 -z-10">
+                  <div className="absolute top-3 lg:top-4 left-1/2 w-full h-0.5 bg-gray-200 -z-10 hidden sm:block">
                     <div 
                       className={`h-full transition-all duration-500 ${
                         isCompleted ? 'bg-primary-500' : 'bg-gray-200'
@@ -69,12 +69,12 @@ export default function ProgressStepper() {
                 {/* Step Circle */}
                 <button
                   onClick={() => router.push(step.path)}
-                  className={`group relative flex flex-col items-center transition-all duration-300 hover:scale-105 ${
+                  className={`group relative flex flex-col items-center transition-all duration-300 hover:scale-105 w-full ${
                     isActive ? 'z-10' : ''
                   }`}
                 >
                   <div className={`
-                    w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-all duration-300
+                    w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 mx-auto
                     ${isCompleted 
                       ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40' 
                       : isActive 
@@ -91,7 +91,7 @@ export default function ProgressStepper() {
 
                   {/* Step Label */}
                   <span className={`
-                    mt-1 lg:mt-2 text-xs font-medium transition-all duration-300 text-center max-w-16 lg:max-w-20
+                    mt-1 lg:mt-2 text-[10px] lg:text-xs font-medium transition-all duration-300 text-center w-full truncate px-0.5 lg:px-1
                     ${isCompleted 
                       ? 'text-primary-600' 
                       : isActive 
