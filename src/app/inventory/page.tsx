@@ -6,9 +6,10 @@ import Footer from "@/components/Footer"
 import { CategoryList } from "@/components/inventory/CategoryList"
 import { SearchCommand } from "@/components/inventory/SearchCommand"
 import { ItemGrid } from "@/components/inventory/ItemGrid"
-import { CartProvider } from "@/contexts/CartContext"
+import { useCart } from "@/contexts/CartContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 // Popular items list for quick adding
 const popularItems = [
@@ -30,10 +31,13 @@ const popularItems = [
 
 function InventoryPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+  const { getTotalItems } = useCart()
+  const router = useRouter()
   
   const handleAddItem = (item: any) => {
-    console.log('Add item:', item)
-    // TODO: Add to cart functionality
+    // The actual cart functionality is handled in SearchCommand and ItemGrid components
+    // This is just a callback for any additional logic if needed
+    console.log('Item added to cart:', item)
   }
   
   return (
@@ -78,7 +82,8 @@ function InventoryPageContent() {
             <Button 
               size="lg"
               className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
-              onClick={() => console.log('Continue to van selection')}
+              onClick={() => router.push('/van-selection')}
+              disabled={getTotalItems() === 0}
             >
               Continue to Van Selection
             </Button>
@@ -119,13 +124,14 @@ function InventoryPageContent() {
 
             {/* Continue button - always visible */}
             <div className="flex justify-end pt-4 border-t border-gray-200">
-              <Button 
-                size="lg"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
-                onClick={() => console.log('Continue to van selection')}
-              >
-                Continue to Van Selection
-              </Button>
+                          <Button 
+              size="lg"
+              className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
+              onClick={() => router.push('/van-selection')}
+              disabled={getTotalItems() === 0}
+            >
+              Continue to Van Selection
+            </Button>
             </div>
           </div>
         </div>
@@ -137,9 +143,5 @@ function InventoryPageContent() {
 }
 
 export default function InventoryPage() {
-  return (
-    <CartProvider>
-      <InventoryPageContent />
-    </CartProvider>
-  )
+  return <InventoryPageContent />
 }

@@ -22,7 +22,7 @@ export default function AboutPage() {
         description="With over 15 years of experience, we've been helping families and businesses move with confidence, care, and professionalism across the UK."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "Our Story",

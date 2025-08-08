@@ -22,7 +22,7 @@ export default function StoragePage() {
         description="Flexible, secure, and affordable storage solutions for all your needs. From short-term to long-term storage, we've got you covered."
         primaryAction={{
           text: "Get Storage Quote",
-          onClick: () => console.log("Get storage quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "View Storage Units",

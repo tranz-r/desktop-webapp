@@ -29,7 +29,7 @@ export default function HouseMovingPage() {
         description="Complete house moving services from small family homes to large estates. We handle every aspect of your house move with care and professionalism."
         primaryAction={{
           text: "Get Free Quote",
-          onClick: () => console.log("Get quote clicked")
+          href: "/inventory"
         }}
         secondaryAction={{
           text: "View Our Process",

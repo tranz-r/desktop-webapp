@@ -12,8 +12,8 @@ interface StreamlinedHeaderProps {
 export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-500 to-primary-600 text-white z-50 border-b border-primary-600 shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16 lg:h-20 w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="hover:opacity-80 transition-opacity">
@@ -26,7 +26,7 @@ export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
           </div>
 
           {/* Phone Number and Cart */}
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-4 md:space-x-8">
             {/* Phone Number */}
             <div className="hidden md:flex items-center space-x-3">
               <div className="bg-accent-400 p-2 rounded-full shadow-md">
@@ -38,10 +38,10 @@ export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
               </div>
             </div>
             
-            {/* Cart Icon - More prominent */}
-                                <div className="flex items-center">
-                      <CartModal />
-                    </div>
+            {/* Cart Icon - More prominent with proper mobile spacing */}
+            <div className="flex items-center pr-3 sm:pr-2 md:pr-0">
+              <CartModal />
+            </div>
           </div>
         </div>
       </div>

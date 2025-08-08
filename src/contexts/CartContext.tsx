@@ -27,23 +27,42 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount (client-side only)
   useEffect(() => {
-    const savedCart = localStorage.getItem('tranzr-cart')
-    if (savedCart) {
+    if (typeof window !== 'undefined') {
       try {
-        setItems(JSON.parse(savedCart))
+        const savedCart = localStorage.getItem('tranzr-cart')
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart)
+          if (Array.isArray(parsedCart)) {
+            setItems(parsedCart)
+          } else {
+            console.error('Invalid cart data format, clearing...')
+            localStorage.removeItem('tranzr-cart')
+          }
+        }
       } catch (error) {
         console.error('Error loading cart from localStorage:', error)
+        // Clear corrupted data
+        localStorage.removeItem('tranzr-cart')
+      } finally {
+        setIsInitialized(true)
       }
     }
   }, [])
 
-  // Save cart to localStorage whenever items change
+  // Save cart to localStorage whenever items change (only after initialization)
   useEffect(() => {
-    localStorage.setItem('tranzr-cart', JSON.stringify(items))
-  }, [items])
+    if (isInitialized && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('tranzr-cart', JSON.stringify(items))
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error)
+      }
+    }
+  }, [items, isInitialized])
 
   const addItem = (item: Omit<CartItem, "quantity">, quantity: number = 1) => {
     setItems(prevItems => {

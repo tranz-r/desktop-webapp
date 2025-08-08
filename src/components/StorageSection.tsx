@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -12,6 +13,7 @@ interface StorageSectionProps {
   imageAlt: string;
   className?: string;
   onButtonClick?: () => void;
+  href?: string;
 }
 
 export default function StorageSection({
@@ -23,6 +25,7 @@ export default function StorageSection({
   imageAlt = "Storage service",
   className = "",
   onButtonClick,
+  href,
 }: StorageSectionProps) {
   // Split the title to highlight the specified text
   const titleParts = title.split(highlightedText);
@@ -66,14 +69,26 @@ export default function StorageSection({
               {description}
             </p>
             <div className="pt-4">
-              <Button
-                size="lg"
-                className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 text-base font-semibold"
-                onClick={onButtonClick}
-              >
-                {buttonText}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              {href ? (
+                <Link href={href}>
+                  <Button
+                    size="lg"
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 text-base font-semibold"
+                  >
+                    {buttonText}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 text-base font-semibold"
+                  onClick={onButtonClick}
+                >
+                  {buttonText}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

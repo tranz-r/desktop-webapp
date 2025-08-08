@@ -5,20 +5,24 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Hero from '@/components/Hero';
 import { loadLastBooking, clearLastBooking } from '@/lib/booking-persist';
+import { useCart } from '@/contexts/CartContext';
 
 export default function ConfirmationPage() {
   const [ref, setRef] = React.useState<string | null>(null);
   const [summary, setSummary] = React.useState<{ amount: string; drivers: number | null; tier: string | null } | null>(null);
+  const { clearCart } = useCart();
 
   React.useEffect(() => {
     const data = loadLastBooking();
     if (data) {
       setRef(data.reference);
       setSummary({ amount: `£${(data.amountPence / 100).toFixed(2)}`, drivers: data.booking.driverCount, tier: data.booking.pricingTier || null });
+      // Clear the cart after successful payment
+      clearCart();
       // Optionally clear after reading to avoid stale data
       // clearLastBooking();
     }
-  }, []);
+  }, [clearCart]);
 
   return (
     <div className="min-h-screen bg-background">

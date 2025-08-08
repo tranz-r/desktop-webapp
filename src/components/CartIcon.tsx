@@ -19,8 +19,8 @@ export function CartIcon({ onClick, className }: CartIconProps) {
       onClick={onClick}
     >
       {/* Cart Icon with modern styling */}
-      <div className="relative p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-200">
-        <ShoppingCart className="h-8 w-8 text-white" />
+      <div className="relative p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-200">
+        <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
         
         {/* Subtle glow effect on hover */}
         <div className="absolute inset-0 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -30,7 +30,7 @@ export function CartIcon({ onClick, className }: CartIconProps) {
       {totalItems > 0 && (
         <Badge 
           variant="destructive" 
-          className="absolute -top-4 -right-4 h-7 w-7 rounded-full p-0 flex items-center justify-center text-xs font-bold bg-red-500 shadow-lg border-2 border-white animate-pulse sm:-top-2 sm:-right-2"
+          className="absolute -top-2 -right-2 h-6 w-6 sm:h-7 sm:w-7 rounded-full p-0 flex items-center justify-center text-xs font-bold bg-red-500 shadow-lg border-2 border-white animate-pulse sm:-top-2 sm:-right-2"
         >
           {totalItems > 99 ? '99+' : totalItems}
         </Badge>

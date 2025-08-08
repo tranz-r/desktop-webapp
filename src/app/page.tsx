@@ -195,7 +195,7 @@ export default function HomePage() {
         buttonText="GET A STORAGE QUOTE"
         imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
         imageAlt="Professional storage service with moving boxes"
-        onButtonClick={() => console.log("Storage quote requested")}
+        href="/inventory"
       />
 
       {/* Footer */}
