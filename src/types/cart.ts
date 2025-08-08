@@ -1,5 +1,5 @@
 export interface CartItem {
-  id: string;
+  id: number;
   name: string;
   height: number; // meters
   width: number;  // meters

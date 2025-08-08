@@ -64,8 +64,8 @@ export function CartModal() {
           <CartIcon />
         </div>
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
+      <SheetContent className="w-[400px] sm:w-[540px] p-0 flex flex-col h-full max-h-screen overflow-hidden gap-0">
+        <SheetHeader className="flex-shrink-0 p-4 border-b bg-background">
           <SheetTitle className="flex items-center gap-2">
             <span>Shopping Cart</span>
             {getTotalItems() > 0 && (
@@ -76,7 +76,7 @@ export function CartModal() {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
           {items.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>Your cart is empty</p>
@@ -85,10 +85,10 @@ export function CartModal() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4">
+                <div key={item.id} className="border rounded-lg p-4 bg-background">
                   <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{item.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {item.length} × {item.width} × {item.height} cm
                       </p>
@@ -100,7 +100,7 @@ export function CartModal() {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeItem(item.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 flex-shrink-0 ml-2"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -208,7 +208,7 @@ export function CartModal() {
         </div>
 
         {items.length > 0 && (
-          <div className="border-t pt-4 space-y-4">
+          <div className="border-t p-4 space-y-4 flex-shrink-0 bg-background">
             <div className="flex justify-between items-center">
               <span className="font-medium">Total Items:</span>
               <span>{getTotalItems()}</span>

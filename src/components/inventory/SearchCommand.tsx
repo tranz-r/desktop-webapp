@@ -136,7 +136,7 @@ export function SearchCommand({ onAddItem }: SearchCommandProps) {
     <div className="relative" ref={dropdownRef}>
       <Command className="rounded-lg border shadow-md">
         <CommandInput
-          placeholder="Search to add new items..."
+          placeholder="Search and add items from our catalog"
           onValueChange={handleSearch}
           className="h-12 text-base"
           value={searchTerm}

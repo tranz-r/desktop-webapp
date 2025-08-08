@@ -2,11 +2,11 @@ import { CartItem } from '@/types/cart';
 import { computeItemVolume } from '@/lib/volume';
 
 export interface GoodsItem {
-  id: string;
+  id: number;
   name: string;
-  height_cm: number;
-  width_cm: number;
-  depth_cm: number;
+  height: number;
+  width: number;
+  length: number;
 }
 
 export async function loadGoodsDataset(): Promise<GoodsItem[]> {
@@ -16,9 +16,9 @@ export async function loadGoodsDataset(): Promise<GoodsItem[]> {
 }
 
 export function toCartItemBase(goods: GoodsItem): Omit<CartItem, 'quantity'> {
-  const height = (goods.height_cm || 0) / 100;
-  const width = (goods.width_cm || 0) / 100;
-  const length = (goods.depth_cm || 0) / 100;
+  const height = (goods.height || 0) / 100;
+  const width = (goods.width || 0) / 100;
+  const length = (goods.length || 0) / 100;
   const volume = computeItemVolume(height, width, length);
   return {
     id: goods.id,
