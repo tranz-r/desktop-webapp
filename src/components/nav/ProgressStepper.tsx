@@ -20,7 +20,7 @@ export default function ProgressStepper() {
   const percent = ((currentIndex + 1) / STEPS.length) * 100;
 
   return (
-    <div className="w-full py-2 bg-white border-b">
+    <div className="w-full py-2 bg-white border-b fixed top-16 lg:top-20 left-0 right-0 z-40">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between text-xs">
           {STEPS.map((s, idx) => (
