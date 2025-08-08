@@ -24,12 +24,16 @@
 ## 🎯 **DETAILED IMPLEMENTATION GUIDANCE**
 
 ### **📱 Quotation Page Implementation**
-- **Hero Section**: Tranzr logo, value propositions, "Get Started" CTA
+- **Header Section**: Streamed down version of the Header component having the logo and phone number and persistent inventory cart
 - **Service Highlights**: Key benefits and features
 - **Navigation**: Direct to `/inventory` without authentication
 - **Components**: Use shadcn Hero and Card components
 
 ### **📦 Inventory Building Implementation**
+- **Category Section**:
+  - On large screen scrollable (Up and Down), and clickable items class/category using the icons in the src/components/icons/index.tsx should be on the left
+  - When each class is selected items that belong to that class should be displayed ready to be added to the inventory cart
+  - On mobile screen, scrollable clickable items class/category should be at top scrollable from left to right.
 - **Search Interface**: 
   - Autocomplete search with item database using the /public/data/Tranzr_goods_enriched_dimensions-Depth.json file
   - Real-time filtering and suggestions
@@ -126,6 +130,7 @@
   ```
 
 ### **🔄 Navigation Flow**
+- All the GET QUOTE or GET FREE QUOTE BUTTON should navigate to the /inventory page to begin the quote.
 - `/` → Landing page
 - `/inventory` → Inventory building
 - `/van-selection` → Van selection

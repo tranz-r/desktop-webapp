@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
@@ -24,8 +25,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" />
       <body className={`${quicksand.variable} font-quicksand`}>
-        {children}
-        <TempoInit />
+        <Providers>
+          {children}
+          <TempoInit />
+        </Providers>
       </body>
     </html>
   );
