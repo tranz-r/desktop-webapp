@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
-import Header from '@/components/Header';
+import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
-import Hero from '@/components/Hero';
 import AddressForm from '@/components/address/AddressForm';
 import { useBooking } from '@/contexts/BookingContext';
 import { Button } from '@/components/ui/button';
@@ -38,16 +37,9 @@ export default function OriginDestinationPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header sticky={true} />
+      <StreamlinedHeader />
 
-      <Hero
-        backgroundImage="/images/tranzr-van-express.png"
-        badge="Addresses"
-        title="Enter your origin and destination details"
-        description="Floors and elevator availability help us estimate the effort and cost."
-      />
-
-      <section className="py-10 bg-white">
+      <section className="pt-32 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-8">
           <AddressForm label="Origin" value={origin} onChange={setOrigin} />
           <AddressForm label="Destination" value={destination} onChange={setDestination} />

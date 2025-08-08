@@ -113,11 +113,11 @@ export default function ProgressStepper() {
         </div>
 
         {/* Progress Text */}
-        <div className="text-center mt-2 lg:mt-3">
+        {/* <div className="text-center mt-2 lg:mt-3">
           <span className="text-xs text-gray-500">
             Step {currentIndex + 1} of {STEPS.length} • {Math.round(percent)}% Complete
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ function InventoryPageContent() {
     <div className="min-h-screen flex flex-col">
       <StreamlinedHeader />
       
-      <main className="flex-1 container mx-auto px-4 pt-36 lg:pt-40 pb-6">
+      <main className="flex-1 container mx-auto px-4 pt-32 lg:pt-44 pb-6">
         {/* Mobile Layout */}
         <div className="md:hidden flex flex-col gap-6 h-[calc(100vh-14rem)]">
           {/* Categories - Horizontal on mobile */}
@@ -61,7 +61,7 @@ function InventoryPageContent() {
 
           {/* Search Input */}
           <div className="flex-shrink-0">
-            <h1 className="text-2xl text-primary-600 font-medium mb-6">Build inventory of the items you need to deliver</h1>
+            {/* <h1 className="text-2xl text-primary-600 font-medium mb-6">Build inventory of the items you need to deliver</h1> */}
             <SearchCommand 
               onAddItem={handleAddItem}
             />
@@ -94,7 +94,7 @@ function InventoryPageContent() {
         <div className="hidden md:flex flex-row gap-8 h-[calc(100vh-14rem)]">
           {/* Left sidebar with categories */}
           <div className="w-[400px] flex-shrink-0">
-            <h2 className="text-xl text-primary-600 font-medium mb-4">Categories</h2>
+            {/* <h2 className="text-xl text-primary-600 font-medium mb-4">Categories</h2> */}
             <div className="bg-muted/50 rounded-lg h-[calc(100vh-22rem)]">
               <CategoryList
                 selectedCategory={selectedCategory}
@@ -107,7 +107,7 @@ function InventoryPageContent() {
           {/* Main content area */}
           <div className="flex-1 flex flex-col h-[calc(100vh-14rem)]">
             <div className="mb-6">
-              <h1 className="text-2xl text-primary-600 font-medium mb-6">Build inventory of the items you need to deliver</h1>
+              {/* <h1 className="text-2xl text-primary-600 font-medium mb-6">Build inventory of the items you need to deliver</h1> */}
               <SearchCommand
                 onAddItem={handleAddItem}
               />

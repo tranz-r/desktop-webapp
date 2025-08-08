@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
-import Header from '@/components/Header';
+import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
-import Hero from '@/components/Hero';
 import PricingTable from '@/components/pricing/PricingTable';
 import DatePickers from '@/components/pricing/DatePickers';
 import { useBooking } from '@/contexts/BookingContext';
@@ -38,14 +37,9 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header sticky={true} />
-      <Hero
-        backgroundImage="/images/tranzr-van-express.png"
-        badge="Pricing & Services"
-        title="Choose your service tier and dates"
-      />
-
-      <section className="py-10 bg-white">
+      <StreamlinedHeader />
+      
+      <section className="pt-32 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-8">
           <PricingTable value={pricingTier} onChange={setPricingTier} />
 

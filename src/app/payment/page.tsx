@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
-import Header from '@/components/Header';
+import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
-import Hero from '@/components/Hero';
 import OrderSummary from '@/components/payment/OrderSummary';
 import PaymentForm from '@/components/payment/PaymentForm';
 import { useBooking } from '@/contexts/BookingContext';
@@ -39,10 +38,9 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header sticky={true} />
-      <Hero backgroundImage="/images/tranzr-van-express.png" badge="Payment" title="Complete your booking" />
-
-      <section className="py-10 bg-white">
+      <StreamlinedHeader />
+      
+      <section className="pt-32 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <div className="text-sm font-semibold mb-3">Order Summary</div>

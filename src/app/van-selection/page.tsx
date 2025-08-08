@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
-import Header from '@/components/Header';
+import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
-import Hero from '@/components/Hero';
 import VanCard from '@/components/van/VanCard';
 import DriverSelector from '@/components/van/DriverSelector';
 import RecommendationBanner from '@/components/van/RecommendationBanner';
@@ -32,15 +31,9 @@ export default function VanSelectionPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header sticky={true} />
-      <Hero
-        backgroundImage="/images/tranzr-van-express.png"
-        badge="Select Your Van"
-        title="Choose the van size that fits your move"
-        description={`Estimated total volume: ${totalVolume.toFixed(3)} m³`}
-      />
-
-      <section className="py-10 bg-white">
+      <StreamlinedHeader />
+      
+      <section className="pt-32 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
           <RecommendationBanner text={`Based on ${totalVolume.toFixed(3)} m³, we recommend the ${VAN_TABLE[recommended].name}.`} />
 
