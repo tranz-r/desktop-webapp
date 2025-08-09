@@ -66,7 +66,12 @@ function floorValueToNumber(val: string): number {
 
 export default function OriginDestinationPage() {
   const router = useRouter();
-  const { isHydrated, selectedVan, setOrigin, setDestination, setDistanceKm } = useBooking();
+  const booking = useBooking();
+  const { isHydrated, vehicle, originDestination, updateOriginDestination } = booking;
+  const selectedVan = vehicle.selectedVan;
+  const setOrigin = (addr: Address) => updateOriginDestination({ origin: addr });
+  const setDestination = (addr: Address) => updateOriginDestination({ destination: addr });
+  const setDistanceKm = (km: number) => updateOriginDestination({ distanceKm: Math.max(0, Number(km) || 0) });
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -78,11 +83,11 @@ export default function OriginDestinationPage() {
       destinationPostcode: "",
       destinationFloor: "ground",
       destinationElevator: true,
-  fullName: "",
-  email: "",
-  phone: "",
-  billingLine1: "",
-  billingPostcode: "",
+  fullName: originDestination?.fullName || "",
+  email: originDestination?.email || "",
+  phone: originDestination?.phone || "",
+  billingLine1: originDestination?.billingAddress?.line1 || "",
+  billingPostcode: originDestination?.billingAddress?.postcode || "",
     },
     mode: "onChange",
   });
@@ -116,24 +121,15 @@ export default function OriginDestinationPage() {
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
     };
-    setOrigin(origin);
-    setDestination(destination);
-    setDistanceKm(0); // Will be calculated later
-
-    // Capture customer details for downstream steps (persist minimally)
-    try {
-      const customerDetails = {
-        fullName: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        billingAddress: {
-          line1: values.billingLine1,
-          postcode: values.billingPostcode,
-        },
-      };
-      // Persist temporarily to avoid losing progress; can be replaced by context if available
-      localStorage.setItem("customerDetails", JSON.stringify(customerDetails));
-    } catch {}
+    updateOriginDestination({
+      origin,
+      destination,
+      distanceKm: 0, // Will be calculated later
+      fullName: values.fullName,
+      email: values.email,
+      phone: values.phone,
+      billingAddress: { line1: values.billingLine1, postcode: values.billingPostcode },
+    });
 
     // Ensure flow: must have selected a van before pricing per rules
     if (!selectedVan) {

@@ -9,7 +9,7 @@ const STEPS = [
   { path: '/van-selection', label: 'Van & Date', icon: Truck },
   { path: '/origin-destination', label: 'Customer', icon: MapPin },
   { path: '/pricing', label: 'Price Tier', icon: CreditCard },
-  { path: '/payment', label: 'Payment', icon: CreditCard },
+  { path: '/summary', label: 'Checkout', icon: CreditCard },
   { path: '/confirmation', label: 'Confirm', icon: FileCheck },
 ];
 

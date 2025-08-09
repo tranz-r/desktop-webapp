@@ -21,17 +21,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import type { VanType } from '@/types/booking';
 
 export default function VanSelectionPage() {
   const router = useRouter();
   const { getTotalVolume, items } = useCart();
-  const { selectedVan, driverCount, setVan, setDriverCount, setCollectionDate } = useBooking();
+  const booking = useBooking();
+  const { vehicle, schedule, updateVehicle, updateSchedule } = booking;
+  const selectedVan = vehicle.selectedVan;
+  const driverCount = vehicle.driverCount;
+  const hours = schedule.hours;
+  const flexibleTime = schedule.flexibleTime || false;
+  const timeSlot = schedule.timeSlot;
+  const setVan = (van: VanType) => updateVehicle({ selectedVan: van });
+  const setDriverCount = (count: number) => updateVehicle({ driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
+  const setHours = (h: number) => updateSchedule({ hours: Math.max(3, Math.floor(h)) });
+  const setFlexibleTime = (flex: boolean) => updateSchedule({ flexibleTime: !!flex });
+  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => updateSchedule({ timeSlot: slot });
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
-  const [hours, setHours] = React.useState<string>('3');
-  const [flexibleTime, setFlexibleTime] = React.useState<boolean>(false);
-  const [timeSlot, setTimeSlot] = React.useState<string>('morning');
  
 
   React.useEffect(() => {
@@ -51,10 +60,10 @@ export default function VanSelectionPage() {
     setMounted(true);
   }, []);
 
-  // Persist minimal schedule data and update booking collection date
+  // Persist minimal schedule data (local for date only) and update booking collection date
   React.useEffect(() => {
     try {
-      const schedule = { movingDate, hours: Number(hours), flexibleTime, timeSlot };
+      const schedule = { movingDate, hours, flexibleTime, timeSlot };
       localStorage.setItem('schedule', JSON.stringify(schedule));
     } catch {}
   }, [movingDate, hours, flexibleTime, timeSlot]);
@@ -62,9 +71,9 @@ export default function VanSelectionPage() {
   React.useEffect(() => {
     if (movingDate) {
       // Save ISO date only
-      setCollectionDate(new Date(movingDate).toISOString());
+      updateSchedule({ dateISO: new Date(movingDate).toISOString() });
     }
-  }, [movingDate, setCollectionDate]);
+  }, [movingDate, updateSchedule]);
 
   if (!mounted) return null;
 
@@ -123,13 +132,13 @@ export default function VanSelectionPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Duration (Minimum 3 hours)</Label>
-                  <Select value={hours} onValueChange={setHours}>
+                  <Select value={String(hours ?? 3)} onValueChange={(v) => setHours(Number(v))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select hours" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => 3 + i).map(h => (
-                        <SelectItem key={h} value={String(h)}>{h} hour{h > 1 ? 's' : ''}</SelectItem>
+                      {Array.from({ length: 10 }, (_, i) => 3 + i).map(hh => (
+                        <SelectItem key={hh} value={String(hh)}>{hh} hour{hh > 1 ? 's' : ''}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -144,10 +153,10 @@ export default function VanSelectionPage() {
                 <Switch checked={flexibleTime} onCheckedChange={setFlexibleTime} />
               </div>
 
-              {!flexibleTime && (
+        {!flexibleTime && (
                 <div className="space-y-2">
                   <Label>Preferred Time Slot</Label>
-                  <RadioGroup value={timeSlot} onValueChange={setTimeSlot} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <RadioGroup value={timeSlot || 'morning'} onValueChange={(v) => setTimeSlot(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="flex items-center gap-2 rounded-md border p-3">
                       <RadioGroupItem value="morning" id="slot-morning" />
                       <Label htmlFor="slot-morning" className="cursor-pointer">Morning (8:00 - 12:00)</Label>

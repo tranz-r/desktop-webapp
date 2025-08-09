@@ -9,13 +9,15 @@ export function canSelectVan(itemsCount: number): boolean {
 }
 
 export function canEnterAddresses(state: BookingState): boolean {
-  return !!state.selectedVan;
+  return !!state.vehicle.selectedVan;
 }
 
 export function canEnterPricing(state: BookingState): boolean {
-  return !!state.selectedVan && !!state.origin && !!state.destination;
+  const origin = (state as any).customer?.origin;
+  const destination = (state as any).customer?.destination;
+  return !!state.vehicle.selectedVan && !!origin && !!destination;
 }
 
 export function canEnterPayment(state: BookingState): boolean {
-  return canEnterPricing(state) && !!state.pricingTier;
+  return canEnterPricing(state) && !!state.pricing.pricingTier;
 }

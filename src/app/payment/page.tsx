@@ -12,13 +12,21 @@ import { canEnterPayment } from '@/lib/guards';
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedVan, driverCount, origin, destination, pricingTier, distanceKm } = useBooking();
+  const booking = useBooking();
+  const { vehicle, addresses, pricing, isHydrated } = booking;
+  const selectedVan = vehicle.selectedVan;
+  const driverCount = vehicle.driverCount;
+  const origin = addresses.origin;
+  const destination = addresses.destination;
+  const distanceKm = addresses.distanceKm;
+  const pricingTier = pricing.pricingTier;
 
   React.useEffect(() => {
-    if (!canEnterPayment({ selectedVan, driverCount, origin, destination, pricingTier, collectionDate: undefined, deliveryDate: undefined, totalCost: 0 })) {
+    if (!isHydrated) return;
+    if (!canEnterPayment(booking)) {
       router.replace('/pricing');
     }
-  }, [router, selectedVan, driverCount, origin, destination, pricingTier]);
+  }, [router, booking, isHydrated]);
 
   const cost = React.useMemo(() => {
     if (!selectedVan) return null;

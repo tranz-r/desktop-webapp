@@ -16,15 +16,27 @@ import type { PricingTierId } from '@/types/booking';
 
 export default function PricingPage() {
   const router = useRouter();
-  const { isHydrated, selectedVan, driverCount, origin, destination, pricingTier, setPricingTier, collectionDate, deliveryDate, setCollectionDate, setDeliveryDate, distanceKm } = useBooking();
+  const booking = useBooking();
+  const { isHydrated, vehicle, addresses, pricing, schedule, updatePricing, updateSchedule } = booking;
+  const selectedVan = vehicle.selectedVan;
+  const driverCount = vehicle.driverCount;
+  const origin = addresses.origin;
+  const destination = addresses.destination;
+  const distanceKm = addresses.distanceKm;
+  const pricingTier = pricing.pricingTier;
+  const collectionDate = schedule.dateISO;
+  const deliveryDate = schedule.deliveryDateISO;
+  const setPricingTier = (tier: PricingTierId) => updatePricing({ pricingTier: tier });
+  const setCollectionDate = (iso: string) => updateSchedule({ dateISO: iso });
+  const setDeliveryDate = (iso: string) => updateSchedule({ deliveryDateISO: iso });
   const [expandedTier, setExpandedTier] = React.useState<PricingTierId | null>(null);
 
   React.useEffect(() => {
     if (!isHydrated) return;
-    if (!canEnterPricing({ selectedVan, driverCount, origin, destination, pricingTier, collectionDate, deliveryDate, totalCost: 0 })) {
+    if (!canEnterPricing(booking)) {
       router.replace('/origin-destination');
     }
-  }, [router, isHydrated, selectedVan, driverCount, origin, destination, pricingTier, collectionDate, deliveryDate]);
+  }, [router, isHydrated, booking]);
 
   const cost = React.useMemo(() => {
     if (!selectedVan) return null;

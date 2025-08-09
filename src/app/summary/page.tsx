@@ -8,10 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useBooking } from '@/contexts/BookingContext';
 import { computeCost } from '@/lib/cost';
+import { email } from 'zod';
 
 export default function SummaryPage() {
   const router = useRouter();
-  const { selectedVan, driverCount, origin, destination, pricingTier, collectionDate, deliveryDate, distanceKm } = useBooking();
+  const booking = useBooking();
+  const { vehicle, addresses, pricing, schedule, customer, setTotalCost } = booking;
+  const selectedVan = vehicle.selectedVan;
+  const driverCount = vehicle.driverCount;
+  const origin = addresses.origin;
+  const destination = addresses.destination;
+  const distanceKm = addresses.distanceKm;
+  const pricingTier = pricing.pricingTier;
+  const collectionDate = schedule.dateISO;
+  const deliveryDate = schedule.deliveryDateISO;
   const [loading, setLoading] = React.useState(false);
 
   const cost = React.useMemo(() => {
@@ -28,6 +38,13 @@ export default function SummaryPage() {
     });
   }, [selectedVan, driverCount, origin, destination, pricingTier, distanceKm]);
 
+  // Persist the computed total into BookingContext (and localStorage via context)
+  React.useEffect(() => {
+    if (cost?.total != null && !Number.isNaN(cost.total)) {
+      setTotalCost(cost.total);
+    }
+  }, [cost, setTotalCost]);
+
   const formatDateShort = (iso?: string) => {
     if (!iso) return '—';
     const d = new Date(iso);
@@ -37,12 +54,12 @@ export default function SummaryPage() {
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      const backendUrl = process.env.NEXT_PUBLIC_PAYMENT_INIT_URL;
-      const targetUrl = backendUrl && backendUrl.length > 0 ? backendUrl : '/api/checkout';
-      const res = await fetch(targetUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Branch A only: Payment Element via PaymentIntent clientSecret from backend (.NET)
+      const targetUrl = process.env.NEXT_PUBLIC_PAYMENT_INIT_URL;
+      console.log('Initializing payment with URL:', targetUrl);
+      if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_PAYMENT_INIT_URL for payment initialization');
+
+      let payload = {
           van: selectedVan,
           driverCount,
           distanceKm: distanceKm || 0,
@@ -51,22 +68,34 @@ export default function SummaryPage() {
           pricingTier,
           collectionDate,
           deliveryDate,
-        }),
+          customer: {
+            fullName: customer?.fullName,
+            email: customer?.email,
+            phone: customer?.phone,
+            billingAddress: customer?.billingAddress,
+          },
+          email: "mcvavy@gmail.com",
+          name: customer?.fullName,
+          amount: cost?.total || 0
+        };
+
+        console.log('Payload for payment init:', payload);
+        
+      const res = await fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+
       if (!res.ok) throw new Error('Failed to create checkout session');
       const data = await res.json();
-      // Prefer checkout URL if backend returns one
-      if (data?.url) {
-        window.location.href = data.url;
+      // Expect paymentIntent only (Payment Element flow)
+      if (data?.paymentIntent) {
+        // Navigate to the Stripe Elements page with the client secret
+        router.push(`/pay?cs=${encodeURIComponent(data.paymentIntent)}`);
         return;
       }
-      // If using Payment Intents and returning clientSecret, you can handle Stripe.js here (future enhancement)
-      if (data?.clientSecret) {
-        // TODO: integrate Stripe Elements page if needed
-        console.warn('clientSecret received but no Elements page is implemented. Add a Stripe Elements flow.');
-        return;
-      }
-      throw new Error('No redirect URL or clientSecret provided by payment init endpoint');
+      throw new Error('Payment init did not return paymentIntent (Payment Element flow only)');
     } catch (e) {
       console.error(e);
       // TODO: Show toast using shadcn toast
