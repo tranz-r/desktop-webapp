@@ -22,27 +22,6 @@ export default function ProgressStepper() {
   return (
     <div className="w-full bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm fixed top-16 lg:top-20 left-0 right-0 z-40">
       <div className="container mx-auto px-2 sm:px-4 py-3 lg:py-4">
-        {/* Progress Bar */}
-        {/* <div className="relative mb-3 lg:mb-4">
-          <div className="h-1.5 lg:h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          <div className="absolute -top-0.5 lg:-top-1 left-0 w-full flex justify-between">
-            {STEPS.map((_, idx) => (
-              <div
-                key={idx}
-                className={`w-3 h-3 lg:w-4 lg:h-4 rounded-full border-2 transition-all duration-300 ${
-                  idx <= currentIndex 
-                    ? 'bg-primary-500 border-primary-500 shadow-lg' 
-                    : 'bg-white border-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </div> */}
 
         {/* Steps */}
         <div className="flex items-center justify-between gap-0.5 sm:gap-1 lg:gap-2">
