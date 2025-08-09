@@ -11,25 +11,35 @@ interface VanCardProps {
   selected: boolean;
   onSelect: () => void;
   dimensions?: { lengthM: number; widthM: number; heightM: number };
+  onDetails?: () => void;
+  disabled?: boolean;
 }
 
-export default function VanCard({ name, capacityM3, basePrice, selected, onSelect, dimensions }: VanCardProps) {
+export default function VanCard({ name, capacityM3, basePrice, selected, onSelect, dimensions, onDetails, disabled = false }: VanCardProps) {
   return (
-    <Card className={`border ${selected ? 'border-primary-500' : 'border-transparent'} shadow-md`}> 
+    <Card
+      onDoubleClick={onDetails}
+      className={`border ${selected ? 'border-primary-500' : 'border-transparent'} shadow-md ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+    > 
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{name}</span>
           <span className="text-sm text-gray-600">~{capacityM3} m³</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         {dimensions && (
           <div className="text-xs text-gray-600">{dimensions.lengthM} × {dimensions.widthM} × {dimensions.heightM} m</div>
         )}
         <div className="text-sm font-semibold">From £{basePrice}</div>
-        <Button className="mt-2" variant={selected ? 'default' : 'outline'} onClick={onSelect}>
-          {selected ? 'Selected' : 'Select'}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant={selected ? 'default' : 'outline'} onClick={onSelect} disabled={disabled}>
+            {selected ? 'Selected' : 'Select'}
+          </Button>
+          {onDetails && (
+            <Button variant="ghost" onClick={onDetails}>Details</Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

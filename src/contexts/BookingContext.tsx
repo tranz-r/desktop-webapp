@@ -26,8 +26,17 @@ const DEFAULT_STATE: BookingState = {
 };
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<BookingState>(() => safeGet<BookingState>(STORAGE_KEY, DEFAULT_STATE));
+  // Initialize with default state to avoid SSR/CSR hydration mismatches.
+  // Load from storage on mount instead.
+  const [state, setState] = useState<BookingState>(DEFAULT_STATE);
 
+  // Load saved booking on client after mount
+  useEffect(() => {
+    const saved = safeGet<BookingState>(STORAGE_KEY, DEFAULT_STATE);
+    setState(saved);
+  }, []);
+
+  // Persist on changes
   useEffect(() => {
     safeSet(STORAGE_KEY, state);
   }, [state]);
