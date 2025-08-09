@@ -3,6 +3,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { PricingTierId } from '@/types/booking';
 
 interface PricingTableProps {
@@ -39,9 +40,13 @@ export default function PricingTable({ value, onChange }: PricingTableProps) {
               </TableCell>
               <TableCell className="text-sm text-gray-700">{t.features.join(' • ')}</TableCell>
               <TableCell className="text-right">
-                <button className={`px-3 py-1 rounded border ${value === t.id ? 'bg-primary-500 text-white' : ''}`} onClick={() => onChange(t.id)}>
+                <Button
+                  variant={value === t.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onChange(t.id)}
+                >
                   {value === t.id ? 'Selected' : 'Select'}
-                </button>
+                </Button>
               </TableCell>
             </TableRow>
           ))}

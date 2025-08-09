@@ -22,6 +22,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { VanType } from '@/types/booking';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function VanSelectionPage() {
   const router = useRouter();
@@ -124,12 +128,29 @@ export default function VanSelectionPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="moving-date">Moving Date</Label>
-                  <Input
-                    id="moving-date"
-                    type="date"
-                    value={movingDate}
-                    onChange={(e) => setMovingDate(e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="relative">
+                        <Input
+                          id="moving-date"
+                          readOnly
+                          value={movingDate ? format(new Date(movingDate), 'LLL dd, y') : ''}
+                          placeholder="Pick a date"
+                        />
+                        <CalendarIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={movingDate ? new Date(movingDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) setMovingDate(format(date, 'yyyy-MM-dd'));
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label>Duration (Minimum 3 hours)</Label>
