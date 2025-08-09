@@ -221,15 +221,21 @@ export default function Header({ sticky = true }: HeaderProps) {
             </Button>
             </Link>
             <div className="flex items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-accent-400 p-2 rounded-full">
-                  <Phone className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-white">
-                  <div className="font-bold text-sm tracking-wide">+44 1604 279 880</div>
-                  <div className="text-xs opacity-90 font-medium">7 days a week • 9AM-5PM</div>
-                </div>
-              </div>
+              <Button
+                asChild
+                variant="secondary"
+                size="lg"
+                className="rounded-full bg-white text-primary-700 hover:bg-white/90 shadow-md px-4 xl:px-5 py-2 xl:py-2.5"
+              >
+                <a href="tel:+441604279880" aria-label="Call Tranzr now on 01604 279 880">
+                  <span className="inline-flex items-center">
+                    <Phone className="mr-2 h-5 w-5 xl:h-6 xl:w-6" />
+                    <span className="font-extrabold tracking-wide tabular-nums text-base xl:text-lg">
+                      01604 279 880
+                    </span>
+                  </span>
+                </a>
+              </Button>
             </div>
           </div>
 
@@ -326,16 +332,20 @@ export default function Header({ sticky = true }: HeaderProps) {
                     GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <div className="flex items-center">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-accent-400 p-2 rounded-full">
-                      <Phone className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="text-white">
-                      <div className="font-bold text-sm tracking-wide">+44 1604 279 880</div>
-                      <div className="text-xs opacity-90 font-medium">7 days a week • 9AM-5PM</div>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="w-full rounded-full bg-white text-primary-700 hover:bg-white/90 shadow-md py-6"
+                  >
+                    <a href="tel:+441604279880" aria-label="Call Tranzr now on 01604 279 880">
+                      <span className="inline-flex items-center justify-center">
+                        <Phone className="mr-2 h-5 w-5" />
+                        <span className="font-extrabold tracking-wide tabular-nums text-lg">01604 279 880</span>
+                      </span>
+                    </a>
+                  </Button>
+                  <div className="text-white/90 text-xs font-medium text-center">7 days a week • 9AM–5PM</div>
                 </div>
               </div>
             </nav>

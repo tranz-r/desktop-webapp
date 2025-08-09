@@ -39,7 +39,7 @@ export default function VanSelectionPage() {
   const timeSlot = schedule.timeSlot;
   const setVan = (van: VanType) => updateVehicle({ selectedVan: van });
   const setDriverCount = (count: number) => updateVehicle({ driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
-  const setHours = (h: number) => updateSchedule({ hours: Math.max(3, Math.floor(h)) });
+  const setHours = (h: number) => updateSchedule({ hours: Math.max(4, Math.floor(h)) });
   const setFlexibleTime = (flex: boolean) => updateSchedule({ flexibleTime: !!flex });
   const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => updateSchedule({ timeSlot: slot });
   const [detailsOpen, setDetailsOpen] = React.useState(false);
@@ -71,6 +71,13 @@ export default function VanSelectionPage() {
       localStorage.setItem('schedule', JSON.stringify(schedule));
     } catch {}
   }, [movingDate, hours, flexibleTime, timeSlot]);
+
+  // Ensure minimum hours is 4 to align with new business rule
+  React.useEffect(() => {
+    if (mounted && (typeof hours !== 'number' || hours < 4)) {
+      updateSchedule({ hours: 4 });
+    }
+  }, [mounted, hours, updateSchedule]);
 
   React.useEffect(() => {
     if (movingDate) {
@@ -153,13 +160,13 @@ export default function VanSelectionPage() {
                   </Popover>
                 </div>
                 <div className="space-y-2">
-                  <Label>Duration (Minimum 3 hours)</Label>
-                  <Select value={String(hours ?? 3)} onValueChange={(v) => setHours(Number(v))}>
+                  <Label>Duration (Minimum 4 hours)</Label>
+                  <Select value={String(Math.max(4, hours ?? 4))} onValueChange={(v) => setHours(Number(v))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select hours" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => 3 + i).map(hh => (
+                      {Array.from({ length: 10 }, (_, i) => 4 + i).map(hh => (
                         <SelectItem key={hh} value={String(hh)}>{hh} hour{hh > 1 ? 's' : ''}</SelectItem>
                       ))}
                     </SelectContent>

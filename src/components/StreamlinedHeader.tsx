@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import VanIcon from "@/components/VanIconComponent";
 import { CartModal } from "@/components/CartModal";
 
@@ -26,20 +27,31 @@ export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
           </div>
 
           {/* Phone Number and Cart */}
-          <div className="flex items-center space-x-4 md:space-x-8">
-            {/* Phone Number */}
-            <div className="hidden md:flex items-center space-x-3">
-              <div className="bg-accent-400 p-2 rounded-full shadow-md">
-                <Phone className="h-4 w-4 text-white" />
-              </div>
-              <div className="text-white">
-                <div className="font-bold text-sm tracking-wide">+44 1604 279 880</div>
-                <div className="text-xs opacity-90 font-medium">7 days a week • 9AM-5PM</div>
+          <div className="flex items-center gap-3 md:gap-6">
+            {/* Phone: highly readable, click-to-call */}
+            <div className="flex items-center">
+              <Button
+                asChild
+                variant="secondary"
+                size="lg"
+                className="rounded-full bg-white text-primary-700 hover:bg-white/90 shadow-md px-4 md:px-5 py-2 md:py-2.5"
+              >
+                <a href="tel:+441604279880" aria-label="Call Tranzr now on 01604 279 880">
+                  <span className="inline-flex items-center">
+                    <Phone className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+                    <span className="font-extrabold tracking-wide tabular-nums text-base md:text-lg lg:text-xl">
+                      01604 279 880
+                    </span>
+                  </span>
+                </a>
+              </Button>
+              <div className="hidden md:block ml-3 text-white/90 text-[11px] md:text-sm font-medium leading-tight">
+                7 days a week • 9AM–5PM
               </div>
             </div>
-            
-            {/* Cart Icon - More prominent with proper mobile spacing */}
-            <div className="flex items-center pr-3 sm:pr-2 md:pr-0">
+
+            {/* Cart Icon */}
+            <div className="flex items-center pr-2 md:pr-0">
               <CartModal />
             </div>
           </div>
