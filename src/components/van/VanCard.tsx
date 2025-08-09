@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface VanCardProps {
   name: string;
@@ -18,28 +18,41 @@ interface VanCardProps {
 export default function VanCard({ name, capacityM3, basePrice, selected, onSelect, dimensions, onDetails, disabled = false }: VanCardProps) {
   return (
     <Card
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-pressed={selected}
+      onClick={() => { if (!disabled) onSelect(); }}
+      onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(); } }}
       onDoubleClick={onDetails}
-      className={`border ${selected ? 'border-primary-500' : 'border-transparent'} shadow-md ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+      className={`border ${selected ? 'border-primary-500' : 'border-transparent'} shadow-md ${disabled ? 'opacity-60 pointer-events-none' : 'cursor-pointer hover:border-primary-200'}`}
     > 
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{name}</span>
           <span className="text-sm text-gray-600">~{capacityM3} m³</span>
         </CardTitle>
+        {disabled && (
+          <div className="flex justify-end">
+            <Badge variant="destructive" className="mt-1">Unavailable</Badge>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {dimensions && (
           <div className="text-xs text-gray-600">{dimensions.lengthM} × {dimensions.widthM} × {dimensions.heightM} m</div>
         )}
         <div className="text-sm font-semibold">From £{basePrice}</div>
-        <div className="flex gap-2">
-          <Button variant={selected ? 'default' : 'outline'} onClick={onSelect} disabled={disabled}>
-            {selected ? 'Selected' : 'Select'}
-          </Button>
-          {onDetails && (
-            <Button variant="ghost" onClick={onDetails}>Details</Button>
-          )}
-        </div>
+        {onDetails && !disabled && (
+          <div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onDetails(); }}
+              className="text-sm text-primary-700 hover:text-primary-800 hover:underline"
+            >
+              Details
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -8,6 +8,7 @@ import DriverSelector from '@/components/van/DriverSelector';
 import RecommendationBanner from '@/components/van/RecommendationBanner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+ 
 import { useCart } from '@/contexts/CartContext';
 import { useBooking } from '@/contexts/BookingContext';
 import { VAN_TABLE, recommendVanByVolume } from '@/lib/recommend-van';
@@ -21,6 +22,7 @@ export default function VanSelectionPage() {
   const { selectedVan, driverCount, setVan, setDriverCount } = useBooking();
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+ 
 
   React.useEffect(() => {
     if (!hasInventory(items.length)) router.replace('/inventory');
@@ -30,8 +32,9 @@ export default function VanSelectionPage() {
   const recommended = React.useMemo(() => recommendVanByVolume(totalVolume), [totalVolume]);
 
   React.useEffect(() => {
-    if (!selectedVan) setVan(recommended);
-  }, [recommended, selectedVan, setVan]);
+    // Auto-select the available van (3.5 Luton Van with Tail Lift)
+    if (!selectedVan) setVan('largeVan');
+  }, [selectedVan, setVan]);
 
   // Avoid hydration mismatch by rendering after mount
   React.useEffect(() => {
@@ -68,6 +71,8 @@ export default function VanSelectionPage() {
           </div>
 
           <DriverSelector value={driverCount} onChange={setDriverCount} />
+
+          {/* Address capture moved to /origin-destination */}
 
           <div className="flex justify-end">
             <Button onClick={() => router.push('/origin-destination')}>Next: Addresses</Button>

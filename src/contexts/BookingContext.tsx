@@ -42,7 +42,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   const setVan = useCallback((van: VanType) => setState(prev => ({ ...prev, selectedVan: van })), []);
-  const setDriverCount = useCallback((count: number) => setState(prev => ({ ...prev, driverCount: Math.max(1, Math.min(2, Math.floor(count))) })), []);
+  const setDriverCount = useCallback((count: number) => setState(prev => ({ ...prev, driverCount: Math.max(1, Math.min(3, Math.floor(count))) })), []);
   const setOrigin = useCallback((addr: Address) => setState(prev => ({ ...prev, origin: addr })), []);
   const setDestination = useCallback((addr: Address) => setState(prev => ({ ...prev, destination: addr })), []);
   const setDistanceKm = useCallback((km: number) => setState(prev => ({ ...prev, distanceKm: Math.max(0, Number(km) || 0) })), []);
