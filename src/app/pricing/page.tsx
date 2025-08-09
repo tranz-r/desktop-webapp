@@ -39,7 +39,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background">
       <StreamlinedHeader />
       
-      <section className="pt-32 lg:pt-44 pb-10 bg-white">
+      <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-8">
           <PricingTable value={pricingTier} onChange={setPricingTier} />
 

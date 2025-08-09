@@ -44,7 +44,7 @@ function InventoryPageContent() {
     <div className="min-h-screen flex flex-col">
       <StreamlinedHeader />
       
-      <main className="flex-1 container mx-auto px-4 pt-32 lg:pt-44 pb-6">
+      <main className="flex-1 container mx-auto px-4 pt-40 lg:pt-44 pb-6">
         {/* Mobile Layout */}
         <div className="md:hidden flex flex-col gap-6 h-[calc(100vh-14rem)]">
           {/* Categories - Horizontal on mobile */}

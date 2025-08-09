@@ -40,7 +40,7 @@ export default function PaymentPage() {
     <div className="min-h-screen bg-background">
       <StreamlinedHeader />
       
-      <section className="pt-32 lg:pt-44 pb-10 bg-white">
+      <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <div className="text-sm font-semibold mb-3">Order Summary</div>
