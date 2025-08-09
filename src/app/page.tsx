@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import StorageSection from "@/components/StorageSection";
 import GuaranteeComponent from "@/components/GuaranteeComponent";
 import SVGImagesComponent from "@/components/SVGImagesComponent";
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Svg247Moving from "@/components/247Moving";
 import PromotionalSection from "@/components/PromotionalSection";
 import SvgLongDistanceSVG from "@/components/LongDistanceSVG";
@@ -20,9 +19,6 @@ import PeoplePackingSVG from "@/components/PeoplePacking";
 import TileInfoSVGComponent from "@/components/TileInfoSVGComponent";
 
 export default function HomePage() {
-  const [movingFrom, setMovingFrom] = useState("");
-  const [movingTo, setMovingTo] = useState("");
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header sticky={false} />
@@ -45,41 +41,16 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Quote Form */}
-            <div className="space-y-4 max-w-md pb-10">
-              <Input
-                type="text"
-                placeholder="Moving from address"
-                value={movingFrom}
-                onChange={(e) => setMovingFrom(e.target.value)}
-                className="bg-white text-gray-900 placeholder-gray-500 border-0 h-12 text-base"
-              />
-              <Input
-                type="text"
-                placeholder="Moving to address"
-                value={movingTo}
-                onChange={(e) => setMovingTo(e.target.value)}
-                className="bg-white text-gray-900 placeholder-gray-500 border-0 h-12 text-base"
-              />
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/inventory">
-                  <Button
-                    size="lg"
-                    variant="default"
-                    className="bg-secondary-400 hover:bg-secondary-500 text-white flex-1"
-                  >
-                    GET QUOTE <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+            {/* Hero CTA */}
+            <div className="pb-10">
+              <Link href="/inventory">
                 <Button
-                  variant="secondary"
-                  size="lg"
-                  className="bg-accent-400 hover:bg-accent-500 text-white flex items-center"
+                  variant="default"
+                  className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg scale-[1.3] origin-left"
                 >
-                  <Phone className="mr-2 h-5 w-5" />
-                  Or get a call from us
+                  GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </div>
+              </Link>
             </div>
           </div>
 

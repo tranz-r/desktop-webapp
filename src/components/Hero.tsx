@@ -76,17 +76,17 @@ export default function Hero({
                 {primaryAction && (
                   <Button 
                     size="lg" 
-                    className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold text-xl px-10 py-5 rounded-full shadow-2xl hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.4)] transform sm:scale-[1.15] lg:scale-[1.25] hover:scale-105 transition-all duration-200"
                     onClick={primaryAction.onClick}
                     asChild={!!primaryAction.href}
                   >
                     {primaryAction.href ? (
                       <a href={primaryAction.href}>
-                        {primaryAction.text} <ArrowRight className="ml-2 h-5 w-5" />
+                        {primaryAction.text} <ArrowRight className="ml-2 h-6 w-6" />
                       </a>
                     ) : (
                       <>
-                        {primaryAction.text} <ArrowRight className="ml-2 h-5 w-5" />
+                        {primaryAction.text} <ArrowRight className="ml-2 h-6 w-6" />
                       </>
                     )}
                   </Button>

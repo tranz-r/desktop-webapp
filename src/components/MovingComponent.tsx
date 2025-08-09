@@ -1,35 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, ArrowRight, Phone } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
-import PromotionalSection from "@/components/PromotionalSection";
 
 export default function MovingComponent() {
-  const [moveDate, setMoveDate] = useState<Date>();
-  const [moveType, setMoveType] = useState("");
-  const [movingFrom, setMovingFrom] = useState("");
-  const [movingTo, setMovingTo] = useState("");
 
   return (
     <div className="bg-background">
@@ -61,115 +38,18 @@ export default function MovingComponent() {
                 Whatever you need to move from A to B, we'll move it safely
               </p>
             </div>
-          </div>
-
-          {/* Right Quote Form */}
-          <Card className="bg-white rounded-lg shadow-2xl mb-10">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900">
-                Your Tranzr Moves starts with a{" "}
-                <span className="text-primary">free quote</span>
-              </CardTitle>
-              <p className="text-gray-600 text-sm">
-                Fill out the form below for a quick flat price quote
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Move Date and Type Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="moveDate" className="text-foreground">
-                    Estimated move date: *
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !moveDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {moveDate ? format(moveDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={moveDate}
-                        onSelect={setMoveDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="moveType" className="text-foreground">
-                    Type of move: *
-                  </Label>
-                  <Select value={moveType} onValueChange={setMoveType}>
-                    <SelectTrigger id="moveType">
-                      <SelectValue placeholder="Choose an option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="local">Local Move</SelectItem>
-                      <SelectItem value="long-distance">
-                        Long Distance
-                      </SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="storage">Storage</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Moving From */}
-              <div className="space-y-2">
-                <Label htmlFor="movingFrom" className="text-foreground">
-                  Moving from address: *
-                </Label>
-                <Input
-                  id="movingFrom"
-                  type="text"
-                  placeholder="Enter a location"
-                  value={movingFrom}
-                  onChange={(e) => setMovingFrom(e.target.value)}
-                />
-              </div>
-
-              {/* Moving To */}
-              <div className="space-y-2">
-                <Label htmlFor="movingTo" className="text-foreground">
-                  Moving to address: *
-                </Label>
-                <Input
-                  id="movingTo"
-                  type="text"
-                  placeholder="Enter a location"
-                  value={movingTo}
-                  onChange={(e) => setMovingTo(e.target.value)}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link href="/inventory" className="flex-1">
-                  <Button className="w-full" size="lg" variant="default">
-                    GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+            {/* Hero CTA */}
+            <div className="pb-10">
+              <Link href="/inventory">
                 <Button
-                  variant="secondary"
-                  size="lg"
-                  className="flex items-center justify-center bg-accent-400 hover:bg-accent-500 text-white"
+                  variant="default"
+                  className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg scale-[1.3] origin-left"
                 >
-                  <Phone className="mr-2 h-4 w-4" />
-                  Or get a call from us
+                  GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>
