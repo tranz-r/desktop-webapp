@@ -5,6 +5,7 @@ import { Address, BookingState, PricingTierId, VanType } from '@/types/booking';
 import { safeGet, safeSet } from '@/lib/storage';
 
 export interface BookingContextType extends BookingState {
+  isHydrated: boolean;
   setVan: (van: VanType) => void;
   setDriverCount: (count: number) => void;
   setOrigin: (addr: Address) => void;
@@ -29,11 +30,13 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   // Initialize with default state to avoid SSR/CSR hydration mismatches.
   // Load from storage on mount instead.
   const [state, setState] = useState<BookingState>(DEFAULT_STATE);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load saved booking on client after mount
   useEffect(() => {
     const saved = safeGet<BookingState>(STORAGE_KEY, DEFAULT_STATE);
     setState(saved);
+    setIsHydrated(true);
   }, []);
 
   // Persist on changes
@@ -54,6 +57,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
 
   const api = useMemo<BookingContextType>(() => ({
     ...state,
+    isHydrated,
     setVan,
     setDriverCount,
     setOrigin,
@@ -64,7 +68,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setDeliveryDate,
     setTotalCost,
     resetBooking,
-  }), [state, setVan, setDriverCount, setOrigin, setDestination, setDistanceKm, setPricingTier, setCollectionDate, setDeliveryDate, setTotalCost, resetBooking]);
+  }), [state, isHydrated, setVan, setDriverCount, setOrigin, setDestination, setDistanceKm, setPricingTier, setCollectionDate, setDeliveryDate, setTotalCost, resetBooking]);
 
   return <BookingContext.Provider value={api}>{children}</BookingContext.Provider>;
 }

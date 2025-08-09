@@ -15,13 +15,23 @@ import { VAN_TABLE, recommendVanByVolume } from '@/lib/recommend-van';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { hasInventory } from '@/lib/guards';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function VanSelectionPage() {
   const router = useRouter();
   const { getTotalVolume, items } = useCart();
-  const { selectedVan, driverCount, setVan, setDriverCount } = useBooking();
+  const { selectedVan, driverCount, setVan, setDriverCount, setCollectionDate } = useBooking();
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [movingDate, setMovingDate] = React.useState<string>('');
+  const [hours, setHours] = React.useState<string>('3');
+  const [flexibleTime, setFlexibleTime] = React.useState<boolean>(false);
+  const [timeSlot, setTimeSlot] = React.useState<string>('morning');
  
 
   React.useEffect(() => {
@@ -41,6 +51,21 @@ export default function VanSelectionPage() {
     setMounted(true);
   }, []);
 
+  // Persist minimal schedule data and update booking collection date
+  React.useEffect(() => {
+    try {
+      const schedule = { movingDate, hours: Number(hours), flexibleTime, timeSlot };
+      localStorage.setItem('schedule', JSON.stringify(schedule));
+    } catch {}
+  }, [movingDate, hours, flexibleTime, timeSlot]);
+
+  React.useEffect(() => {
+    if (movingDate) {
+      // Save ISO date only
+      setCollectionDate(new Date(movingDate).toISOString());
+    }
+  }, [movingDate, setCollectionDate]);
+
   if (!mounted) return null;
 
   return (
@@ -49,28 +74,97 @@ export default function VanSelectionPage() {
       
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
-          <RecommendationBanner text={`Based on ${totalVolume.toFixed(3)} m³, we recommend the ${VAN_TABLE[recommended].name}.`} />
+          {/* Vehicle & Crew */}
+          <Card className="border-primary-200">
+            <CardHeader>
+              <CardTitle className="text-primary-700 text-base">Vehicle & Crew</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RecommendationBanner text={`Based on ${totalVolume.toFixed(3)} m³, we recommend the ${VAN_TABLE[recommended].name}.`} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.values(VAN_TABLE).map(v => {
-              const isEnabled = v.id === 'largeVan';
-              return (
-                <VanCard
-                  key={v.id}
-                  name={v.name}
-                  capacityM3={v.capacityM3}
-                  basePrice={v.basePrice}
-                  dimensions={v.dimensions}
-                  selected={selectedVan === v.id}
-                  onSelect={() => setVan(v.id)}
-                  onDetails={() => setDetailsOpen(true)}
-                  disabled={!isEnabled}
-                />
-              );
-            })}
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.values(VAN_TABLE).map(v => {
+                  const isEnabled = v.id === 'largeVan';
+                  return (
+                    <VanCard
+                      key={v.id}
+                      name={v.name}
+                      capacityM3={v.capacityM3}
+                      basePrice={v.basePrice}
+                      dimensions={v.dimensions}
+                      selected={selectedVan === v.id}
+                      onSelect={() => setVan(v.id)}
+                      onDetails={() => setDetailsOpen(true)}
+                      disabled={!isEnabled}
+                    />
+                  );
+                })}
+              </div>
 
-          <DriverSelector value={driverCount} onChange={setDriverCount} />
+              <DriverSelector value={driverCount} onChange={setDriverCount} />
+            </CardContent>
+          </Card>
+
+          {/* Date & Time */}
+          <Card className="border-primary-200">
+            <CardHeader>
+              <CardTitle className="text-primary-700 text-base">Date & Time</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="moving-date">Moving Date</Label>
+                  <Input
+                    id="moving-date"
+                    type="date"
+                    value={movingDate}
+                    onChange={(e) => setMovingDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duration (Minimum 3 hours)</Label>
+                  <Select value={hours} onValueChange={setHours}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select hours" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => 3 + i).map(h => (
+                        <SelectItem key={h} value={String(h)}>{h} hour{h > 1 ? 's' : ''}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-md border p-3 bg-orange-50 border-orange-200">
+                <div>
+                  <div className="text-sm font-medium text-orange-800">Flexible Time</div>
+                  <div className="text-xs text-orange-700">Save 15% by being flexible with your time slot</div>
+                </div>
+                <Switch checked={flexibleTime} onCheckedChange={setFlexibleTime} />
+              </div>
+
+              {!flexibleTime && (
+                <div className="space-y-2">
+                  <Label>Preferred Time Slot</Label>
+                  <RadioGroup value={timeSlot} onValueChange={setTimeSlot} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="flex items-center gap-2 rounded-md border p-3">
+                      <RadioGroupItem value="morning" id="slot-morning" />
+                      <Label htmlFor="slot-morning" className="cursor-pointer">Morning (8:00 - 12:00)</Label>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-md border p-3">
+                      <RadioGroupItem value="afternoon" id="slot-afternoon" />
+                      <Label htmlFor="slot-afternoon" className="cursor-pointer">Afternoon (12:00 - 16:00)</Label>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-md border p-3">
+                      <RadioGroupItem value="evening" id="slot-evening" />
+                      <Label htmlFor="slot-evening" className="cursor-pointer">Evening (16:00 - 20:00)</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Address capture moved to /origin-destination */}
 

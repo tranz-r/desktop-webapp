@@ -6,9 +6,9 @@ import { Check, Package, Truck, MapPin, CreditCard, FileCheck, ArrowRight } from
 
 const STEPS = [
   { path: '/inventory', label: 'Inventory', icon: Package },
-  { path: '/van-selection', label: 'Van Selection', icon: Truck },
-  { path: '/origin-destination', label: 'Addresses', icon: MapPin },
-  { path: '/pricing', label: 'Pricing', icon: CreditCard },
+  { path: '/van-selection', label: 'Van & Date', icon: Truck },
+  { path: '/origin-destination', label: 'Customer', icon: MapPin },
+  { path: '/pricing', label: 'Price Tier', icon: CreditCard },
   { path: '/payment', label: 'Payment', icon: CreditCard },
   { path: '/confirmation', label: 'Confirm', icon: FileCheck },
 ];

@@ -39,6 +39,12 @@ type FormValues = {
   destinationPostcode: string;
   destinationFloor: string;
   destinationElevator: boolean;
+  // New: Customer details
+  fullName: string;
+  email: string;
+  phone: string;
+  billingLine1: string;
+  billingPostcode: string;
 };
 
 const FLOOR_OPTIONS = [
@@ -60,7 +66,7 @@ function floorValueToNumber(val: string): number {
 
 export default function OriginDestinationPage() {
   const router = useRouter();
-  const { setOrigin, setDestination, setDistanceKm } = useBooking();
+  const { isHydrated, selectedVan, setOrigin, setDestination, setDistanceKm } = useBooking();
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -72,6 +78,11 @@ export default function OriginDestinationPage() {
       destinationPostcode: "",
       destinationFloor: "ground",
       destinationElevator: true,
+  fullName: "",
+  email: "",
+  phone: "",
+  billingLine1: "",
+  billingPostcode: "",
     },
     mode: "onChange",
   });
@@ -84,6 +95,13 @@ export default function OriginDestinationPage() {
   const showExtraCost =
     (!watchOriginElevator && floorValueToNumber(watchOriginFloor) > 0) ||
     (!watchDestinationElevator && floorValueToNumber(watchDestinationFloor) > 0);
+
+  // Watch customer billing for readiness checks
+  const watchBillingLine1 = form.watch("billingLine1");
+  const watchBillingPostcode = form.watch("billingPostcode");
+  const watchFullName = form.watch("fullName");
+  const watchEmail = form.watch("email");
+  const watchPhone = form.watch("phone");
 
   function onSubmit(values: FormValues) {
     const origin: Address = {
@@ -101,14 +119,47 @@ export default function OriginDestinationPage() {
     setOrigin(origin);
     setDestination(destination);
     setDistanceKm(0); // Will be calculated later
+
+    // Capture customer details for downstream steps (persist minimally)
+    try {
+      const customerDetails = {
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        billingAddress: {
+          line1: values.billingLine1,
+          postcode: values.billingPostcode,
+        },
+      };
+      // Persist temporarily to avoid losing progress; can be replaced by context if available
+      localStorage.setItem("customerDetails", JSON.stringify(customerDetails));
+    } catch {}
+
+    // Ensure flow: must have selected a van before pricing per rules
+    if (!selectedVan) {
+      router.push("/van-selection");
+      return;
+    }
     router.push("/pricing");
   }
 
-  const isReady =
+  const hasAddressSelections =
     form.watch("originPostcode").trim().length > 0 &&
     form.watch("destinationPostcode").trim().length > 0 &&
     form.watch("originLine1").trim().length > 0 &&
-    form.watch("destinationLine1").trim().length > 0;
+    form.watch("destinationLine1").trim().length > 0 &&
+    (watchBillingPostcode?.trim().length ?? 0) > 0 &&
+    (watchBillingLine1?.trim().length ?? 0) > 0;
+
+  // Explicit validation for customer details to avoid edge cases where formState.isValid lags
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const ukPhoneRegex = /^(?:\+44\s?\d{3,4}[\s-]?\d{3}[\s-]?\d{3,4}|0\s?\d{3,4}[\s-]?\d{3}[\s-]?\d{3,4})$/;
+  const isCustomerValid =
+    (watchFullName?.trim().length ?? 0) >= 2 &&
+    (!!watchEmail && emailRegex.test(watchEmail)) &&
+    (!!watchPhone && ukPhoneRegex.test(watchPhone));
+  
+  const isReady = hasAddressSelections && isCustomerValid;
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,16 +167,148 @@ export default function OriginDestinationPage() {
 
       <main className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
+          {/* Flow guard: if booking hasn't hydrated yet, avoid premature redirects; if no van selected, direct user */}
+          {isHydrated && !selectedVan && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm">
+              Please select a van first to continue. You'll be redirected to van selection if you proceed.
+            </div>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* Customer Details */}
           <Card className="border-primary-200">
+            <CardHeader>
+              <CardTitle className="text-primary-700 text-base">Customer Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Contact Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      rules={{ required: "Full name is required", minLength: { value: 2, message: "Name is too short" } }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. John Smith" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      rules={{
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: "Enter a valid email address",
+                        },
+                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="e.g. john.smith@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      rules={{
+                        required: "Phone number is required",
+                        pattern: {
+                          // Accepts UK numbers in formats like 07123 456789, 020 7946 0018, +44 7123 456789
+                          value: /^(?:\+44\s?\d{3,4}[\s-]?\d{3}[\s-]?\d{3,4}|0\s?\d{3,4}[\s-]?\d{3}[\s-]?\d{3,4})$/,
+                          message: "Enter a valid UK phone number",
+                        },
+                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number (UK)</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="e.g. 07123 456789" {...field} />
+                          </FormControl>
+                          <FormDescription>Include country code or leading 0</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Billing Address</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {watchBillingLine1 ? (
+                      <div className="rounded-md border p-3 bg-muted/30">
+                        <div className="text-sm font-medium text-gray-900">{watchBillingLine1}</div>
+                        {watchBillingPostcode && (
+                          <div className="text-xs text-gray-600 mt-1">{watchBillingPostcode}</div>
+                        )}
+                        <div className="mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              form.setValue("billingLine1", "");
+                              form.setValue("billingPostcode", "");
+                            }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="billingPostcode"
+                        rules={{ required: "Postcode is required" }}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postcode</FormLabel>
+                            <FormControl>
+                              <PostcodeTypeahead
+                                postcode={field.value}
+                                onPostcodeChange={field.onChange}
+                                onAddressSelected={(addr) => {
+                                  form.setValue("billingLine1", addr);
+                                }}
+                                placeholder="e.g. EC1A 1BB"
+                                variant="pickup"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+    <Card className="border-primary-200">
             <CardHeader>
               <CardTitle className="text-primary-700 text-base">
                 Provide pickup and delivery addresses
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Pickup */}
                     <Card>
                       <CardHeader>
@@ -333,16 +516,15 @@ export default function OriginDestinationPage() {
                       </div>
                     </div>
                   )}
-
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={!isReady}>
-                      Next: Pricing
-                    </Button>
-                  </div>
-                </form>
-              </Form>
             </CardContent>
           </Card>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={!isReady}>
+              Next: Pricing
+            </Button>
+          </div>
+            </form>
+          </Form>
         </div>
       </main>
 
