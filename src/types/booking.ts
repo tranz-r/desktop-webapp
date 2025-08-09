@@ -13,7 +13,7 @@ export interface VanInfo {
   driverBaseCount: number;
 }
 
-export type PricingTierId = 'basic' | 'standard' | 'premium';
+export type PricingTierId = 'eco' | 'ecoPlus' | 'standard' | 'premium';
 
 export interface PricingTier {
   id: PricingTierId;

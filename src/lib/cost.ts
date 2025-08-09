@@ -40,7 +40,8 @@ export function computeCost(inputs: CostInputs): CostBreakdown {
   const drivers = Math.max(0, (inputs.driverCount || 1) - 1) * driverExtraFee;
 
   const tierMultiplier: Record<PricingTierId, number> = {
-    basic: 1,
+    eco: 1.0,
+    ecoPlus: 1.08,
     standard: 1.15,
     premium: 1.35,
   };

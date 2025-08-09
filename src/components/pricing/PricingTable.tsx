@@ -12,8 +12,9 @@ interface PricingTableProps {
 
 export default function PricingTable({ value, onChange }: PricingTableProps) {
   const tiers: { id: PricingTierId; name: string; features: string[]; popular?: boolean }[] = [
-    { id: 'basic', name: 'Basic', features: ['Standard service', 'No packing'], popular: false },
-    { id: 'standard', name: 'Standard', features: ['Standard service', 'Basic packing'], popular: true },
+    { id: 'eco', name: 'Eco', features: ['Standard service', 'No packing'], popular: false },
+    { id: 'ecoPlus', name: 'Eco Plus', features: ['Standard service', 'Enhanced scheduling'], popular: false },
+    { id: 'standard', name: 'Standard', features: ['Priority service', 'Basic packing'], popular: true },
     { id: 'premium', name: 'Premium', features: ['Priority service', 'Full packing'], popular: false },
   ];
 

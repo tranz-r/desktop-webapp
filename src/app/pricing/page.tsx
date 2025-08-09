@@ -40,49 +40,83 @@ export default function PricingPage() {
     });
   }, [selectedVan, driverCount, origin, destination, pricingTier, distanceKm]);
 
-  // Reference mobile implementation: present tiers as cards with features and a popular badge
-  const tiers: { id: PricingTierId; name: string; popular?: boolean; features: { name: string; included: boolean; value?: string; info?: string }[] }[] = [
+  // Four-tier model: Eco, Eco Plus, Standard, Premium (inspired by reference design)
+  const tiers: { id: PricingTierId; name: string; popular?: boolean; timescale: string; features: { name: string; included: boolean; value?: string; info?: string }[] }[] = [
     {
-      id: 'basic',
-      name: 'Tranzr Basic',
+      id: 'eco',
+      name: 'Tranzr Eco',
+      timescale: '7-10 working days',
       features: [
-        { name: 'Standard service', included: true },
-        { name: 'Careful protection', included: true },
+        { name: 'State of the art service', included: true },
         { name: 'Two men team', included: true },
+        { name: 'Careful protection', included: true },
+        { name: 'In time delivery', included: true },
+        { name: 'Level of service', included: true, value: 'door to door' },
+        { name: 'Damage cover', included: true, value: '£0' },
+        { name: 'Time slot', included: true, value: 'whole day' },
+        { name: 'Tracking (basic)', included: false },
+        { name: 'Time slot the day before', included: false },
+        { name: 'Real time tracking', included: false },
+        { name: 'SMS updates', included: false },
+        { name: '1-2 stops away notifications', included: false },
+      ],
+    },
+    {
+      id: 'ecoPlus',
+      name: 'Tranzr Eco Plus',
+      timescale: '5-7 working days',
+      features: [
+        { name: 'State of the art service', included: true },
+        { name: 'Two men team', included: true },
+        { name: 'Careful protection', included: true },
+        { name: 'In time delivery', included: true },
         { name: 'Level of service', included: true, value: 'ground floor' },
         { name: 'Damage cover', included: true, value: 'up to £100' },
         { name: 'Time slot', included: true, value: '4 hours' },
+        { name: 'Tracking (basic)', included: true },
+        { name: 'Time slot the day before', included: false },
         { name: 'Real time tracking', included: false },
         { name: 'SMS updates', included: false },
+        { name: '1-2 stops away notifications', included: false },
       ],
+      popular: true,
     },
     {
       id: 'standard',
       name: 'Tranzr Standard',
-      popular: true,
+      timescale: '2-4 working days',
       features: [
-        { name: 'Priority service', included: true },
-        { name: 'Careful protection', included: true },
+        { name: 'State of the art service', included: true },
         { name: 'Two men team', included: true },
-        { name: 'Level of service', included: true, value: 'ground floor' },
-        { name: 'Damage cover', included: true, value: 'up to £150' },
-        { name: 'Time slot', included: true, value: '3 hours' },
-        { name: 'SMS updates', included: true },
+        { name: 'Careful protection', included: true },
+        { name: 'In time delivery', included: true },
+        { name: 'Level of service', included: true, value: 'room of choice' },
+        { name: 'Damage cover', included: true, value: 'up to £300' },
+        { name: 'Time slot', included: true, value: '2 hours' },
+        { name: 'Tracking (basic)', included: true },
+        { name: 'Time slot the day before', included: true },
         { name: 'Real time tracking', included: false },
+        { name: 'SMS updates', included: true },
+        { name: '1-2 stops away notifications', included: false },
       ],
     },
     {
       id: 'premium',
       name: 'Tranzr Premium',
+      timescale: '1-2 business days',
       features: [
-        { name: 'Priority service', included: true },
-        { name: 'Careful protection', included: true },
+        { name: 'State of the art service', included: true },
         { name: 'Two men team', included: true },
-        { name: 'Level of service', included: true, value: 'any floor' },
-        { name: 'Damage cover', included: true, value: 'up to £200' },
+        { name: 'Careful protection', included: true },
+        { name: 'In time delivery', included: true },
+        { name: 'Level of service', included: true, value: 'room of choice' },
+        { name: 'Damage cover', included: true, value: 'up to purchase, market, or repair cost' },
         { name: 'Time slot', included: true, value: '2 hours' },
+        { name: 'Tracking (premium)', included: true },
+        { name: 'Time slot the day before', included: true },
         { name: 'Real time tracking', included: true },
         { name: 'SMS updates', included: true },
+        { name: '1-2 stops away notifications', included: true },
       ],
     },
   ];
@@ -121,13 +155,16 @@ export default function PricingPage() {
           </div>
 
           {/* Pricing Tiers */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {tiers.map((t) => {
               const selected = pricingTier === t.id;
               const price = tierCost(t.id);
               const expanded = expandedTier === t.id;
               return (
-                <Card key={t.id} className={`overflow-hidden ${selected ? 'border-red-500 shadow-red-100' : ''}`}>
+                <Card
+                  key={t.id}
+                  className={`overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 ${selected ? 'border-primary-500 shadow-primary-100' : ''}`}
+                >
                   {t.popular && (
                     <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-center">
                       <span className="text-white text-xs font-bold tracking-wide">MOST POPULAR</span>
@@ -142,8 +179,22 @@ export default function PricingPage() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-gray-600">Estimated</div>
-                      <div className="text-xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
+                      <div className="text-2xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
                     </div>
+
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-gray-600">Collection</span>
+                        <span className="text-xs font-medium text-gray-600">Delivery</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
+                        <span className="flex-1 mx-3 h-px bg-gray-300" />
+                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(deliveryDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-gray-600">{t.timescale}</div>
                     <Button variant={selected ? 'default' : 'secondary'} className="w-full" onClick={() => setPricingTier(t.id)}>
                       {selected ? 'Selected' : 'Select'}
                     </Button>
@@ -183,7 +234,7 @@ export default function PricingPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={() => router.push('/payment')}>Next: Payment</Button>
+            <Button onClick={() => router.push('/summary')}>Next: Review Summary</Button>
           </div>
         </div>
       </section>

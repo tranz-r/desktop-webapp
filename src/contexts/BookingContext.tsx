@@ -35,7 +35,14 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   // Load saved booking on client after mount
   useEffect(() => {
     const saved = safeGet<BookingState>(STORAGE_KEY, DEFAULT_STATE);
-    setState(saved);
+    // Back-compat: migrate legacy 'basic' tier to 'eco'
+    const migratedTier = ((): BookingState['pricingTier'] => {
+      const t = saved.pricingTier as unknown as string | undefined;
+      if (t === 'basic') return 'eco' as any;
+      return saved.pricingTier as any;
+    })();
+    const migrated: BookingState = { ...saved, pricingTier: migratedTier };
+    setState(migrated);
     setIsHydrated(true);
   }, []);
 
