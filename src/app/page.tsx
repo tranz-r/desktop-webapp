@@ -9,9 +9,7 @@ import Header from "@/components/Header";
 import StorageSection from "@/components/StorageSection";
 import GuaranteeComponent from "@/components/GuaranteeComponent";
 import SVGImagesComponent from "@/components/SVGImagesComponent";
-import {
-  ArrowRight,   Phone,
-} from "lucide-react";
+import { ArrowRight, Phone } from "lucide-react";
 import Svg247Moving from "@/components/247Moving";
 import PromotionalSection from "@/components/PromotionalSection";
 import SvgLongDistanceSVG from "@/components/LongDistanceSVG";
@@ -96,7 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-            {/* Complete Moving Services */}
+      {/* Complete Moving Services */}
       <section className="py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -178,8 +176,6 @@ export default function HomePage() {
         imageSrc="/images/feet-up.jpg"
         imageAlt="Professional movers packing furniture with care"
       />
-
-
 
       {/* SVG Images Component */}
       <SVGImagesComponent />
