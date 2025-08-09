@@ -78,9 +78,10 @@ export default function VanSelectionPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StreamlinedHeader />
       
+      <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
           {/* Vehicle & Crew */}
@@ -181,7 +182,8 @@ export default function VanSelectionPage() {
             <Button onClick={() => router.push('/origin-destination')}>Next: Addresses</Button>
           </div>
         </div>
-      </section>
+  </section>
+  </main>
 
       {/* Van details dialog (mirrors mobile double-tap modal) */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -215,7 +217,7 @@ export default function VanSelectionPage() {
         </DialogContent>
       </Dialog>
 
-      <Footer />
+  <Footer />
     </div>
   );
 }

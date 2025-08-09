@@ -38,8 +38,9 @@ function ResultContent() {
   }, [clientSecret]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StreamlinedHeader />
+      <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 max-w-2xl">
           <Card>
@@ -52,6 +53,7 @@ function ResultContent() {
           </Card>
         </div>
       </section>
+      </main>
       <Footer />
     </div>
   );

@@ -158,10 +158,11 @@ export default function OriginDestinationPage() {
   const isReady = hasAddressSelections && isCustomerValid;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StreamlinedHeader />
 
-      <main className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
+      <main className="flex-1">
+      <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
           {/* Flow guard: if booking hasn't hydrated yet, avoid premature redirects; if no van selected, direct user */}
           {isHydrated && !selectedVan && (
@@ -522,9 +523,10 @@ export default function OriginDestinationPage() {
             </form>
           </Form>
         </div>
-      </main>
+  </section>
+  </main>
 
-      <Footer />
+  <Footer />
     </div>
   );
 }

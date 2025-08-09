@@ -45,9 +45,10 @@ export default function PaymentPage() {
   const amountPence = Math.max(0, Math.round((cost?.total || 0) * 100));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StreamlinedHeader />
       
+      <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
@@ -68,6 +69,7 @@ export default function PaymentPage() {
           </div>
         </div>
       </section>
+      </main>
 
       <Footer />
     </div>
