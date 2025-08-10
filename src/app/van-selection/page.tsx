@@ -60,6 +60,18 @@ export default function VanSelectionPage() {
     if (isHydrated && !selectedVan) setVan('largeVan');
   }, [isHydrated, selectedVan, setVan]);
 
+  // Rehydrate moving date from schedule if available
+  React.useEffect(() => {
+    if (isHydrated && !movingDate && schedule?.dateISO) {
+      try {
+        const d = new Date(schedule.dateISO);
+        if (!isNaN(d.getTime())) {
+          setMovingDate(format(d, 'yyyy-MM-dd'));
+        }
+      } catch {}
+    }
+  }, [isHydrated, schedule?.dateISO, movingDate]);
+
   // Avoid hydration mismatch by rendering after mount
   React.useEffect(() => {
     setMounted(true);

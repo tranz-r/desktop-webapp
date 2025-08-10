@@ -77,13 +77,13 @@ export default function OriginDestinationPage() {
 
   const form = useForm<FormValues>({
     defaultValues: {
-      originLine1: "",
-      originPostcode: "",
+  originLine1: originDestination?.origin?.line1 || "",
+  originPostcode: originDestination?.origin?.postcode || "",
       originFloor: "ground",
       originElevator: true,
   sameAsBilling: false,
-      destinationLine1: "",
-      destinationPostcode: "",
+  destinationLine1: originDestination?.destination?.line1 || "",
+  destinationPostcode: originDestination?.destination?.postcode || "",
       destinationFloor: "ground",
       destinationElevator: true,
   fullName: originDestination?.fullName || "",
@@ -174,6 +174,25 @@ export default function OriginDestinationPage() {
     (!!watchPhone && ukPhoneRegex.test(watchPhone));
   
   const isReady = hasAddressSelections && isCustomerValid;
+
+  // When hydrated, rehydrate form fields for floors/elevators from saved state if present
+  React.useEffect(() => {
+    if (!isHydrated || !originDestination) return;
+    const o = originDestination.origin;
+    const d = originDestination.destination;
+    if (o?.floor !== undefined) {
+      form.setValue('originFloor', o.floor === 0 ? 'ground' : (o.floor >= 6 ? '6+' : String(o.floor)));
+    }
+    if (typeof o?.hasElevator === 'boolean') {
+      form.setValue('originElevator', o.hasElevator);
+    }
+    if (d?.floor !== undefined) {
+      form.setValue('destinationFloor', d.floor === 0 ? 'ground' : (d.floor >= 6 ? '6+' : String(d.floor)));
+    }
+    if (typeof d?.hasElevator === 'boolean') {
+      form.setValue('destinationElevator', d.hasElevator);
+    }
+  }, [isHydrated, originDestination]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
