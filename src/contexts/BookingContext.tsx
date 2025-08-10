@@ -16,12 +16,6 @@ export interface BookingContextType extends BookingState {
     phone?: string;
   billingAddress?: Pick<Address, 'line1' | 'postcode'>;
   };
-  // Back-compat: derived addresses for pages that read booking.addresses
-  addresses: {
-    origin?: Address;
-    destination?: Address;
-    distanceKm?: number;
-  };
   // Slice updaters (preferred)
   updateVehicle: (partial: Partial<BookingState['vehicle']>) => void;
   updateSchedule: (partial: Partial<BookingState['schedule']>) => void;
@@ -39,9 +33,6 @@ export interface BookingContextType extends BookingState {
   }) => void;
   setVan: (van: VanType) => void;
   setDriverCount: (count: number) => void;
-  setOrigin: (addr: Address) => void;
-  setDestination: (addr: Address) => void;
-  setDistanceKm: (km: number) => void;
   setPricingTier: (tier: PricingTierId) => void;
   setCollectionDate: (iso: string) => void;
   setDeliveryDate: (iso: string) => void;
@@ -61,7 +52,7 @@ const STORAGE_KEY = 'booking';
 
 const DEFAULT_STATE: BookingState = {
   vehicle: { selectedVan: undefined, driverCount: 1 },
-  schedule: { dateISO: undefined, deliveryDateISO: undefined, hours: 3, flexibleTime: false, timeSlot: 'morning' },
+  schedule: { dateISO: undefined, deliveryDateISO: undefined, hours: 4, flexibleTime: false, timeSlot: 'morning' },
   pricing: { pricingTier: undefined, totalCost: 0 },
   payment: undefined,
   customer: {},
@@ -123,13 +114,10 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   // Back-compat setters using slice updaters
   const setVan = useCallback((van: VanType) => updateVehicle({ selectedVan: van }), [updateVehicle]);
   const setDriverCount = useCallback((count: number) => updateVehicle({ driverCount: Math.max(1, Math.min(3, Math.floor(count))) }), [updateVehicle]);
-  const setOrigin = useCallback((addr: Address) => updateCustomer({ origin: addr }), [updateCustomer]);
-  const setDestination = useCallback((addr: Address) => updateCustomer({ destination: addr }), [updateCustomer]);
-  const setDistanceKm = useCallback((km: number) => updateCustomer({ distanceKm: Math.max(0, Number(km) || 0) }), [updateCustomer]);
   const setPricingTier = useCallback((tier: PricingTierId) => updatePricing({ pricingTier: tier }), [updatePricing]);
   const setCollectionDate = useCallback((iso: string) => updateSchedule({ dateISO: iso }), [updateSchedule]);
   const setDeliveryDate = useCallback((iso: string) => updateSchedule({ deliveryDateISO: iso }), [updateSchedule]);
-  const setHours = useCallback((hours: number) => updateSchedule({ hours: Math.max(3, Math.floor(hours)) }), [updateSchedule]);
+  const setHours = useCallback((hours: number) => updateSchedule({ hours: Math.max(4, Math.floor(hours)) }), [updateSchedule]);
   const setFlexibleTime = useCallback((flex: boolean) => updateSchedule({ flexibleTime: !!flex }), [updateSchedule]);
   const setTimeSlot = useCallback((slot: 'morning' | 'afternoon' | 'evening') => updateSchedule({ timeSlot: slot }), [updateSchedule]);
   const setTotalCost = useCallback((amount: number) => updatePricing({ totalCost: Math.max(0, amount) }), [updatePricing]);
@@ -151,11 +139,6 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       phone: state.customer?.phone,
       billingAddress: state.customer?.billingAddress,
     },
-    addresses: {
-      origin: state.customer?.origin,
-      destination: state.customer?.destination,
-      distanceKm: state.customer?.distanceKm,
-    },
     updateVehicle,
     updateSchedule,
     updatePricing,
@@ -163,10 +146,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     updateCustomer,
   updateOriginDestination,
     setVan,
-    setDriverCount,
-    setOrigin,
-    setDestination,
-    setDistanceKm,
+  setDriverCount,
     setPricingTier,
     setCollectionDate,
     setDeliveryDate,
@@ -179,7 +159,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setCustomerPhone,
     setBillingAddress,
     resetBooking,
-  }), [state, isHydrated, updateVehicle, updateSchedule, updatePricing, updatePayment, updateCustomer, updateOriginDestination, setVan, setDriverCount, setOrigin, setDestination, setDistanceKm, setPricingTier, setCollectionDate, setDeliveryDate, setHours, setFlexibleTime, setTimeSlot, setTotalCost, setCustomerName, setCustomerEmail, setCustomerPhone, setBillingAddress, resetBooking]);
+  }), [state, isHydrated, updateVehicle, updateSchedule, updatePricing, updatePayment, updateCustomer, updateOriginDestination, setVan, setDriverCount, setPricingTier, setCollectionDate, setDeliveryDate, setHours, setFlexibleTime, setTimeSlot, setTotalCost, setCustomerName, setCustomerEmail, setCustomerPhone, setBillingAddress, resetBooking]);
 
   return <BookingContext.Provider value={api}>{children}</BookingContext.Provider>;
 }

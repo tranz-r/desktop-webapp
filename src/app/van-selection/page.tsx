@@ -31,7 +31,7 @@ export default function VanSelectionPage() {
   const router = useRouter();
   const { getTotalVolume, items } = useCart();
   const booking = useBooking();
-  const { vehicle, schedule, updateVehicle, updateSchedule } = booking;
+  const { vehicle, schedule, updateVehicle, updateSchedule, isHydrated } = booking;
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
   const hours = schedule.hours;
@@ -45,6 +45,7 @@ export default function VanSelectionPage() {
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
+  const [dateOpen, setDateOpen] = React.useState(false);
  
 
   React.useEffect(() => {
@@ -55,9 +56,9 @@ export default function VanSelectionPage() {
   const recommended = React.useMemo(() => recommendVanByVolume(totalVolume), [totalVolume]);
 
   React.useEffect(() => {
-    // Auto-select the available van (3.5 Luton Van with Tail Lift)
-    if (!selectedVan) setVan('largeVan');
-  }, [selectedVan, setVan]);
+    // Auto-select the available van (3.5 Luton Van with Tail Lift) after hydration
+    if (isHydrated && !selectedVan) setVan('largeVan');
+  }, [isHydrated, selectedVan, setVan]);
 
   // Avoid hydration mismatch by rendering after mount
   React.useEffect(() => {
@@ -87,6 +88,9 @@ export default function VanSelectionPage() {
   }, [movingDate, updateSchedule]);
 
   if (!mounted) return null;
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -135,7 +139,7 @@ export default function VanSelectionPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="moving-date">Moving Date</Label>
-                  <Popover>
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <div className="relative">
                         <Input
@@ -152,8 +156,12 @@ export default function VanSelectionPage() {
                         mode="single"
                         selected={movingDate ? new Date(movingDate) : undefined}
                         onSelect={(date) => {
-                          if (date) setMovingDate(format(date, 'yyyy-MM-dd'));
+                          if (date) {
+                            setMovingDate(format(date, 'yyyy-MM-dd'));
+                            setDateOpen(false);
+                          }
                         }}
+                        disabled={{ before: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) }}
                         initialFocus
                       />
                     </PopoverContent>

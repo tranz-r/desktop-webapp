@@ -17,12 +17,12 @@ import type { PricingTierId } from '@/types/booking';
 export default function PricingPage() {
   const router = useRouter();
   const booking = useBooking();
-  const { isHydrated, vehicle, addresses, pricing, schedule, updatePricing, updateSchedule } = booking;
+  const { isHydrated, vehicle, originDestination, pricing, schedule, updatePricing, updateSchedule } = booking;
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
-  const origin = addresses.origin;
-  const destination = addresses.destination;
-  const distanceKm = addresses.distanceKm;
+  const origin = originDestination.origin;
+  const destination = originDestination.destination;
+  const distanceKm = originDestination.distanceKm;
   const pricingTier = pricing.pricingTier;
   const collectionDate = schedule.dateISO;
   const deliveryDate = schedule.deliveryDateISO;

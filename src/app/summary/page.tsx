@@ -13,12 +13,12 @@ import { email } from 'zod';
 export default function SummaryPage() {
   const router = useRouter();
   const booking = useBooking();
-  const { vehicle, addresses, pricing, schedule, customer, setTotalCost } = booking;
+  const { vehicle, originDestination, pricing, schedule, customer, setTotalCost } = booking;
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
-  const origin = addresses.origin;
-  const destination = addresses.destination;
-  const distanceKm = addresses.distanceKm;
+  const origin = originDestination.origin;
+  const destination = originDestination.destination;
+  const distanceKm = originDestination.distanceKm;
   const pricingTier = pricing.pricingTier;
   const collectionDate = schedule.dateISO;
   const deliveryDate = schedule.deliveryDateISO;

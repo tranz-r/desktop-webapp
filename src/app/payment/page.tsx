@@ -13,12 +13,12 @@ import { canEnterPayment } from '@/lib/guards';
 export default function PaymentPage() {
   const router = useRouter();
   const booking = useBooking();
-  const { vehicle, addresses, pricing, isHydrated } = booking;
+  const { vehicle, originDestination, pricing, isHydrated } = booking;
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
-  const origin = addresses.origin;
-  const destination = addresses.destination;
-  const distanceKm = addresses.distanceKm;
+  const origin = originDestination.origin;
+  const destination = originDestination.destination;
+  const distanceKm = originDestination.distanceKm;
   const pricingTier = pricing.pricingTier;
 
   React.useEffect(() => {

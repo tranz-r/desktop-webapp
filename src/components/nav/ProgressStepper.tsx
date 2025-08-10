@@ -53,14 +53,20 @@ export default function ProgressStepper() {
                   }`}
                 >
                   <div className={`
-                    w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 mx-auto
+                    relative w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 mx-auto
                     ${isCompleted 
                       ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40' 
                       : isActive 
-                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 ring-2 lg:ring-4 ring-primary-100 hover:shadow-xl hover:shadow-primary-500/40' 
+                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 ring-2 lg:ring-4 ring-primary-200 hover:shadow-xl hover:shadow-primary-500/40' 
                         : 'bg-gray-100 text-gray-400 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                     }
                   `}>
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 rounded-full ring-2 lg:ring-4 ring-primary-400 animate-ping pointer-events-none"
+                      />
+                    )}
                     {isCompleted ? (
                       <Check className="w-3 h-3 lg:w-4 lg:h-4" />
                     ) : (
@@ -81,10 +87,7 @@ export default function ProgressStepper() {
                     {step.label}
                   </span>
 
-                  {/* Active Indicator */}
-                  {isActive && (
-                    <div className="absolute -bottom-0.5 lg:-bottom-1 w-1.5 h-1.5 lg:w-2 lg:h-2 bg-primary-500 rounded-full animate-pulse" />
-                  )}
+                  {/* Removed bottom pulse dot; active state now animates circle border */}
                 </button>
               </div>
             );
