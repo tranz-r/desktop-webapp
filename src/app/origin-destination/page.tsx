@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -35,6 +36,7 @@ type FormValues = {
   originPostcode: string;
   originFloor: string; // "ground" | "1" | "2" | "3" | "4" | "5" | "6+"
   originElevator: boolean;
+  sameAsBilling: boolean;
   destinationLine1: string;
   destinationPostcode: string;
   destinationFloor: string;
@@ -79,6 +81,7 @@ export default function OriginDestinationPage() {
       originPostcode: "",
       originFloor: "ground",
       originElevator: true,
+  sameAsBilling: false,
       destinationLine1: "",
       destinationPostcode: "",
       destinationFloor: "ground",
@@ -104,9 +107,24 @@ export default function OriginDestinationPage() {
   // Watch customer billing for readiness checks
   const watchBillingLine1 = form.watch("billingLine1");
   const watchBillingPostcode = form.watch("billingPostcode");
+  const watchSameAsBilling = form.watch("sameAsBilling");
   const watchFullName = form.watch("fullName");
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
+
+  // Keep origin in sync with billing when "Same as billing" is checked
+  React.useEffect(() => {
+    if (watchSameAsBilling) {
+      const b1 = watchBillingLine1 || "";
+      const bp = watchBillingPostcode || "";
+      if (form.getValues("originLine1") !== b1) {
+        form.setValue("originLine1", b1, { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      }
+      if (form.getValues("originPostcode") !== bp) {
+        form.setValue("originPostcode", bp, { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      }
+    }
+  }, [watchSameAsBilling, watchBillingLine1, watchBillingPostcode]);
 
   function onSubmit(values: FormValues) {
     const origin: Address = {
@@ -315,6 +333,21 @@ export default function OriginDestinationPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="sameAsBilling"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Same as billing address</FormLabel>
+                                <FormDescription>Use the billing address for pickup</FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                         {form.watch("originLine1") ? (
                           <div className="rounded-md border p-3 bg-muted/30">
                             <div className="text-sm font-medium text-gray-900">{form.watch("originLine1")}</div>
@@ -322,17 +355,19 @@ export default function OriginDestinationPage() {
                               <div className="text-xs text-gray-600 mt-1">{form.watch("originPostcode")}</div>
                             )}
                             <div className="mt-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                type="button"
-                                onClick={() => {
-                                  form.setValue("originLine1", "");
-                                  form.setValue("originPostcode", "");
-                                }}
-                              >
-                                Change
-                              </Button>
+                              {!watchSameAsBilling && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => {
+                                    form.setValue("originLine1", "");
+                                    form.setValue("originPostcode", "");
+                                  }}
+                                >
+                                  Change
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -352,6 +387,7 @@ export default function OriginDestinationPage() {
                                     }}
                                     placeholder="e.g. SW1A 1AA"
                                     variant="pickup"
+                                    disabled={watchSameAsBilling}
                                   />
                                 </FormControl>
                                 <FormMessage />
