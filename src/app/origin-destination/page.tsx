@@ -73,7 +73,7 @@ export default function OriginDestinationPage() {
   const selectedVan = vehicle.selectedVan;
   const setOrigin = (addr: Address) => updateOriginDestination({ origin: addr });
   const setDestination = (addr: Address) => updateOriginDestination({ destination: addr });
-  const setDistanceKm = (km: number) => updateOriginDestination({ distanceKm: Math.max(0, Number(km) || 0) });
+  const setDistanceMiles = (miles: number) => updateOriginDestination({ distanceMiles: Math.max(0, Number(miles) || 0) });
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -142,7 +142,7 @@ export default function OriginDestinationPage() {
     updateOriginDestination({
       origin,
       destination,
-      distanceKm: 0, // Will be calculated later
+      distanceMiles: originDestination?.distanceMiles ?? 0,
       fullName: values.fullName,
       email: values.email,
       phone: values.phone,
@@ -174,6 +174,36 @@ export default function OriginDestinationPage() {
     (!!watchPhone && ukPhoneRegex.test(watchPhone));
   
   const isReady = hasAddressSelections && isCustomerValid;
+
+  // Fetch distance in miles when both addresses are available
+  React.useEffect(() => {
+    const oLine = form.watch('originLine1');
+    const oPc = form.watch('originPostcode');
+    const dLine = form.watch('destinationLine1');
+    const dPc = form.watch('destinationPostcode');
+    const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
+    if (!baseUrl) return;
+    const hasOrigin = !!oLine && !!oPc;
+    const hasDest = !!dLine && !!dPc;
+    if (!hasOrigin || !hasDest) return;
+
+    const controller = new AbortController();
+    const url = new URL(baseUrl);
+    url.searchParams.set('originAddress', `${oLine}, ${oPc}`);
+    url.searchParams.set('destinationAddress', `${dLine}, ${dPc}`);
+
+    fetch(url.toString(), { signal: controller.signal })
+      .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch distance')))
+      .then((miles) => {
+        const numeric = Number(miles);
+        if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
+          setDistanceMiles(numeric);
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.watch('originLine1'), form.watch('originPostcode'), form.watch('destinationLine1'), form.watch('destinationPostcode')]);
 
   // When hydrated, rehydrate form fields for floors/elevators from saved state if present
   React.useEffect(() => {

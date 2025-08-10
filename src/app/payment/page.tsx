@@ -18,7 +18,7 @@ export default function PaymentPage() {
   const driverCount = vehicle.driverCount;
   const origin = originDestination.origin;
   const destination = originDestination.destination;
-  const distanceKm = originDestination.distanceKm;
+  const distanceMiles = originDestination.distanceMiles;
   const pricingTier = pricing.pricingTier;
 
   React.useEffect(() => {
@@ -33,14 +33,14 @@ export default function PaymentPage() {
     return computeCost({
       van: selectedVan,
       driverCount,
-      distanceKm: distanceKm || 0,
+      distanceMiles: distanceMiles || 0,
       originFloor: origin?.floor,
       originElevator: origin?.hasElevator,
       destinationFloor: destination?.floor,
       destinationElevator: destination?.hasElevator,
       pricingTier,
     });
-  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceKm]);
+  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
   const amountPence = Math.max(0, Math.round((cost?.total || 0) * 100));
 
@@ -58,7 +58,7 @@ export default function PaymentPage() {
                 { label: 'Van', value: selectedVan || '-' },
                 { label: 'Drivers', value: driverCount },
                 { label: 'Tier', value: pricingTier || '-' },
-                { label: 'Distance (km)', value: distanceKm ?? 0 },
+                { label: 'Distance (miles)', value: distanceMiles ?? 0 },
               ]}
               total={`£${(cost?.total || 0).toFixed(2)}`}
             />

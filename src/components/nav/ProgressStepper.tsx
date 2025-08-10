@@ -13,10 +13,26 @@ const STEPS = [
   { path: '/confirmation', label: 'Confirm', icon: FileCheck },
 ];
 
+// Alias certain routes to existing steps so the correct active state is shown
+const ALIASES = new Map<string, string>([
+  ['/pay', '/summary']
+]);
+
+function normalizePath(p: string) {
+  let normalized = p;
+  ALIASES.forEach((to, from) => {
+    if (normalized.startsWith(from)) {
+      normalized = to;
+    }
+  });
+  return normalized;
+}
+
 export default function ProgressStepper() {
   const pathname = usePathname();
   const router = useRouter();
-  const currentIndex = Math.max(0, STEPS.findIndex(s => pathname.startsWith(s.path)));
+  const normalized = normalizePath(pathname);
+  const currentIndex = Math.max(0, STEPS.findIndex(s => normalized.startsWith(s.path)));
   const percent = ((currentIndex + 1) / STEPS.length) * 100;
 
   return (

@@ -18,7 +18,7 @@ export default function SummaryPage() {
   const driverCount = vehicle.driverCount;
   const origin = originDestination.origin;
   const destination = originDestination.destination;
-  const distanceKm = originDestination.distanceKm;
+  const distanceMiles = originDestination.distanceMiles;
   const pricingTier = pricing.pricingTier;
   const collectionDate = schedule.dateISO;
   const deliveryDate = schedule.deliveryDateISO;
@@ -29,14 +29,14 @@ export default function SummaryPage() {
     return computeCost({
       van: selectedVan,
       driverCount,
-      distanceKm: distanceKm || 0,
+      distanceMiles: distanceMiles || 0,
       originFloor: origin?.floor,
       originElevator: origin?.hasElevator,
       destinationFloor: destination?.floor,
       destinationElevator: destination?.hasElevator,
       pricingTier,
     });
-  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceKm]);
+  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
   // Persist the computed total into BookingContext (and localStorage via context)
   React.useEffect(() => {
@@ -62,7 +62,7 @@ export default function SummaryPage() {
       let payload = {
           van: selectedVan,
           driverCount,
-          distanceKm: distanceKm || 0,
+          distanceMiles: distanceMiles || 0,
           origin,
           destination,
           pricingTier,
@@ -120,11 +120,11 @@ export default function SummaryPage() {
                   <div className="flex items-center justify-between"><span className="text-gray-600">Vehicle</span><span className="font-semibold">{selectedVan || '—'}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">Crew size</span><span className="font-semibold">{driverCount}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">Tier</span><span className="font-semibold">{pricingTier || '—'}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-gray-600">Distance</span><span className="font-semibold">{(distanceKm || 0).toFixed(1)} km</span></div>
+                  <div className="flex items-center justify-between"><span className="text-gray-600">Distance</span><span className="font-semibold">{(distanceMiles || 0).toFixed(1)} miles</span></div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between"><span className="text-gray-600">Collection</span><span className="font-semibold">{formatDateShort(collectionDate)}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-gray-600">Delivery</span><span className="font-semibold">{formatDateShort(deliveryDate)}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-gray-600">Delivery</span><span className="font-semibold">{formatDateShort(collectionDate)}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">From</span><span className="font-semibold truncate max-w-[60%]" title={origin?.line1 || ''}>{origin?.line1 || '—'}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">To</span><span className="font-semibold truncate max-w-[60%]" title={destination?.line1 || ''}>{destination?.line1 || '—'}</span></div>
                 </div>

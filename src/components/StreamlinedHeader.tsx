@@ -26,20 +26,20 @@ export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
             </Link>
           </div>
 
-          {/* Phone Number and Cart */}
-          <div className="flex items-center gap-3 md:gap-6">
+      {/* Phone Number and Cart */}
+      <div className="flex items-center gap-2 md:gap-6">
             {/* Phone: highly readable, click-to-call */}
             <div className="flex items-center">
               <Button
                 asChild
                 variant="secondary"
-                size="lg"
-                className="rounded-full bg-white text-primary-700 hover:bg-white/90 shadow-md px-4 md:px-5 py-2 md:py-2.5"
+        size="lg"
+        className="rounded-full bg-white text-primary-700 hover:bg-white/90 shadow-md px-3 md:px-5 py-2 md:py-2.5"
               >
                 <a href="tel:+441604279880" aria-label="Call Tranzr now on 01604 279 880">
                   <span className="inline-flex items-center">
-                    <Phone className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-                    <span className="font-extrabold tracking-wide tabular-nums text-base md:text-lg lg:text-xl">
+          <Phone className="md:mr-2 mr-0 h-5 w-5 md:h-6 md:w-6" />
+          <span className="hidden md:inline font-extrabold tracking-wide tabular-nums text-base md:text-lg lg:text-xl">
                       01604 279 880
                     </span>
                   </span>
@@ -51,7 +51,7 @@ export function StreamlinedHeader({ sticky = true }: StreamlinedHeaderProps) {
             </div>
 
             {/* Cart Icon */}
-            <div className="flex items-center pr-2 md:pr-0">
+            <div className="flex items-center pr-2 md:pr-0 flex-shrink-0">
               <CartModal />
             </div>
           </div>

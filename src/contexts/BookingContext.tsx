@@ -10,7 +10,7 @@ export interface BookingContextType extends BookingState {
   originDestination: {
     origin?: Address;
     destination?: Address;
-    distanceKm?: number;
+  distanceMiles?: number;
     fullName?: string;
     email?: string;
     phone?: string;
@@ -25,7 +25,7 @@ export interface BookingContextType extends BookingState {
   updateOriginDestination: (data: {
     origin?: Address;
     destination?: Address;
-    distanceKm?: number;
+  distanceMiles?: number;
     fullName?: string;
     email?: string;
     phone?: string;
@@ -100,15 +100,15 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   const updateOriginDestination = useCallback((data: {
     origin?: Address;
     destination?: Address;
-    distanceKm?: number;
+  distanceMiles?: number;
     fullName?: string;
     email?: string;
     phone?: string;
     billingAddress?: Pick<Address, 'line1' | 'postcode'>;
   }) => {
-    const { origin, destination, distanceKm, fullName, email, phone, billingAddress } = data;
+  const { origin, destination, distanceMiles, fullName, email, phone, billingAddress } = data;
     // Write to customer as source of truth
-    updateCustomer({ origin, destination, distanceKm, fullName, email, phone, billingAddress });
+  updateCustomer({ origin, destination, distanceMiles, fullName, email, phone, billingAddress });
   }, [updateCustomer]);
 
   // Back-compat setters using slice updaters
@@ -133,7 +133,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     originDestination: {
       origin: state.customer?.origin,
       destination: state.customer?.destination,
-      distanceKm: state.customer?.distanceKm,
+  distanceMiles: state.customer?.distanceMiles,
       fullName: state.customer?.fullName,
       email: state.customer?.email,
       phone: state.customer?.phone,

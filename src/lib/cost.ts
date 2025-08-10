@@ -4,7 +4,7 @@ import { VAN_TABLE } from '@/lib/recommend-van';
 export interface CostInputs {
   van: VanType;
   driverCount: number; // 1 or 2
-  distanceKm: number;  // computed later; 0 for now
+  distanceMiles: number;  // computed later; 0 for now
   originFloor?: number; // 0 ground
   originElevator?: boolean;
   destinationFloor?: number;
@@ -26,8 +26,8 @@ export function computeCost(inputs: CostInputs): CostBreakdown {
   const vanInfo = VAN_TABLE[inputs.van];
   const baseVan = vanInfo.basePrice;
 
-  const perKm = 1.2; // placeholder
-  const distance = Math.max(0, inputs.distanceKm || 0) * perKm;
+  const perMile = 1.5; // placeholder per mile rate
+  const distance = Math.max(0, inputs.distanceMiles || 0) * perMile;
 
   const floorSurchargePerFloor = 5; // placeholder
   const originFloors = Math.max(0, inputs.originFloor || 0);

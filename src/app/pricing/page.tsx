@@ -22,7 +22,7 @@ export default function PricingPage() {
   const driverCount = vehicle.driverCount;
   const origin = originDestination.origin;
   const destination = originDestination.destination;
-  const distanceKm = originDestination.distanceKm;
+  const distanceMiles = originDestination.distanceMiles;
   const pricingTier = pricing.pricingTier;
   const collectionDate = schedule.dateISO;
   const deliveryDate = schedule.deliveryDateISO;
@@ -43,14 +43,14 @@ export default function PricingPage() {
     return computeCost({
       van: selectedVan,
       driverCount,
-      distanceKm: distanceKm || 0,
+      distanceMiles: distanceMiles || 0,
       originFloor: origin?.floor,
       originElevator: origin?.hasElevator,
       destinationFloor: destination?.floor,
       destinationElevator: destination?.hasElevator,
       pricingTier: pricingTier,
     });
-  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceKm]);
+  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
   // Four-tier model: Eco, Eco Plus, Standard, Premium (inspired by reference design)
   const tiers: { id: PricingTierId; name: string; popular?: boolean; timescale: string; features: { name: string; included: boolean; value?: string; info?: string }[] }[] = [
@@ -138,7 +138,7 @@ export default function PricingPage() {
     const c = computeCost({
       van: selectedVan,
       driverCount,
-      distanceKm: distanceKm || 0,
+      distanceMiles: distanceMiles || 0,
       originFloor: origin?.floor,
       originElevator: origin?.hasElevator,
       destinationFloor: destination?.floor,
@@ -202,7 +202,7 @@ export default function PricingPage() {
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
                         <span className="flex-1 mx-3 h-px bg-gray-300" />
-                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(deliveryDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
+                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
                       </div>
                     </div>
 

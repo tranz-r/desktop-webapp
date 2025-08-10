@@ -67,7 +67,7 @@ export interface CustomerState {
   // Make customer the single source of truth for origin/destination on the origin-destination screen
   origin?: Address;
   destination?: Address;
-  distanceKm?: number;
+  distanceMiles?: number;
 }
 
 export interface BookingState {
