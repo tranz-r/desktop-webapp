@@ -189,8 +189,12 @@ export default function OriginDestinationPage() {
 
     const controller = new AbortController();
     const url = new URL(baseUrl);
-    url.searchParams.set('originAddress', `${oLine}, ${oPc}`);
-    url.searchParams.set('destinationAddress', `${dLine}, ${dPc}`);
+
+    // url.searchParams.set('originAddress', `${oLine}, ${oPc}`);
+    // url.searchParams.set('destinationAddress', `${dLine}, ${dPc}`);
+
+    url.searchParams.set('originAddress', `${oLine}`);
+    url.searchParams.set('destinationAddress', `${dLine}`);
 
     fetch(url.toString(), { signal: controller.signal })
       .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch distance')))
@@ -372,7 +376,9 @@ export default function OriginDestinationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Removed header arrow and badge per request */}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Pickup */}
                     <Card>
                       <CardHeader>
@@ -596,6 +602,13 @@ export default function OriginDestinationPage() {
                       <div className="text-sm">
                         Additional charges may apply for floors above ground without elevator access.
                       </div>
+                    </div>
+                  )}
+
+                  {/* Plain text total distance at the bottom */}
+                  {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
+                    <div className="mt-4 w-full text-center text-lg text-muted-foreground font-extrabold">
+                      Total distance: {Math.round(originDestination.distanceMiles!)} miles
                     </div>
                   )}
             </CardContent>

@@ -74,9 +74,7 @@ export default function SummaryPage() {
             phone: customer?.phone,
             billingAddress: customer?.billingAddress,
           },
-          email: "mcvavy@gmail.com",
-          name: customer?.fullName,
-          amount: cost?.total || 0
+          cost: cost
         };
 
         console.log('Payload for payment init:', payload);
