@@ -88,6 +88,13 @@ function ConfirmationContent() {
   const job = booking.payment?.jobDetails;
   const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
 
+  // Promote status to Paid locally once payment succeeded (backend may still show Pending)
+  React.useEffect(() => {
+    if (status === 'succeeded' && job && job.paymentStatus && job.paymentStatus.toLowerCase() === 'pending') {
+      booking.updatePayment?.({ jobDetails: { ...job, paymentStatus: 'Paid' } });
+    }
+  }, [status, job, booking]);
+
   // If we arrive without a bookingId in context (fresh navigation) but have ref param, hydrate it immediately
   React.useEffect(() => {
     if (refFromUrl && !booking.payment?.bookingId) {
@@ -205,7 +212,14 @@ function ConfirmationContent() {
                 </Table>
               </div>
               <div className="mt-6 flex flex-col items-center gap-2">
-                <Badge variant="outline" className="text-lg px-4 py-2">Status: {job.paymentStatus}</Badge>
+                {(() => {
+                  const displayStatus = status === 'succeeded'
+                    ? (job.paymentStatus && job.paymentStatus.toLowerCase() !== 'pending' ? job.paymentStatus : 'Paid')
+                    : (job.paymentStatus || 'Pending');
+                  return (
+                    <Badge variant="outline" className="text-lg px-4 py-2">Status: {displayStatus}</Badge>
+                  );
+                })()}
                 {job.receiptUrl && (
                   <a href={job.receiptUrl} target="_blank" rel="noopener" className="text-primary-700 underline text-sm">Download Receipt</a>
                 )}
@@ -310,7 +324,7 @@ function ConfirmationContent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <StreamlinedHeader />
+  <StreamlinedHeader hideCart />
       <main className="flex-1">
         <section className="pt-32 lg:pt-40 pb-10 bg-white">
           <div className="container mx-auto px-4 max-w-2xl">

@@ -3,6 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -209,7 +211,7 @@ export default function SummaryPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <StreamlinedHeader />
+  <StreamlinedHeader hideCart />
       <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-8">
@@ -218,6 +220,36 @@ export default function SummaryPage() {
               <CardTitle>Quote Summary</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Collapsed inventory overview */}
+              <div className="mb-6">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="inv">
+                    <AccordionTrigger className="text-sm font-medium">Inventory ({cartItems.length} items, total volume {cartItems.reduce((a,c)=>a + (c.volume * c.quantity),0).toFixed(2)} m³)</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="border rounded-md overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-1/2">Item</TableHead>
+                              <TableHead>Qty</TableHead>
+                              <TableHead>Volume (m³)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cartItems.map(ci => (
+                              <TableRow key={ci.id}>
+                                <TableCell className="py-1 text-xs">{ci.name}</TableCell>
+                                <TableCell className="py-1 text-xs">{ci.quantity}</TableCell>
+                                <TableCell className="py-1 text-xs">{(ci.volume * ci.quantity).toFixed(2)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between"><span className="text-gray-600">Vehicle</span><span className="font-semibold">{selectedVan || '—'}</span></div>

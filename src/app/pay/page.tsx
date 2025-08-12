@@ -96,7 +96,7 @@ function PayContent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <StreamlinedHeader />
+  <StreamlinedHeader hideCart />
       <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 max-w-2xl">
