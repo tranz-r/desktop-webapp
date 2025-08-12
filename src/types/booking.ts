@@ -57,6 +57,7 @@ export interface PaymentState {
   bookingId?: string;
   clientSecret?: string;
   status?: 'pending' | 'paid' | 'failed';
+  jobDetails?: any;
 }
 
 export interface CustomerState {

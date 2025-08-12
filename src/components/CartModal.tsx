@@ -194,7 +194,7 @@ export function CartModal() {
                   ) : (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => handleEditDimensions(item.id)}
                       className="w-full"
                     >

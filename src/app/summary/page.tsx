@@ -7,13 +7,15 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useBooking } from '@/contexts/BookingContext';
+import { useCart } from '@/contexts/CartContext';
 import { computeCost } from '@/lib/cost';
 import { email } from 'zod';
 
 export default function SummaryPage() {
   const router = useRouter();
   const booking = useBooking();
-  const { vehicle, originDestination, pricing, schedule, customer, setTotalCost } = booking;
+  const { vehicle, originDestination, pricing, schedule, customer, setTotalCost, updatePayment } = booking;
+  const { items: cartItems } = useCart();
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
   const origin = originDestination.origin;
@@ -51,6 +53,28 @@ export default function SummaryPage() {
     return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  function toBackendVanType(v?: string) {
+    if (!v) return undefined as unknown as string;
+    const map: Record<string, string> = {
+      smallVan: 'SmallVan',
+      mediumVan: 'MediumVan',
+      largeVan: 'LargeVan',
+      xlLuton: 'XlLuton',
+    };
+    return map[v] ?? v;
+  }
+
+  function toBackendPricingTier(t?: string) {
+    if (!t) return undefined as unknown as string;
+    const map: Record<string, string> = {
+      eco: 'Eco',
+      ecoPlus: 'EcoPlus',
+      standard: 'Standard',
+      premium: 'Premium',
+    };
+    return map[t] ?? t;
+  }
+
   const handleCheckout = async () => {
     try {
       setLoading(true);
@@ -59,23 +83,103 @@ export default function SummaryPage() {
       console.log('Initializing payment with URL:', targetUrl);
       if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_PAYMENT_INIT_URL for payment initialization');
 
-      let payload = {
-          van: selectedVan,
-          driverCount,
-          distanceMiles: distanceMiles || 0,
-          origin,
-          destination,
-          pricingTier,
-          collectionDate,
-          deliveryDate,
-          customer: {
-            fullName: customer?.fullName,
-            email: customer?.email,
-            phone: customer?.phone,
-            billingAddress: customer?.billingAddress,
+      // Ensure bookingId early
+      let quoteId = booking.payment?.bookingId;
+      if (!quoteId) {
+        quoteId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `q-${Date.now()}`;
+        updatePayment({ bookingId: quoteId });
+      }
+
+      // Persist Job BEFORE payment init (if not already persisted)
+      if (!booking.payment?.jobDetails) {
+        const jobsBaseUrl = process.env.NEXT_PUBLIC_JOBS_BASE_URL;
+        if (!jobsBaseUrl) throw new Error('Missing NEXT_PUBLIC_JOBS_BASE_URL for job persistence');
+
+        if (!selectedVan || !origin || !destination || !pricingTier) {
+          throw new Error('Missing required booking details for job creation');
+        }
+
+        const payloadJob: any = {
+          quoteId,
+          vanType: toBackendVanType(selectedVan),
+          origin: {
+            addressLine1: origin.line1 || '',
+            addressLine2: origin.line2 || undefined,
+            city: origin.city || '',
+            county: undefined,
+            postCode: origin.postcode || '',
+            country: origin.country || undefined,
           },
-          cost: cost
+          destination: {
+            addressLine1: destination.line1 || '',
+            addressLine2: destination.line2 || undefined,
+            city: destination.city || '',
+            county: undefined,
+            postCode: destination.postcode || '',
+            country: destination.country || undefined,
+          },
+          paymentStatus: 'Pending',
+          pricingTier: toBackendPricingTier(pricingTier),
+          collectionDate: collectionDate || new Date().toISOString(),
+          driverCount: driverCount ?? 1,
+          distanceMiles: Math.max(0, Math.round(distanceMiles || 0)),
+          cost: cost ? {
+            baseVan: Math.round(cost.baseVan),
+            distance: cost.distance,
+            floor: Math.round(cost.floors),
+            elevatorAdjustment: Math.round(cost.elevatorAdjustment),
+            driver: Math.round(cost.drivers),
+            tierAdjustment: cost.tierAdjustment,
+            total: cost.total,
+          } : undefined,
+          inventoryItems: cartItems.map(ci => ({
+            name: ci.name,
+            width: Math.round(ci.width),
+            height: Math.round(ci.height),
+            depth: Math.round(ci.length),
+            quantity: ci.quantity,
+          })),
+          user: customer ? {
+            fullName: customer.fullName || '',
+            email: customer.email || '',
+            phoneNumber: customer.phone || '',
+            billingAddress: customer.billingAddress ? {
+              addressLine1: customer.billingAddress.line1 || '',
+              postCode: customer.billingAddress.postcode || '',
+            } : undefined,
+          } : undefined,
         };
+
+        console.log('[summary] Persisting job pre-payment', { url: jobsBaseUrl, payloadJob });
+        const jobRes = await fetch(jobsBaseUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadJob),
+        });
+        if (!jobRes.ok) throw new Error(`Failed to persist job (status ${jobRes.status})`);
+        const jobData = await jobRes.json();
+        updatePayment({ bookingId: jobData.quoteId || quoteId, jobDetails: jobData });
+        quoteId = jobData.quoteId || quoteId;
+      }
+
+      let payload = {
+        van: selectedVan,
+        driverCount,
+        distanceMiles: distanceMiles || 0,
+        origin,
+        destination,
+        pricingTier,
+        collectionDate,
+        deliveryDate,
+        quoteId: booking.payment?.bookingId, // allow backend to embed metadata if supported
+        customer: {
+          fullName: customer?.fullName,
+          email: customer?.email,
+          phone: customer?.phone,
+          billingAddress: customer?.billingAddress,
+        },
+        cost: cost
+      };
 
         console.log('Payload for payment init:', payload);
         
@@ -89,8 +193,9 @@ export default function SummaryPage() {
       const data = await res.json();
       // Expect paymentIntent only (Payment Element flow)
       if (data?.paymentIntent) {
-        // Navigate to the Stripe Elements page with the client secret
-        router.push(`/pay?cs=${encodeURIComponent(data.paymentIntent)}`);
+        // Navigate to /pay including booking reference for continuity
+        const ref = booking.payment?.bookingId ? `&ref=${encodeURIComponent(booking.payment.bookingId)}` : '';
+        router.push(`/pay?cs=${encodeURIComponent(data.paymentIntent)}${ref}`);
         return;
       }
       throw new Error('Payment init did not return paymentIntent (Payment Element flow only)');
