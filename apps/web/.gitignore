@@ -1,0 +1,12 @@
+# Next.js
+.next
+out
+build
+
+# Env
+.env
+.env*.local
+
+# Misc
+node_modules
+*.log
