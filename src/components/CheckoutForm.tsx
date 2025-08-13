@@ -3,6 +3,10 @@
 import React from 'react';
 import { PaymentElement, useElements, useStripe, AddressElement, LinkAuthenticationElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import TermsContent from '@/components/legal/TermsContent';
 
 type Props = {
   returnUrl: string;
@@ -14,6 +18,8 @@ export function CheckoutForm({ returnUrl }: Props) {
   const [email, setEmail] = React.useState<string>('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [processing, setProcessing] = React.useState(false);
+  const [acceptedTerms, setAcceptedTerms] = React.useState(false);
+  const [termsOpen, setTermsOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!stripe) return;
@@ -72,8 +78,31 @@ export function CheckoutForm({ returnUrl }: Props) {
       <AddressElement options={{ mode: 'billing' }} />
       <PaymentElement />
       {message && <div className="text-sm text-red-600">{message}</div>}
+      <div className="flex items-start gap-2 pt-1">
+        <Checkbox id="accept-terms" checked={acceptedTerms} onCheckedChange={(v) => setAcceptedTerms(Boolean(v))} />
+        <Label htmlFor="accept-terms" className="text-sm text-muted-foreground leading-relaxed">
+          I’ve read and accept the{' '}
+          <button
+            type="button"
+            onClick={() => setTermsOpen(true)}
+            className="underline underline-offset-4 text-foreground hover:opacity-80"
+          >
+            Terms & Conditions
+          </button>.
+        </Label>
+      </div>
+      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Terms & Conditions</DialogTitle>
+          </DialogHeader>
+          <div className="h-[70vh] overflow-y-auto pr-2">
+            <TermsContent compact />
+          </div>
+        </DialogContent>
+      </Dialog>
       <div className="pt-2 flex justify-end">
-        <Button type="submit" disabled={!stripe || processing}>
+        <Button type="submit" disabled={!stripe || processing || !acceptedTerms}>
           {processing ? 'Processing…' : 'Pay now'}
         </Button>
       </div>
