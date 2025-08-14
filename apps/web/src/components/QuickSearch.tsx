@@ -57,7 +57,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
         </div>
       )}
 
-      {/* Get Quote Button */}
+      {/* Get Instant Quote Button */}
       <Link href="/inventory">
         <Button
           size="lg"
@@ -65,7 +65,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
           className="w-full bg-secondary-400 hover:bg-secondary-500 text-white"
           disabled={!selectedItem}
         >
-          {selectedItem ? 'GET QUOTE FOR THIS ITEM' : 'SELECT AN ITEM FIRST'}
+          {selectedItem ? 'GET INSTANT QUOTE FOR THIS ITEM' : 'SELECT AN ITEM FIRST'}
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </Link>

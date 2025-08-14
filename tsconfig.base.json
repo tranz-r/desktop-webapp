@@ -1,17 +1,6 @@
 {
+  "extends": "./packages/tsconfig/base.json",
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["dom", "es2020"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowJs": false,
-    "strict": true,
-    "noEmit": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@repo/*": ["packages/*"],

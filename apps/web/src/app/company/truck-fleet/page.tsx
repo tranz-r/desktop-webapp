@@ -114,7 +114,7 @@ export default function TruckFleetPage() {
           onClick: () => console.log("View fleet clicked")
         }}
         secondaryAction={{
-          text: "Get Quote",
+          text: "GET INSTANT QUOTE",
           href: "/inventory"
         }}
       />

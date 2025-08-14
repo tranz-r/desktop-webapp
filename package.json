@@ -1,7 +1,7 @@
 {
   "name": "tranzr-monorepo",
   "private": true,
-  "packageManager": "npm@10.8.2",
+  "packageManager": "pnpm@9.0.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -12,9 +12,16 @@
     "start": "turbo run start",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "clean": "git clean -fdX -e !node_modules/.cache/turbo"
   },
   "devDependencies": {
-    "turbo": "^2.5.5"
-  }
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.5",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.17 <=22"
+  },
+  "preinstall": "node -e \"if (!process.env.npm_config_user_agent || !process.env.npm_config_user_agent.includes('pnpm')) { console.error('Use pnpm to install dependencies.'); process.exit(1); }\""
 }

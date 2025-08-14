@@ -2,8 +2,8 @@
 	"name": "@repo/tailwind-config",
 	"version": "0.0.1",
 	"private": true,
-	"type": "module",
+	"type": "commonjs",
 	"exports": {
-		"./tailwind.preset": "./tailwind.preset.ts"
+		"./tailwind.preset": "./tailwind.preset.cjs"
 	}
 }

@@ -45,7 +45,7 @@ export default function MovingComponent() {
                   variant="default"
                   className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg scale-[1.3] origin-left"
                 >
-                  GET QUOTE <ArrowRight className="ml-2 h-4 w-4" />
+                  GET INSTANT QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>

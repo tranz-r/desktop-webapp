@@ -130,7 +130,7 @@
   ```
 
 ### **🔄 Navigation Flow**
-- All the GET QUOTE or GET FREE QUOTE BUTTON should navigate to the /inventory page to begin the quote.
+- All the GET INSTANT QUOTE or GET FREE QUOTE BUTTON should navigate to the /inventory page to begin the quote.
 - `/` → Landing page
 - `/inventory` → Inventory building
 - `/van-selection` → Van selection
