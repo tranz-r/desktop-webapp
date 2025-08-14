@@ -5,5 +5,13 @@
 	"type": "commonjs",
 	"exports": {
 		"./tailwind.preset": "./tailwind.preset.cjs"
+	},
+	"scripts": {
+		"build": "echo 'Tailwind config requires no build step'",
+		"typecheck": "echo 'Tailwind config requires no typecheck'"
+	},
+	"devDependencies": {
+		"tailwindcss": "^3.4.0",
+		"tailwindcss-animate": "^1.0.0"
 	}
 }

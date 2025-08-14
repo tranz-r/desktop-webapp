@@ -1,8 +1,9 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "^typecheck"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "build/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -12,19 +13,45 @@
         ".env*"
       ],
       "env": [
-        "NEXT_PUBLIC_",
-        "STRIPE_",
+        "NEXT_PUBLIC_*",
+        "STRIPE_*", 
+        "SUPABASE_*",
         "NODE_ENV"
       ]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": [
+        "NEXT_PUBLIC_*",
+        "STRIPE_*",
+        "SUPABASE_*"
+      ]
     },
-    "lint": {},
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "eslint.config.*",
+        ".eslintrc.*"
+      ]
+    },
     "typecheck": {
+      "outputs": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig*.json"
+      ]
+    },
+    "format": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
       "outputs": []
     },
-    "format": {}
+    "clean": {
+      "cache": false
+    }
   }
 }

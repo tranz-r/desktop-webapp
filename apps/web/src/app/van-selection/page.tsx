@@ -205,7 +205,7 @@ export default function VanSelectionPage() {
         {!flexibleTime && (
                 <div className="space-y-2">
                   <Label>Preferred Time Slot</Label>
-          <RadioGroup value={timeSlot || 'morning'} onValueChange={(v) => setTimeSlot(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <RadioGroup value={timeSlot || 'morning'} onValueChange={(v: string) => setTimeSlot(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="flex items-center gap-2 rounded-md border p-3">
                       <RadioGroupItem value="morning" id="slot-morning" />
                       <Label htmlFor="slot-morning" className="cursor-pointer">Morning (8:00 - 12:00)</Label>

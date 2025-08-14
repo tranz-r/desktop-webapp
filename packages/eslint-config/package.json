@@ -1,1 +1,29 @@
-{ "name": "@repo/eslint-config", "version": "0.0.1", "private": true }
+{
+  "name": "@repo/eslint-config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./nextjs": "./nextjs.js",
+    "./react": "./react.js"
+  },
+  "files": [
+    "base.js",
+    "nextjs.js", 
+    "react.js"
+  ],
+  "scripts": {
+    "build": "echo 'ESLint config requires no build step'",
+    "typecheck": "echo 'ESLint config requires no typecheck'"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/eslint": "^8.56.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

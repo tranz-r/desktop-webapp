@@ -125,7 +125,7 @@ const CostCalculator = ({
                 max={100}
                 step={1}
                 value={[distance]}
-                onValueChange={(value) => setDistance(value[0])}
+                onValueChange={(value: number[]) => setDistance(value[0])}
                 className="flex-1"
               />
               <Input
