@@ -46,6 +46,7 @@ export default function VanSelectionPage() {
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
   const [dateOpen, setDateOpen] = React.useState(false);
+  const [dateError, setDateError] = React.useState<string | null>(null);
  
 
   React.useEffect(() => {
@@ -96,6 +97,7 @@ export default function VanSelectionPage() {
     if (movingDate) {
       // Save ISO date only
       updateSchedule({ dateISO: new Date(movingDate).toISOString() });
+  setDateError(null);
     }
   }, [movingDate, updateSchedule]);
 
@@ -150,7 +152,7 @@ export default function VanSelectionPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="moving-date">Moving Date</Label>
+                  <Label htmlFor="moving-date">Moving Date <span className="text-red-600">*</span></Label>
                   <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <div className="relative">
@@ -159,6 +161,9 @@ export default function VanSelectionPage() {
                           readOnly
                           value={movingDate ? format(new Date(movingDate), 'LLL dd, y') : ''}
                           placeholder="Pick a date"
+                          aria-invalid={!!dateError}
+                          aria-describedby={dateError ? 'moving-date-error' : undefined}
+                          className={`${dateError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         />
                         <CalendarIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       </div>
@@ -171,6 +176,7 @@ export default function VanSelectionPage() {
                           if (date) {
                             setMovingDate(format(date, 'yyyy-MM-dd'));
                             setDateOpen(false);
+                            setDateError(null);
                           }
                         }}
                         disabled={{ before: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) }}
@@ -178,6 +184,9 @@ export default function VanSelectionPage() {
                       />
                     </PopoverContent>
                   </Popover>
+                  {dateError && (
+                    <p id="moving-date-error" className="text-sm text-red-600">{dateError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Duration (Minimum 4 hours)</Label>
@@ -227,7 +236,21 @@ export default function VanSelectionPage() {
           {/* Address capture moved to /origin-destination */}
 
           <div className="flex justify-end">
-            <Button onClick={() => router.push('/origin-destination')}>Next: Addresses</Button>
+            <Button
+              onClick={() => {
+                if (!movingDate) {
+                  setDateError('Please select a moving date to continue.');
+                  setDateOpen(true);
+                  // Try to focus the input for accessibility
+                  try { document.getElementById('moving-date')?.focus(); } catch {}
+                  return;
+                }
+                router.push('/origin-destination');
+              }}
+              disabled={!movingDate}
+            >
+              Next: Addresses
+            </Button>
           </div>
         </div>
   </section>
