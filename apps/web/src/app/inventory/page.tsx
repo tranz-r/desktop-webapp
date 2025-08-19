@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
+import { Loader2 } from "lucide-react"
 
 // Popular items list for quick adding
 
@@ -231,7 +232,14 @@ function InventoryPageContent() {
               onClick={handleContinueClick}
               disabled={getTotalItems() === 0 || isLoading}
             >
-              {isLoading ? 'Loading...' : 'Continue to Van Selection'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Calculating pricing...
+                </>
+              ) : (
+                'Continue to Van Selection'
+              )}
             </Button>
           </div>
         </div>
@@ -276,7 +284,14 @@ function InventoryPageContent() {
               onClick={handleContinueClick}
               disabled={getTotalItems() === 0 || isLoading}
             >
-              {isLoading ? 'Loading...' : 'Continue to Van Selection'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Calculating pricing...
+                </>
+              ) : (
+                'Continue to Van Selection'
+              )}
             </Button>
             </div>
           </div>
