@@ -17,6 +17,7 @@ const STEPS = [
 const ALIASES = new Map<string, string>([
   ['/pay', '/summary'],
   ['/collection-delivery', '/inventory'],
+  ['/pickup-dropoff', '/van-selection'],
 ]);
 
 function normalizePath(p: string) {

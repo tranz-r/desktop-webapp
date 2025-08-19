@@ -5,18 +5,20 @@ import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import DatePickers from '@/components/pricing/DatePickers';
 import { useBooking } from '@/contexts/BookingContext';
+import { useQuoteOption } from '@/contexts/QuoteOptionContext';
 import { Button } from '@/components/ui/button';
 import { computeCost } from '@/lib/cost';
 import { canEnterPricing } from '@/lib/guards';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, ChevronDown, Info, Shield } from 'lucide-react';
+import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock } from 'lucide-react';
 import type { PricingTierId } from '@/types/booking';
 
 export default function PricingPage() {
   const router = useRouter();
   const booking = useBooking();
+  const { option: quoteOption } = useQuoteOption();
   const { isHydrated, vehicle, originDestination, pricing, schedule, updatePricing, updateSchedule } = booking;
   const selectedVan = vehicle.selectedVan;
   const driverCount = vehicle.driverCount;
@@ -24,12 +26,14 @@ export default function PricingPage() {
   const destination = originDestination.destination;
   const distanceMiles = originDestination.distanceMiles;
   const pricingTier = pricing.pricingTier;
+  const pickUpDropOffPrice = pricing.pickUpDropOffPrice;
   const collectionDate = schedule.dateISO;
   const deliveryDate = schedule.deliveryDateISO;
   const setPricingTier = (tier: PricingTierId) => updatePricing({ pricingTier: tier });
   const setCollectionDate = (iso: string) => updateSchedule({ dateISO: iso });
   const setDeliveryDate = (iso: string) => updateSchedule({ deliveryDateISO: iso });
   const [expandedTier, setExpandedTier] = React.useState<PricingTierId | null>(null);
+  const [selectedServiceTier, setSelectedServiceTier] = React.useState<'standard' | 'premium'>('standard');
 
   React.useEffect(() => {
     if (!isHydrated) return;
@@ -37,6 +41,9 @@ export default function PricingPage() {
       router.replace('/origin-destination');
     }
   }, [router, isHydrated, booking]);
+
+  // Check if this is a send/receive quote with pricing data
+  const isSendReceiveQuote = (quoteOption === 'send' || quoteOption === 'receive') && pickUpDropOffPrice;
 
   const cost = React.useMemo(() => {
     if (!selectedVan) return null;
@@ -148,6 +155,18 @@ export default function PricingPage() {
     return c.total;
   };
 
+  // Handle continue for send/receive quotes
+  const handleSendReceiveContinue = () => {
+    if (pickUpDropOffPrice) {
+      const selectedPricing = pickUpDropOffPrice[selectedServiceTier];
+      updatePricing({ 
+        pricingTier: selectedServiceTier === 'premium' ? 'premium' : 'standard',
+        totalCost: selectedPricing.customerTotal
+      });
+    }
+    router.push('/summary');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <StreamlinedHeader />
@@ -158,95 +177,241 @@ export default function PricingPage() {
           <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center gap-2 mb-1">
               <Shield className="h-4 w-4 text-blue-600" />
-              <div className="text-blue-900 font-semibold text-sm">Professional Moving Service</div>
+              <div className="text-blue-900 font-semibold text-sm">
+                {isSendReceiveQuote ? 'Pickup & Dropoff Service' : 'Professional Moving Service'}
+              </div>
             </div>
             <div className="text-blue-800 text-sm">
-              All tiers include professional movers, insurance coverage, and careful handling of your belongings.
-              Choose based on your timeline and service preferences.
+              {isSendReceiveQuote 
+                ? 'Choose between our Standard and Premium service tiers. All include professional movers, insurance coverage, and careful handling.'
+                : 'All tiers include professional movers, insurance coverage, and careful handling of your belongings. Choose based on your timeline and service preferences.'
+              }
             </div>
           </div>
 
-          {/* Pricing Tiers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {tiers.map((t) => {
-              const selected = pricingTier === t.id;
-              const price = tierCost(t.id);
-              const expanded = expandedTier === t.id;
-              return (
-                <Card
-                  key={t.id}
-                  className={`overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 ${selected ? 'border-primary-500 shadow-primary-100' : ''}`}
-                >
-                  {t.popular && (
-                    <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-center">
-                      <span className="text-white text-xs font-bold tracking-wide">MOST POPULAR</span>
+          {/* Send/Receive Quote Pricing Display */}
+          {isSendReceiveQuote && pickUpDropOffPrice && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Standard Service */}
+              <Card 
+                className={`cursor-pointer transition-all ${
+                  selectedServiceTier === 'standard' 
+                    ? 'border-primary-500 bg-primary-50 shadow-lg' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedServiceTier('standard')}
+              >
+                <CardHeader>
+                <CardTitle className="text-primary-700 text-base flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Standard Service
+                </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary-700">
+                      £{pickUpDropOffPrice.standard.customerTotal.toFixed(0)}
                     </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="flex items-start justify-between gap-2 text-base">
-                      <span>{t.name}</span>
-                      {t.popular && <Badge>Popular</Badge>}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">Estimated</div>
-                      <div className="text-2xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
+                    <div className="text-sm text-gray-600">inc. VAT</div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Base Service:</span>
+                      <span>£{pickUpDropOffPrice.standard.base.toFixed(0)}</span>
                     </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-600">Collection</span>
-                        <span className="text-xs font-medium text-gray-600">Delivery</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                        <span className="flex-1 mx-3 h-px bg-gray-300" />
-                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                      </div>
-                    </div>
-
-                    <div className="text-sm text-gray-600">{t.timescale}</div>
-                    <Button variant={selected ? 'default' : 'secondary'} className="w-full" onClick={() => setPricingTier(t.id)}>
-                      {selected ? 'Selected' : 'Select'}
-                    </Button>
-
-                    <Button variant="ghost" className="w-full justify-center gap-2" type="button" onClick={() => setExpandedTier(expanded ? null : t.id)}>
-                      <span className="text-sm font-medium">{expanded ? 'Hide details' : 'View details'}</span>
-                      <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-                    </Button>
-
-                    {expanded && (
-                      <div className="border-t pt-4 space-y-2">
-                        {t.features.map((f) => (
-                          <div key={f.name} className="flex items-center justify-between py-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-700">{f.name}</span>
-                              {f.info && <Info className="h-3.5 w-3.5 text-gray-400" />}
-                            </div>
-                            <div className="text-sm font-medium text-gray-800">
-                              {f.included ? (
-                                f.value ? (
-                                  <span>{f.value}</span>
-                                ) : (
-                                  <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                )
-                              ) : (
-                                <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-gray-300" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                    {pickUpDropOffPrice.standard.volumeSurcharge > 0 && (
+                      <div className="flex justify-between">
+                        <span>Volume Surcharge:</span>
+                        <span>£{pickUpDropOffPrice.standard.volumeSurcharge.toFixed(0)}</span>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    <div className="flex justify-between">
+                      <span>Crew ({pickUpDropOffPrice.standard.requestedMovers} movers):</span>
+                      <span>£{pickUpDropOffPrice.standard.crewFee.toFixed(0)}</span>
+                    </div>
+                    {pickUpDropOffPrice.standard.stairsFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>Stairs Fee:</span>
+                        <span>£{pickUpDropOffPrice.standard.stairsFee.toFixed(0)}</span>
+                      </div>
+                    )}
+                    {pickUpDropOffPrice.standard.longCarryFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>Long Carry Fee:</span>
+                        <span>£{pickUpDropOffPrice.standard.longCarryFee.toFixed(0)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-center text-sm text-gray-600">
+                    <Clock className="inline h-4 w-4 mr-1" />
+                    Total Volume: {pickUpDropOffPrice.standard.totalVolumeM3.toFixed(2)} m³ • 
+                    Distance: {distanceMiles || 0} miles
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Premium Service */}
+              <Card 
+                className={`cursor-pointer transition-all ${
+                  selectedServiceTier === 'premium' 
+                    ? 'border-primary-500 bg-primary-50 shadow-lg' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedServiceTier('premium')}
+              >
+                <CardHeader>
+                <CardTitle className="text-primary-700 text-base flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Premium Service
+                  <Badge variant="secondary" className="text-xs">RECOMMENDED</Badge>
+                </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary-700">
+                      £{pickUpDropOffPrice.premium.customerTotal.toFixed(0)}
+                    </div>
+                    <div className="text-sm text-gray-600">inc. VAT</div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Premium Base Service:</span>
+                      <span>£{(pickUpDropOffPrice.premium.base + pickUpDropOffPrice.premium.tierUplift).toFixed(0)}</span>
+                    </div>
+                    {pickUpDropOffPrice.premium.volumeSurcharge > 0 && (
+                      <div className="flex justify-between">
+                        <span>Volume Surcharge:</span>
+                        <span>£{pickUpDropOffPrice.premium.volumeSurcharge.toFixed(0)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Crew ({pickUpDropOffPrice.premium.requestedMovers} movers):</span>
+                      <span>£{pickUpDropOffPrice.premium.crewFee.toFixed(0)}</span>
+                    </div>
+                    {pickUpDropOffPrice.premium.assemblyFee > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>✓ Assembly Included:</span>
+                        <span>£0</span>
+                      </div>
+                    )}
+                    {pickUpDropOffPrice.premium.dismantleFee > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>✓ Dismantle Included:</span>
+                        <span>£0</span>
+                      </div>
+                    )}
+                    {pickUpDropOffPrice.premium.stairsFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>Stairs Fee:</span>
+                        <span>£{pickUpDropOffPrice.premium.stairsFee.toFixed(0)}</span>
+                      </div>
+                    )}
+                    {pickUpDropOffPrice.premium.longCarryFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>Long Carry Fee:</span>
+                        <span>£{pickUpDropOffPrice.premium.longCarryFee.toFixed(0)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-center text-sm text-gray-600">
+                    <Clock className="inline h-4 w-4 mr-1" />
+                    Total Volume: {pickUpDropOffPrice.premium.totalVolumeM3.toFixed(2)} m³ • 
+                    Distance: {distanceMiles || 0} miles
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Standard Pricing Tiers (for removals) */}
+          {!isSendReceiveQuote && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {tiers.map((t) => {
+                const selected = pricingTier === t.id;
+                const price = tierCost(t.id);
+                const expanded = expandedTier === t.id;
+                return (
+                  <Card
+                    key={t.id}
+                    className={`overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 ${selected ? 'border-primary-500 shadow-primary-100' : ''}`}
+                  >
+                    {t.popular && (
+                      <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-center">
+                        <span className="text-white text-xs font-bold tracking-wide">MOST POPULAR</span>
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="flex items-start justify-between gap-2 text-base">
+                        <span>{t.name}</span>
+                        {t.popular && <Badge>Popular</Badge>}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-600">Estimated</div>
+                        <div className="text-2xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-600">Collection</span>
+                          <span className="text-xs font-medium text-gray-600">Delivery</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
+                          <span className="flex-1 mx-3 h-px bg-gray-300" />
+                          <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-gray-600">{t.timescale}</div>
+                      <Button variant={selected ? 'default' : 'secondary'} className="w-full" onClick={() => setPricingTier(t.id)}>
+                        {selected ? 'Selected' : 'Select'}
+                      </Button>
+
+                      <Button variant="ghost" className="w-full justify-center gap-2" type="button" onClick={() => setExpandedTier(expanded ? null : t.id)}>
+                        <span className="text-sm font-medium">{expanded ? 'Hide details' : 'View details'}</span>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      </Button>
+
+                      {expanded && (
+                        <div className="border-t pt-4 space-y-2">
+                          {t.features.map((f) => (
+                            <div key={f.name} className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-700">{f.name}</span>
+                                {f.info && <Info className="h-3.5 w-3.5 text-gray-400" />}
+                              </div>
+                              <div className="text-sm font-medium text-gray-800">
+                                {f.included ? (
+                                  f.value ? (
+                                    <span>{f.value}</span>
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                                  )
+                                ) : (
+                                  <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-gray-300" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
           <div className="flex justify-end">
-            <Button onClick={() => router.push('/summary')}>Next: Review Summary</Button>
+            <Button onClick={isSendReceiveQuote ? handleSendReceiveContinue : () => router.push('/summary')}>
+              {isSendReceiveQuote ? 'Next: Review Summary' : 'Next: Review Summary'}
+            </Button>
           </div>
         </div>
       </section>
