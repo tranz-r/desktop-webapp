@@ -100,15 +100,26 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   const updateOriginDestination = useCallback((data: {
     origin?: Address;
     destination?: Address;
-  distanceMiles?: number;
+    distanceMiles?: number;
     fullName?: string;
     email?: string;
     phone?: string;
     billingAddress?: Pick<Address, 'line1' | 'postcode'>;
   }) => {
-  const { origin, destination, distanceMiles, fullName, email, phone, billingAddress } = data;
+    const { origin, destination, distanceMiles, fullName, email, phone, billingAddress } = data;
+    
+    // Filter out undefined values to avoid overwriting existing data
+    const updateData: Partial<BookingState['customer']> = {};
+    if (origin !== undefined) updateData.origin = origin;
+    if (destination !== undefined) updateData.destination = destination;
+    if (distanceMiles !== undefined) updateData.distanceMiles = distanceMiles;
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (billingAddress !== undefined) updateData.billingAddress = billingAddress;
+    
     // Write to customer as source of truth
-  updateCustomer({ origin, destination, distanceMiles, fullName, email, phone, billingAddress });
+    updateCustomer(updateData);
   }, [updateCustomer]);
 
   // Back-compat setters using slice updaters
@@ -133,7 +144,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     originDestination: {
       origin: state.customer?.origin,
       destination: state.customer?.destination,
-  distanceMiles: state.customer?.distanceMiles,
+      distanceMiles: state.customer?.distanceMiles,
       fullName: state.customer?.fullName,
       email: state.customer?.email,
       phone: state.customer?.phone,
@@ -144,9 +155,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     updatePricing,
     updatePayment,
     updateCustomer,
-  updateOriginDestination,
+    updateOriginDestination,
     setVan,
-  setDriverCount,
+    setDriverCount,
     setPricingTier,
     setCollectionDate,
     setDeliveryDate,

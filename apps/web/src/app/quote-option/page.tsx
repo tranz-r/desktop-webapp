@@ -10,24 +10,25 @@ import {
   RecieveSomethingSvgComponent,
   RemovalSvgComponent,
 } from '@/components/icons';
+import { QuoteOption } from '@/types/booking';
+import { useQuoteOption } from '@/contexts/QuoteOptionContext';
+import { useRouter } from 'next/navigation';
 
-type OptionId = 'send' | 'receive' | 'removals';
-
-const OPTIONS: Array<{ id: OptionId; title: string; description: string; Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }> = [
+const OPTIONS: Array<{ id: QuoteOption; title: string; description: string; Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }> = [
   {
-    id: 'send',
+    id: QuoteOption.Send,
     title: 'Send Items',
     description: 'Arrange a courier to send your items from A to B.',
     Icon: SendSomethingSvgComponent,
   },
   {
-    id: 'receive',
+    id: QuoteOption.Receive,
     title: 'Receive Items',
     description: 'Expecting a delivery? We can help you receive it.',
     Icon: RecieveSomethingSvgComponent,
   },
   {
-    id: 'removals',
+    id: QuoteOption.Removals,
     title: 'Removals',
     description: 'Book a van and crew for home or office removals.',
     Icon: RemovalSvgComponent,
@@ -35,7 +36,9 @@ const OPTIONS: Array<{ id: OptionId; title: string; description: string; Icon: R
 ];
 
 export default function QuoteOptionPage() {
-  const [selected, setSelected] = React.useState<OptionId | null>(null);
+  const { option, setOption } = useQuoteOption();
+  const selected = option;
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -56,11 +59,15 @@ export default function QuoteOptionPage() {
                     key={id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => setSelected(id)}
+          onClick={() => {
+            setOption(id);
+            router.push('/collection-delivery');
+          }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        setSelected(id);
+            setOption(id);
+            router.push('/collection-delivery');
                       }
                     }}
                     className={`transition-colors cursor-pointer border ${
@@ -83,7 +90,7 @@ export default function QuoteOptionPage() {
             </div>
 
             <div className="mt-6 flex justify-center">
-              <Button type="button" disabled={!selected} aria-disabled={!selected}>
+              <Button type="button" disabled={!selected} aria-disabled={!selected} onClick={() => selected && router.push('/collection-delivery')}>
                 Continue
               </Button>
             </div>

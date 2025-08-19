@@ -21,6 +21,83 @@ export interface PricingTier {
   multiplier: number; // used to adjust base costs
 }
 
+// API Response Types for Pricing
+export interface ItemBreakdown {
+  id: number;
+  name: string;
+  quantity: number;
+  unitLengthCm: number;
+  unitWidthCm: number;
+  unitHeightCm: number;
+  unitLongestEdgeM: number;
+  unitSecondEdgeM: number;
+  unitVolumeM3: number;
+  lineVolumeM3: number;
+  bulkiness: 'Normal' | 'Bulky' | 'VeryBulky';
+  bulkinessReasons: string[];
+}
+
+export interface QuoteBreakdown {
+  // pricing
+  base: number;
+  volumeSurcharge: number;
+  tierUplift: number;
+  tieredSubtotal: number;
+  
+  // crew
+  recommendedMinimumMovers: number;
+  requestedMovers: number;
+  crewFee: number;
+  crewRuleReasons: string[];
+  
+  // access & extras
+  stairsFee: number;
+  longCarryFee: number;
+  assemblyFee: number;
+  dismantleFee: number;
+  extrasFee: number;
+  
+  // totals
+  totalExVat: number;
+  vatRate: number;
+  customerTotal: number;
+  
+  // context
+  totalVolumeM3: number;
+  bulkyItemsCount: number;
+  veryBulkyItemsCount: number;
+  
+  items: ItemBreakdown[];
+}
+
+export interface PickUpDropOffPrice {
+  standard: QuoteBreakdown;
+  premium: QuoteBreakdown;
+}
+
+// API Request Types for CreateJobAsync
+export interface QuoteItem {
+  id: number;        
+  name: string;      
+  lengthCm: number;  
+  widthCm: number;   
+  heightCm: number;  
+  quantity: number;  
+}
+
+export interface QuoteRequest {
+  distanceMiles: number;                   
+  items: QuoteItem[];
+  stairsFloors: number;                     
+  longCarry: boolean;                       
+  numberOfItemsToAssemble: number;          
+  numberOfItemsToDismantle: number;         
+  parkingFee: number;                       
+  ulezFee: number;                          
+  vatRegistered: boolean;                   
+  requestedMovers: number;                  
+}
+
 export interface Address {
   line1: string;
   line2?: string;
@@ -51,6 +128,8 @@ export interface ScheduleState {
 export interface PricingState {
   pricingTier?: PricingTierId;
   totalCost: number;
+  // API response from CreateJobAsync for send/receive quote options
+  pickUpDropOffPrice?: PickUpDropOffPrice;
 }
 
 export interface PaymentState {
@@ -78,5 +157,12 @@ export interface BookingState {
   pricing: PricingState;
   payment?: PaymentState;
   customer?: CustomerState;
+}
+
+// Quote option selection to drive different quote journeys
+export enum QuoteOption {
+  Send = 'send',
+  Receive = 'receive',
+  Removals = 'removals',
 }
 

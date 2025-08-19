@@ -7,38 +7,184 @@ import { CategoryList } from "@/components/inventory/CategoryList"
 import { SearchCommand } from "@/components/inventory/SearchCommand"
 import { ItemGrid } from "@/components/inventory/ItemGrid"
 import { useCart } from "@/contexts/CartContext"
+import { useBooking } from "@/contexts/BookingContext"
+import { useQuoteOption } from "@/contexts/QuoteOptionContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
 
 // Popular items list for quick adding
-const popularItems = [
-  { id: "box-50", name: "Box approx 50x50x60cm" },
-  { id: "car-roof", name: "Car Roof Rack" },
-  { id: "box-100", name: "Large Box approx 100x50x70cm" },
-  { id: "box-40", name: "Small Box approx 40x30x30cm" },
-  { id: "wardrobe", name: "Single Wardrobe" },
-  { id: "shelf", name: "Shelf" },
-  { id: "shoe-cabinet", name: "Shoe Cabinet" },
-  { id: "bookcase", name: "bookcase" },
-  { id: "bookshelf", name: "Bookshelf" },
-  { id: "corner-cabinet", name: "Corner Cabinet" },
-  { id: "storage-box", name: "Storage Box" },
-  { id: "display-cabinet", name: "Display Cabinet" },
-  { id: "record-cabinet", name: "Record Cabinet" },
-  { id: "large-bookcase", name: "Large Bookcase" },
-]
 
 function InventoryPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
-  const { getTotalItems } = useCart()
+  const [isLoading, setIsLoading] = useState(false)
+  const { getTotalItems, items } = useCart()
+  const { updatePricing, customer, originDestination } = useBooking()
+  const { option } = useQuoteOption()
   const router = useRouter()
   
-  const handleAddItem = (item: any) => {
+  const handleAddItem = () => {
     // The actual cart functionality is handled in SearchCommand and ItemGrid components
     // This is just a callback for any additional logic if needed
-    console.log('Item added to cart:', item)
   }
+  
+  const createQuoteRequest = (): QuoteRequest => {
+    // Convert cart items to QuoteItem format
+    const quoteItems: QuoteItem[] = items.map(item => ({
+      id: item.id,                    
+      name: item.name,                
+      lengthCm: item.length,
+      widthCm: item.width,
+      heightCm: item.height,
+      quantity: item.quantity         
+    }));
+    
+    // Calculate stairs floors from pickup and delivery addresses
+    const calculateStairsFloors = (): number => {
+      let totalStairsFloors = 0;
+      
+      // Origin (pickup) stairs - count floors if no elevator available
+      if (customer?.origin?.floor && customer.origin.floor > 0 && !customer.origin.hasElevator) {
+        totalStairsFloors += customer.origin.floor;
+      }
+      
+      // Destination (delivery) stairs - count floors if no elevator available
+      if (customer?.destination?.floor && customer.destination.floor > 0 && !customer.destination.hasElevator) {
+        totalStairsFloors += customer.destination.floor;
+      }
+      
+      return totalStairsFloors;
+    };
+    
+    // Determine if there's a long carry situation
+    const hasLongCarry = (): boolean => {
+      // Business rule: Consider it a long carry if either location is above 3rd floor without elevator
+      const originLongCarry = customer?.origin?.floor && customer.origin.floor > 3 && !customer.origin.hasElevator;
+      const destinationLongCarry = customer?.destination?.floor && customer.destination.floor > 3 && !customer.destination.hasElevator;
+      
+      return !!(originLongCarry || destinationLongCarry);
+    };
+    
+    return {
+      distanceMiles: customer?.distanceMiles || 0,           
+      items: quoteItems,                                     
+      stairsFloors: calculateStairsFloors(),                 
+      longCarry: hasLongCarry(),                             
+      numberOfItemsToAssemble: 0,                            
+      numberOfItemsToDismantle: 0,                           
+      parkingFee: 0,                                         
+      ulezFee: 0,                                            
+      vatRegistered: true,                                   
+      requestedMovers: 0                                     
+    };
+  };
+
+  const callCreateJobAsync = async (): Promise<PickUpDropOffPrice | null> => {
+    try {
+      // Check if we have required customer data
+      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
+        console.error('Missing origin or destination addresses');
+        return null;
+      }
+
+      // Distance should already be calculated from /collection-delivery page
+      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
+        console.error('Distance missing - this should have been calculated on /collection-delivery page');
+        return null;
+      }
+
+      const quoteRequest = createQuoteRequest();
+      
+      // Use environment variable for API base URL, fallback for development
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const apiUrl = `${apiBaseUrl}/api/v1/prices`;
+      
+      // Ensure we have a valid payload before sending
+      if (!quoteRequest || typeof quoteRequest !== 'object') {
+        console.error('Invalid quote request object:', quoteRequest);
+        throw new Error('Invalid quote request - payload is not an object');
+      }
+      
+      if (!quoteRequest.items || quoteRequest.items.length === 0) {
+        console.error('No items in quote request');
+        throw new Error('No items to quote');
+      }
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteRequest)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+      }
+      
+      const data: PickUpDropOffPrice = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error calling CreateJobAsync:', error);
+      return null;
+    }
+  };
+  
+  const handleContinueClick = async () => {
+    // Check if we need to make API call based on quote option
+    if (option === QuoteOption.Send || option === QuoteOption.Receive) {
+      
+      // Validate required data before making API call
+      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
+        alert('Please complete the pickup and delivery addresses first.');
+        router.push('/collection-delivery');
+        return;
+      }
+      
+      // Validate distance is present (it should be calculated from /collection-delivery)
+      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
+        console.error('Distance is missing from customer context!');
+        alert('Distance calculation missing. Please complete the address details.');
+        router.push('/collection-delivery');
+        return;
+      }
+      
+      // Check if we have items to quote
+      if (getTotalItems() === 0) {
+        alert('Please add some items to your inventory first.');
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      try {
+        const pricingData = await callCreateJobAsync();
+        
+        if (pricingData) {
+          // Store the API response in booking context
+          updatePricing({ pickUpDropOffPrice: pricingData });
+          
+          // Navigate to pickup-dropoff page only after successful API call
+          router.push('/pickup-dropoff');
+        } else {
+          // Handle error case - show user feedback and don't navigate
+          console.error('Failed to get pricing data');
+          alert('Unable to calculate pricing. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error in handleContinueClick:', error);
+        alert('Unable to calculate pricing. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // For 'removals' option, continue with normal flow to van-selection
+      router.push('/van-selection');
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -82,10 +228,10 @@ function InventoryPageContent() {
             <Button 
               size="lg"
               className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
-              onClick={() => router.push('/van-selection')}
-              disabled={getTotalItems() === 0}
+              onClick={handleContinueClick}
+              disabled={getTotalItems() === 0 || isLoading}
             >
-              Continue to Van Selection
+              {isLoading ? 'Loading...' : 'Continue to Van Selection'}
             </Button>
           </div>
         </div>
@@ -127,10 +273,10 @@ function InventoryPageContent() {
                           <Button 
               size="lg"
               className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
-              onClick={() => router.push('/van-selection')}
-              disabled={getTotalItems() === 0}
+              onClick={handleContinueClick}
+              disabled={getTotalItems() === 0 || isLoading}
             >
-              Continue to Van Selection
+              {isLoading ? 'Loading...' : 'Continue to Van Selection'}
             </Button>
             </div>
           </div>

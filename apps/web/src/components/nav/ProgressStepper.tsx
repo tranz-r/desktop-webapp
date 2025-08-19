@@ -15,7 +15,8 @@ const STEPS = [
 
 // Alias certain routes to existing steps so the correct active state is shown
 const ALIASES = new Map<string, string>([
-  ['/pay', '/summary']
+  ['/pay', '/summary'],
+  ['/collection-delivery', '/inventory'],
 ]);
 
 function normalizePath(p: string) {

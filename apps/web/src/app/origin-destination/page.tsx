@@ -9,15 +9,6 @@ import { Address } from "@/types/booking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -29,14 +20,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { AlertCircle, Building2, MapPin, Navigation } from "lucide-react";
+import { AlertCircle, Building2, MapPin } from "lucide-react";
 
 type FormValues = {
   originLine1: string;
   originPostcode: string;
   originFloor: string; // "ground" | "1" | "2" | "3" | "4" | "5" | "6+"
   originElevator: boolean;
-  sameAsBilling: boolean;
   destinationLine1: string;
   destinationPostcode: string;
   destinationFloor: string;
@@ -81,7 +71,6 @@ export default function OriginDestinationPage() {
   originPostcode: originDestination?.origin?.postcode || "",
       originFloor: "ground",
       originElevator: true,
-  sameAsBilling: false,
   destinationLine1: originDestination?.destination?.line1 || "",
   destinationPostcode: originDestination?.destination?.postcode || "",
       destinationFloor: "ground",
@@ -95,36 +84,18 @@ export default function OriginDestinationPage() {
     mode: "onChange",
   });
 
-  const watchOriginFloor = form.watch("originFloor");
-  const watchDestinationFloor = form.watch("destinationFloor");
-  const watchOriginElevator = form.watch("originElevator");
-  const watchDestinationElevator = form.watch("destinationElevator");
-
+  const o = originDestination?.origin;
+  const d = originDestination?.destination;
+  const collectedAddresses = !!o?.line1 && !!o?.postcode && !!d?.line1 && !!d?.postcode;
   const showExtraCost =
-    (!watchOriginElevator && floorValueToNumber(watchOriginFloor) > 0) ||
-    (!watchDestinationElevator && floorValueToNumber(watchDestinationFloor) > 0);
+    ((!o?.hasElevator && (o?.floor ?? 0) > 0) || (!d?.hasElevator && (d?.floor ?? 0) > 0));
 
   // Watch customer billing for readiness checks
   const watchBillingLine1 = form.watch("billingLine1");
   const watchBillingPostcode = form.watch("billingPostcode");
-  const watchSameAsBilling = form.watch("sameAsBilling");
   const watchFullName = form.watch("fullName");
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
-
-  // Keep origin in sync with billing when "Same as billing" is checked
-  React.useEffect(() => {
-    if (watchSameAsBilling) {
-      const b1 = watchBillingLine1 || "";
-      const bp = watchBillingPostcode || "";
-      if (form.getValues("originLine1") !== b1) {
-        form.setValue("originLine1", b1, { shouldDirty: true, shouldTouch: true, shouldValidate: false });
-      }
-      if (form.getValues("originPostcode") !== bp) {
-        form.setValue("originPostcode", bp, { shouldDirty: true, shouldTouch: true, shouldValidate: false });
-      }
-    }
-  }, [watchSameAsBilling, watchBillingLine1, watchBillingPostcode]);
 
   function onSubmit(values: FormValues) {
     const origin: Address = {
@@ -157,13 +128,7 @@ export default function OriginDestinationPage() {
     router.push("/pricing");
   }
 
-  const hasAddressSelections =
-    form.watch("originPostcode").trim().length > 0 &&
-    form.watch("destinationPostcode").trim().length > 0 &&
-    form.watch("originLine1").trim().length > 0 &&
-    form.watch("destinationLine1").trim().length > 0 &&
-    (watchBillingPostcode?.trim().length ?? 0) > 0 &&
-    (watchBillingLine1?.trim().length ?? 0) > 0;
+  const hasBilling = (watchBillingPostcode?.trim().length ?? 0) > 0 && (watchBillingLine1?.trim().length ?? 0) > 0;
 
   // Explicit validation for customer details to avoid edge cases where formState.isValid lags
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,41 +138,7 @@ export default function OriginDestinationPage() {
     (!!watchEmail && emailRegex.test(watchEmail)) &&
     (!!watchPhone && ukPhoneRegex.test(watchPhone));
   
-  const isReady = hasAddressSelections && isCustomerValid;
-
-  // Fetch distance in miles when both addresses are available
-  React.useEffect(() => {
-    const oLine = form.watch('originLine1');
-    const oPc = form.watch('originPostcode');
-    const dLine = form.watch('destinationLine1');
-    const dPc = form.watch('destinationPostcode');
-    const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
-    if (!baseUrl) return;
-    const hasOrigin = !!oLine && !!oPc;
-    const hasDest = !!dLine && !!dPc;
-    if (!hasOrigin || !hasDest) return;
-
-    const controller = new AbortController();
-    const url = new URL(baseUrl);
-
-    // url.searchParams.set('originAddress', `${oLine}, ${oPc}`);
-    // url.searchParams.set('destinationAddress', `${dLine}, ${dPc}`);
-
-    url.searchParams.set('originAddress', `${oLine}`);
-    url.searchParams.set('destinationAddress', `${dLine}`);
-
-    fetch(url.toString(), { signal: controller.signal })
-      .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch distance')))
-      .then((miles) => {
-        const numeric = Number(miles);
-        if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
-          setDistanceMiles(numeric);
-        }
-      })
-      .catch(() => {})
-    return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('originLine1'), form.watch('originPostcode'), form.watch('destinationLine1'), form.watch('destinationPostcode')]);
+  const isReady = collectedAddresses && hasBilling && isCustomerValid;
 
   // When hydrated, rehydrate form fields for floors/elevators from saved state if present
   React.useEffect(() => {
@@ -370,249 +301,83 @@ export default function OriginDestinationPage() {
           </Card>
 
     <Card className="border-primary-200">
-            <CardHeader>
-              <CardTitle className="text-primary-700 text-base">
-                Provide pickup and delivery addresses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Removed header arrow and badge per request */}
+      <CardHeader>
+        <CardTitle className="text-primary-700 text-base">
+          Provide pickup and delivery addresses
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {collectedAddresses ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pickup summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <MapPin className="h-4 w-4 text-emerald-600" />
+                  Pickup Address
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-sm font-medium text-gray-900">{o?.line1}</div>
+                {o?.postcode && (
+                  <div className="text-xs text-gray-600">{o.postcode}</div>
+                )}
+                <div className="text-xs text-gray-600 flex items-center gap-2">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Floor: {o?.floor ? (o.floor >= 6 ? '6+' : o.floor) : 'ground'}{typeof o?.hasElevator === 'boolean' ? ` · Elevator: ${o.hasElevator ? 'Yes' : 'No'}` : ''}
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Pickup */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <MapPin className="h-4 w-4 text-emerald-600" />
-                          Pickup Address
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="sameAsBilling"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>Same as billing address</FormLabel>
-                                <FormDescription>Use the billing address for pickup</FormDescription>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        {form.watch("originLine1") ? (
-                          <div className="rounded-md border p-3 bg-muted/30">
-                            <div className="text-sm font-medium text-gray-900">{form.watch("originLine1")}</div>
-                            {form.watch("originPostcode") && (
-                              <div className="text-xs text-gray-600 mt-1">{form.watch("originPostcode")}</div>
-                            )}
-                            <div className="mt-2">
-                              {!watchSameAsBilling && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  type="button"
-                                  onClick={() => {
-                                    form.setValue("originLine1", "");
-                                    form.setValue("originPostcode", "");
-                                  }}
-                                >
-                                  Change
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="originPostcode"
-                            rules={{ required: "Postcode is required" }}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Postcode</FormLabel>
-                                <FormControl>
-                                  <PostcodeTypeahead
-                                    postcode={field.value}
-                                    onPostcodeChange={field.onChange}
-                                    onAddressSelected={(addr) => {
-                                      form.setValue("originLine1", addr);
-                                    }}
-                                    placeholder="e.g. SW1A 1AA"
-                                    variant="pickup"
-                                    disabled={watchSameAsBilling}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="originFloor"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Floor</FormLabel>
-                                <Select value={field.value} onValueChange={field.onChange}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select floor" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {FLOOR_OPTIONS.map((f) => (
-                                      <SelectItem key={f.value} value={f.value}>
-                                        {f.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormDescription className="flex items-center gap-2">
-                                  <Building2 className="h-3.5 w-3.5" /> Select building floor
-                                </FormDescription>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="originElevator"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col justify-end">
-                                <div className="flex items-center justify-between gap-3">
-                                  <FormLabel>Elevator available</FormLabel>
-                                  <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                  </FormControl>
-                                </div>
-                                <FormDescription>Toggle if elevator is available</FormDescription>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
+            {/* Delivery summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  Delivery Address
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-sm font-medium text-gray-900">{d?.line1}</div>
+                {d?.postcode && (
+                  <div className="text-xs text-gray-600">{d.postcode}</div>
+                )}
+                <div className="text-xs text-gray-600 flex items-center gap-2">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Floor: {d?.floor ? (d.floor >= 6 ? '6+' : d.floor) : 'ground'}{typeof d?.hasElevator === 'boolean' ? ` · Elevator: ${d.hasElevator ? 'Yes' : 'No'}` : ''}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm">
+            Pickup and delivery addresses have not been provided yet.
+          </div>
+        )}
 
-                    {/* Delivery */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <Navigation className="h-4 w-4 text-red-600" />
-                          Delivery Address
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {form.watch("destinationLine1") ? (
-                          <div className="rounded-md border p-3 bg-muted/30">
-                            <div className="text-sm font-medium text-gray-900">{form.watch("destinationLine1")}</div>
-                            {form.watch("destinationPostcode") && (
-                              <div className="text-xs text-gray-600 mt-1">{form.watch("destinationPostcode")}</div>
-                            )}
-                            <div className="mt-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                type="button"
-                                onClick={() => {
-                                  form.setValue("destinationLine1", "");
-                                  form.setValue("destinationPostcode", "");
-                                }}
-                              >
-                                Change
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="destinationPostcode"
-                            rules={{ required: "Postcode is required" }}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Postcode</FormLabel>
-                                <FormControl>
-                                  <PostcodeTypeahead
-                                    postcode={field.value}
-                                    onPostcodeChange={field.onChange}
-                                    onAddressSelected={(addr) => {
-                                      form.setValue("destinationLine1", addr);
-                                    }}
-                                    placeholder="e.g. W1K 1QA"
-                                    variant="delivery"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="destinationFloor"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Floor</FormLabel>
-                                <Select value={field.value} onValueChange={field.onChange}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select floor" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {FLOOR_OPTIONS.map((f) => (
-                                      <SelectItem key={f.value} value={f.value}>
-                                        {f.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormDescription className="flex items-center gap-2">
-                                  <Building2 className="h-3.5 w-3.5" /> Select building floor
-                                </FormDescription>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="destinationElevator"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col justify-end">
-                                <div className="flex items-center justify-between gap-3">
-                                  <FormLabel>Elevator available</FormLabel>
-                                  <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                  </FormControl>
-                                </div>
-                                <FormDescription>Toggle if elevator is available</FormDescription>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+        {showExtraCost && (
+          <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
+            <AlertCircle className="h-5 w-5" />
+            <div className="text-sm">
+              Additional charges may apply for floors above ground without elevator access.
+            </div>
+          </div>
+        )}
 
-                  {showExtraCost && (
-                    <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
-                      <AlertCircle className="h-5 w-5" />
-                      <div className="text-sm">
-                        Additional charges may apply for floors above ground without elevator access.
-                      </div>
-                    </div>
-                  )}
+        {/* Total distance from context */}
+        {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
+          <div className="mt-4 w-full text-center text-lg text-muted-foreground font-extrabold">
+            Total distance: {Math.round(originDestination.distanceMiles!)} miles
+          </div>
+        )}
 
-                  {/* Plain text total distance at the bottom */}
-                  {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
-                    <div className="mt-4 w-full text-center text-lg text-muted-foreground font-extrabold">
-                      Total distance: {Math.round(originDestination.distanceMiles!)} miles
-                    </div>
-                  )}
-            </CardContent>
-          </Card>
+        <div className="mt-4 flex justify-end">
+          <Button type="button" variant="outline" onClick={() => router.push('/collection-delivery')}>
+            Change addresses
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
           <div className="flex justify-end">
             <Button type="submit" disabled={!isReady}>
               Next: Pricing
