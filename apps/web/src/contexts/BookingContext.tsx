@@ -71,10 +71,11 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Persist on changes
+  // Persist on changes (only after hydration)
   useEffect(() => {
+    if (!isHydrated) return;
     safeSet(STORAGE_KEY, state);
-  }, [state]);
+  }, [state, isHydrated]);
 
   // Slice updaters
   const updateVehicle = useCallback((partial: Partial<BookingState['vehicle']>) => setState(prev => ({

@@ -5,34 +5,202 @@ import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import CollectionDeliveryAddresses, { CollectionDeliveryFormValues, floorValueToNumber } from "@/components/address/CollectionDeliveryAddresses";
+import CollectionDeliveryAddresses, {
+  CollectionDeliveryFormValues,
+  floorValueToNumber,
+} from "@/components/address/CollectionDeliveryAddresses";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useBooking } from "@/contexts/BookingContext";
 import { AlertCircle } from "lucide-react";
+import type { Address } from "@/types/booking";
+import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export default function CollectionDeliveryPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { originDestination, updateOriginDestination, isHydrated, customer } = booking;
+  const { originDestination, isHydrated } = useBooking();
 
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <StreamlinedHeader />
+        <main className="flex-1">
+          <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
+            <div className="container mx-auto px-4">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-gray-900">Loading your booking...</h2>
+                  <p className="text-muted-foreground">Please wait while we load your saved information.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const hasOriginComplete = Boolean(
+    originDestination?.origin?.line1?.trim() &&
+      originDestination?.origin?.postcode?.trim() &&
+      typeof originDestination?.origin?.floor === "number" &&
+      typeof originDestination?.origin?.hasElevator === "boolean"
+  );
+
+  const hasDestinationComplete = Boolean(
+    originDestination?.destination?.line1?.trim() &&
+      originDestination?.destination?.postcode?.trim() &&
+      typeof originDestination?.destination?.floor === "number" &&
+      typeof originDestination?.destination?.hasElevator === "boolean"
+  );
+
+  const isComplete = hasOriginComplete && hasDestinationComplete;
+  const [mode, setMode] = React.useState<
+    "collect" | "readonly" | "edit-origin" | "edit-destination"
+  >(isComplete ? "readonly" : "collect");
+
+  React.useEffect(() => {
+    setMode(isComplete ? "readonly" : "collect");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isComplete, originDestination?.origin, originDestination?.destination]);
+
+  if (mode === "readonly") {
+    return (
+      <ReadOnlyView
+        onChangeOrigin={() => setMode("edit-origin")}
+        onChangeDestination={() => setMode("edit-destination")}
+        onNext={() => router.push("/inventory")}
+      />
+    );
+  }
+
+  if (mode === "edit-origin" || mode === "edit-destination") {
+    return (
+      <EditAddressForm
+        target={mode === "edit-origin" ? "origin" : "destination"}
+        onCancel={() => setMode("readonly")}
+        onSaved={() => setMode("readonly")}
+      />
+    );
+  }
+
+  return <CollectAddressesForm onNext={() => router.push("/inventory")} />;
+}
+
+function ReadOnlyView({
+  onChangeOrigin,
+  onChangeDestination,
+  onNext,
+}: {
+  onChangeOrigin: () => void;
+  onChangeDestination: () => void;
+  onNext: () => void;
+}) {
+  const { originDestination } = useBooking();
+  const origin = originDestination.origin!;
+  const destination = originDestination.destination!;
+  const distance = originDestination.distanceMiles;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <StreamlinedHeader />
+      <main className="flex-1">
+        <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <h1 className="text-2xl font-bold mb-6">Review your addresses</h1>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ReadonlyCard
+                title="Pickup address"
+                address={origin}
+                onChange={onChangeOrigin}
+              />
+              <ReadonlyCard
+                title="Delivery address"
+                address={destination}
+                onChange={onChangeDestination}
+              />
+            </div>
+
+            {typeof distance === "number" && Number.isFinite(distance) && distance > 0 && (
+              <div className="text-center mt-8">
+                <div className="inline-block bg-muted rounded-full px-6 py-3 text-sm font-semibold">
+                  Total distance: {Math.round(distance)} miles
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end mt-8">
+              <Button onClick={onNext}>Continue</Button>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function ReadonlyCard({
+  title,
+  address,
+  onChange,
+}: {
+  title: string;
+  address: Address; // Allow potential undefined props, we render defensively
+  onChange?: () => void;
+}) {
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold">{title}</h3>
+        {onChange && (
+          <Button variant="outline" size="sm" onClick={onChange}>
+            Change
+          </Button>
+        )}
+      </div>
+      <div className="space-y-1 text-sm text-muted-foreground">
+        <div className="text-foreground font-medium">{address?.line1 || ""}</div>
+        <div>{address?.postcode || ""}</div>
+        <div>
+          Floor: {typeof address?.floor === "number" ? (address.floor === 0 ? "Ground" : address.floor) : ""}
+          {typeof address?.hasElevator === "boolean"
+            ? address.hasElevator
+              ? " • Elevator available"
+              : " • No elevator"
+            : ""}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CollectAddressesForm({ onNext }: { onNext: () => void }) {
+  const { originDestination, updateOriginDestination } = useBooking();
   const form = useForm<CollectionDeliveryFormValues>({
     defaultValues: {
       originLine1: originDestination?.origin?.line1 || "",
       originPostcode: originDestination?.origin?.postcode || "",
-      originFloor: (originDestination?.origin?.floor ?? 0) === 0
-        ? "ground"
-        : (originDestination?.origin?.floor ?? 0) >= 6
-        ? "6+"
-        : String(originDestination?.origin?.floor ?? "ground"),
+      originFloor:
+        (originDestination?.origin?.floor ?? 0) === 0
+          ? "ground"
+          : (originDestination?.origin?.floor ?? 0) >= 6
+          ? "6+"
+          : String(originDestination?.origin?.floor ?? "ground"),
       originElevator: originDestination?.origin?.hasElevator ?? true,
       destinationLine1: originDestination?.destination?.line1 || "",
       destinationPostcode: originDestination?.destination?.postcode || "",
-      destinationFloor: (originDestination?.destination?.floor ?? 0) === 0
-        ? "ground"
-        : (originDestination?.destination?.floor ?? 0) >= 6
-        ? "6+"
-        : String(originDestination?.destination?.floor ?? "ground"),
+      destinationFloor:
+        (originDestination?.destination?.floor ?? 0) === 0
+          ? "ground"
+          : (originDestination?.destination?.floor ?? 0) >= 6
+          ? "6+"
+          : String(originDestination?.destination?.floor ?? "ground"),
       destinationElevator: originDestination?.destination?.hasElevator ?? true,
     },
     mode: "onChange",
@@ -44,157 +212,38 @@ export default function CollectionDeliveryPage() {
     form.watch("destinationLine1").trim().length > 0 &&
     form.watch("destinationPostcode").trim().length > 0;
 
-  // Persist origin fields to context as user edits
-  React.useEffect(() => {
-    const origin = {
-      line1: form.watch('originLine1') || '',
-      postcode: form.watch('originPostcode') || '',
-      floor: floorValueToNumber(form.watch('originFloor')),
-      hasElevator: !!form.watch('originElevator'),
-    };
-    updateOriginDestination({ origin });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch('originLine1'),
-    form.watch('originPostcode'),
-    form.watch('originFloor'),
-    form.watch('originElevator'),
-  ]);
-
-  // Persist destination fields to context as user edits
-  React.useEffect(() => {
-    const destination = {
-      line1: form.watch('destinationLine1') || '',
-      postcode: form.watch('destinationPostcode') || '',
-      floor: floorValueToNumber(form.watch('destinationFloor')),
-      hasElevator: !!form.watch('destinationElevator'),
-    };
-    updateOriginDestination({ destination });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch('destinationLine1'),
-    form.watch('destinationPostcode'),
-    form.watch('destinationFloor'),
-    form.watch('destinationElevator'),
-  ]);
-
-  // Compute and persist distance when both addresses are set
-  React.useEffect(() => {
-    const oLine = form.watch('originLine1');
-    const oPc = form.watch('originPostcode');
-    const dLine = form.watch('destinationLine1');
-    const dPc = form.watch('destinationPostcode');
+  async function computeAndStoreDistance(originLine: string, destLine: string) {
     const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
-    
-    console.log('=== DISTANCE CALCULATION DEBUG ===');
-    console.log('Environment variable NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL:', baseUrl);
-    console.log('Origin:', { line: oLine, postcode: oPc });
-    console.log('Destination:', { line: dLine, postcode: dPc });
-    
-    if (!baseUrl) {
-      console.error('❌ NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL is not configured!');
-      return;
-    }
-    
-    const hasOrigin = !!oLine && !!oPc;
-    const hasDest = !!dLine && !!dPc;
-    
-    console.log('Address validation:', { hasOrigin, hasDest });
-    
-    if (!hasOrigin || !hasDest) {
-      console.log('⏳ Waiting for both addresses to be complete');
-      return;
-    }
-
-    console.log('🚀 Starting distance calculation...');
-    const controller = new AbortController();
+    if (!baseUrl) return;
     const url = new URL(baseUrl);
-    url.searchParams.set('originAddress', `${oLine}`);
-    url.searchParams.set('destinationAddress', `${dLine}`);
-    
-    console.log('📡 API URL:', url.toString());
-
-    fetch(url.toString(), { signal: controller.signal })
-      .then(res => {
-        console.log('📥 API Response status:', res.status, res.statusText);
-        if (res.ok) {
-          return res.json();
-        } else {
-          return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
-        }
-      })
-      .then((miles) => {
-        console.log('📊 Raw API response:', miles);
-        const numeric = Number(miles);
-        console.log('🔢 Parsed numeric value:', numeric);
-        console.log('✅ Is valid number?', !Number.isNaN(numeric) && Number.isFinite(numeric));
-        
-        if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
-          console.log('💾 Storing distance in context:', numeric);
-          updateOriginDestination({ distanceMiles: numeric });
-          console.log('✅ Distance successfully stored');
-        } else {
-          console.error('❌ Invalid distance value received:', miles);
-        }
-      })
-      .catch((error) => {
-        console.error('❌ Distance calculation failed:', error);
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      })
-    return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('originLine1'), form.watch('originPostcode'), form.watch('destinationLine1'), form.watch('destinationPostcode')]);
-
-  // Rehydrate form values from saved context once hydrated
-  React.useEffect(() => {
-    if (!isHydrated) return;
-    const o = originDestination?.origin;
-    const d = originDestination?.destination;
-    if (o) {
-      if (o.line1) form.setValue('originLine1', o.line1, { shouldDirty: false });
-      if (o.postcode) form.setValue('originPostcode', o.postcode, { shouldDirty: false });
-      if (typeof o.floor === 'number') {
-        form.setValue('originFloor', o.floor === 0 ? 'ground' : (o.floor >= 6 ? '6+' : String(o.floor)), { shouldDirty: false });
+    url.searchParams.set("originAddress", originLine);
+    url.searchParams.set("destinationAddress", destLine);
+    try {
+      const res = await fetch(url.toString());
+      if (!res.ok) return;
+      const miles = await res.json();
+      const numeric = Number(miles);
+      if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
+        updateOriginDestination({ distanceMiles: numeric });
       }
-      if (typeof o.hasElevator === 'boolean') form.setValue('originElevator', o.hasElevator, { shouldDirty: false });
-    }
-    if (d) {
-      if (d.line1) form.setValue('destinationLine1', d.line1, { shouldDirty: false });
-      if (d.postcode) form.setValue('destinationPostcode', d.postcode, { shouldDirty: false });
-      if (typeof d.floor === 'number') {
-        form.setValue('destinationFloor', d.floor === 0 ? 'ground' : (d.floor >= 6 ? '6+' : String(d.floor)), { shouldDirty: false });
-      }
-      if (typeof d.hasElevator === 'boolean') form.setValue('destinationElevator', d.hasElevator, { shouldDirty: false });
-    }
-  }, [isHydrated]);
+    } catch {}
+  }
 
   function onSubmit(values: CollectionDeliveryFormValues) {
-    // Preserve the distance that was calculated during address entry
-    const preservedDistance = customer?.distanceMiles || originDestination?.distanceMiles;
-    
-    updateOriginDestination({
-      origin: {
-        line1: values.originLine1,
-        postcode: values.originPostcode,
-        floor: floorValueToNumber(values.originFloor),
-        hasElevator: values.originElevator,
-      },
-      destination: {
-        line1: values.destinationLine1,
-        postcode: values.destinationPostcode,
-        floor: floorValueToNumber(values.destinationFloor),
-        hasElevator: values.destinationElevator,
-      },
-      // Preserve the calculated distance
-      distanceMiles: preservedDistance,
-    });
-    
-    // Proceed to inventory step
-    router.push("/inventory");
+    const origin = buildAddress(values.originLine1, values.originPostcode, values.originFloor, values.originElevator);
+    const destination = buildAddress(
+      values.destinationLine1,
+      values.destinationPostcode,
+      values.destinationFloor,
+      values.destinationElevator
+    );
+
+    if (origin && destination) {
+      updateOriginDestination({ origin, destination });
+      computeAndStoreDistance(values.originLine1.trim(), values.destinationLine1.trim());
+      onNext();
+      return;
+    }
   }
 
   return (
@@ -206,8 +255,9 @@ export default function CollectionDeliveryPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <CollectionDeliveryAddresses form={form} />
-                {/* Extra-cost notice similar to origin-destination */}
-                {((!form.watch('originElevator') && floorValueToNumber(form.watch('originFloor')) > 0) || (!form.watch('destinationElevator') && floorValueToNumber(form.watch('destinationFloor')) > 0)) && (
+
+                {((!form.watch("originElevator") && floorValueToNumber(form.watch("originFloor")) > 0) ||
+                  (!form.watch("destinationElevator") && floorValueToNumber(form.watch("destinationFloor")) > 0)) && (
                   <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
                     <AlertCircle className="h-5 w-5" />
                     <div className="text-sm">
@@ -215,13 +265,11 @@ export default function CollectionDeliveryPage() {
                     </div>
                   </div>
                 )}
-                {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
-                  <div className="w-full text-center text-lg text-muted-foreground font-extrabold">
-                    Total distance: {Math.round(originDestination.distanceMiles!)} miles
-                  </div>
-                )}
+
                 <div className="pt-4 flex justify-end">
-                  <Button type="submit" disabled={!isReady}>Next</Button>
+                  <Button type="submit" disabled={!isReady}>
+                    Next
+                  </Button>
                 </div>
               </form>
             </Form>
@@ -231,4 +279,286 @@ export default function CollectionDeliveryPage() {
       <Footer />
     </div>
   );
+}
+
+function EditAddressForm({
+  target,
+  onCancel,
+  onSaved,
+}: {
+  target: "origin" | "destination";
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const { originDestination, updateOriginDestination } = useBooking();
+  const seed = target === "origin" ? originDestination.origin : originDestination.destination;
+  const form = useForm<CollectionDeliveryFormValues>({
+    defaultValues: {
+      originLine1: target === "origin" ? (seed?.line1 || "") : (originDestination.origin?.line1 || ""),
+      originPostcode: target === "origin" ? (seed?.postcode || "") : (originDestination.origin?.postcode || ""),
+      originFloor:
+        ((target === "origin" ? seed?.floor : originDestination.origin?.floor) ?? 0) === 0
+          ? "ground"
+          : (((target === "origin" ? seed?.floor : originDestination.origin?.floor) ?? 0) >= 6
+            ? "6+"
+            : String((target === "origin" ? seed?.floor : originDestination.origin?.floor) ?? "ground")),
+      originElevator: target === "origin" ? (seed?.hasElevator ?? true) : (originDestination.origin?.hasElevator ?? true),
+      destinationLine1:
+        target === "destination" ? (seed?.line1 || "") : (originDestination.destination?.line1 || ""),
+      destinationPostcode:
+        target === "destination" ? (seed?.postcode || "") : (originDestination.destination?.postcode || ""),
+      destinationFloor:
+        ((target === "destination" ? seed?.floor : originDestination.destination?.floor) ?? 0) === 0
+          ? "ground"
+          : (((target === "destination" ? seed?.floor : originDestination.destination?.floor) ?? 0) >= 6
+            ? "6+"
+            : String((target === "destination" ? seed?.floor : originDestination.destination?.floor) ?? "ground")),
+      destinationElevator:
+        target === "destination"
+          ? (seed?.hasElevator ?? true)
+          : (originDestination.destination?.hasElevator ?? true),
+    },
+    mode: "onChange",
+  });
+
+  const isOrigin = target === "origin";
+
+  async function computeAndStoreDistanceIfComplete(updatedLine1?: string) {
+    const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
+    if (!baseUrl) return;
+    const o = isOrigin ? updatedLine1 ?? originDestination.origin?.line1 : originDestination.origin?.line1;
+    const d = !isOrigin ? updatedLine1 ?? originDestination.destination?.line1 : originDestination.destination?.line1;
+    if (!o?.trim() || !d?.trim()) return;
+
+    const url = new URL(baseUrl);
+    url.searchParams.set("originAddress", o.trim());
+    url.searchParams.set("destinationAddress", d.trim());
+    try {
+      const res = await fetch(url.toString());
+      if (!res.ok) return;
+      const miles = await res.json();
+      const numeric = Number(miles);
+      if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
+        updateOriginDestination({ distanceMiles: numeric });
+      }
+    } catch {}
+  }
+
+  function onSubmit(values: CollectionDeliveryFormValues) {
+    if (isOrigin) {
+      const origin = buildAddress(values.originLine1, values.originPostcode, values.originFloor, values.originElevator);
+      if (origin) {
+        updateOriginDestination({ origin });
+        computeAndStoreDistanceIfComplete(values.originLine1);
+        onSaved();
+      }
+      return;
+    }
+
+    const destination = buildAddress(
+      values.destinationLine1,
+      values.destinationPostcode,
+      values.destinationFloor,
+      values.destinationElevator
+    );
+    if (destination) {
+      updateOriginDestination({ destination });
+      computeAndStoreDistanceIfComplete(values.destinationLine1);
+      onSaved();
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <StreamlinedHeader />
+      <main className="flex-1">
+        <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {isOrigin ? (
+                <>
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-4">Edit pickup address</h3>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="originPostcode"
+                          rules={{ required: "Postcode is required" }}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Postcode</FormLabel>
+                              <FormControl>
+                                <PostcodeTypeahead
+                                  postcode={field.value}
+                                  onPostcodeChange={field.onChange}
+                                  onAddressSelected={(addr) => form.setValue("originLine1", addr)}
+                                  placeholder="e.g. EC1A 1BB"
+                                  variant="pickup"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="originFloor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Floor</FormLabel>
+                                <FormControl>
+                                  <Select value={field.value} onValueChange={field.onChange}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Floor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="ground">Ground Floor</SelectItem>
+                                      <SelectItem value="1">1st Floor</SelectItem>
+                                      <SelectItem value="2">2nd Floor</SelectItem>
+                                      <SelectItem value="3">3rd Floor</SelectItem>
+                                      <SelectItem value="4">4th Floor</SelectItem>
+                                      <SelectItem value="5">5th Floor</SelectItem>
+                                      <SelectItem value="6+">6th Floor or Higher</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="originElevator"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col justify-end">
+                                <div className="flex items-center justify-between gap-3">
+                                  <FormLabel>Elevator available</FormLabel>
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                          <Button type="submit">Save</Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </div>
+                  <div>
+                    <ReadonlyCard
+                      title="Delivery address"
+                      address={(originDestination.destination as Address)}
+                      onChange={undefined}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <ReadonlyCard
+                      title="Pickup address"
+                      address={(originDestination.origin as Address)}
+                      onChange={undefined}
+                    />
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-4">Edit delivery address</h3>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="destinationPostcode"
+                          rules={{ required: "Postcode is required" }}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Postcode</FormLabel>
+                              <FormControl>
+                                <PostcodeTypeahead
+                                  postcode={field.value}
+                                  onPostcodeChange={field.onChange}
+                                  onAddressSelected={(addr) => form.setValue("destinationLine1", addr)}
+                                  placeholder="e.g. SW1A 1AA"
+                                  variant="delivery"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="destinationFloor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Floor</FormLabel>
+                                <FormControl>
+                                  <Select value={field.value} onValueChange={field.onChange}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Floor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="ground">Ground Floor</SelectItem>
+                                      <SelectItem value="1">1st Floor</SelectItem>
+                                      <SelectItem value="2">2nd Floor</SelectItem>
+                                      <SelectItem value="3">3rd Floor</SelectItem>
+                                      <SelectItem value="4">4th Floor</SelectItem>
+                                      <SelectItem value="5">5th Floor</SelectItem>
+                                      <SelectItem value="6+">6th Floor or Higher</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="destinationElevator"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col justify-end">
+                                <div className="flex items-center justify-between gap-3">
+                                  <FormLabel>Elevator available</FormLabel>
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                          <Button type="submit">Save</Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function buildAddress(
+  line1: string,
+  postcode: string,
+  floor: string,
+  hasElevator: boolean
+): { line1: string; postcode: string; floor: number; hasElevator: boolean } | undefined {
+  const l = line1.trim();
+  const p = postcode.trim();
+  if (!l || !p) return undefined;
+  const f = floorValueToNumber(floor);
+  const elev = Boolean(hasElevator);
+  return { line1: l, postcode: p, floor: f, hasElevator: elev };
 }
