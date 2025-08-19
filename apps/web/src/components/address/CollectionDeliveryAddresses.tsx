@@ -20,6 +20,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { MapPin, MoveVertical, Building2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { useBooking } from "@/contexts/BookingContext";
+import { Loader2 } from "lucide-react";
 
 export type CollectionDeliveryFormValues = {
   originLine1: string;
@@ -56,6 +59,37 @@ export default function CollectionDeliveryAddresses({
   form: UseFormReturn<CollectionDeliveryFormValues>;
   title?: string;
 }) {
+  const { originDestination, isHydrated } = useBooking();
+  const [editingOrigin, setEditingOrigin] = React.useState(false);
+  const [editingDestination, setEditingDestination] = React.useState(false);
+
+  // Prevent brief flicker of inputs before we know if captured values exist
+  if (!isHydrated) {
+    return (
+      <Card className="border-primary-200">
+        <CardHeader>
+          <CardTitle className="text-primary-700 text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center gap-3 py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="text-sm text-muted-foreground">Loading addresses…</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasOriginCaptured = Boolean(
+    originDestination?.origin?.line1?.trim() && originDestination?.origin?.postcode?.trim()
+  );
+  const hasDestinationCaptured = Boolean(
+    originDestination?.destination?.line1?.trim() && originDestination?.destination?.postcode?.trim()
+  );
+
+  const showOriginInputs = !hasOriginCaptured || editingOrigin;
+  const showDestinationInputs = !hasDestinationCaptured || editingDestination;
+
   return (
     <Card className="border-primary-200">
       <CardHeader>
@@ -72,65 +106,84 @@ export default function CollectionDeliveryAddresses({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="originPostcode"
-                rules={{ required: "Postcode is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postcode</FormLabel>
-                    <FormControl>
-                      <PostcodeTypeahead
-                        postcode={field.value}
-                        onPostcodeChange={field.onChange}
-                        onAddressSelected={(addr) => form.setValue("originLine1", addr)}
-                        placeholder="e.g. EC1A 1BB"
-                        variant="pickup"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="originFloor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
-                      <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Floor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FLOOR_OPTIONS.map((f) => (
-                              <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="originElevator"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col justify-end">
-                      <div className="flex items-center justify-between gap-3">
-                        <FormLabel className="flex items-center gap-2">
-                          <MoveVertical className="h-4 w-4" /> Elevator available
-                        </FormLabel>
+              {showOriginInputs ? (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="originPostcode"
+                    rules={{ required: "Postcode is required" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postcode</FormLabel>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <PostcodeTypeahead
+                            postcode={field.value}
+                            onPostcodeChange={field.onChange}
+                            onAddressSelected={(addr) => form.setValue("originLine1", addr)}
+                            placeholder="e.g. EC1A 1BB"
+                            variant="pickup"
+                          />
                         </FormControl>
-                      </div>
-                    </FormItem>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="originFloor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Floor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {FLOOR_OPTIONS.map((f) => (
+                                  <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="originElevator"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col justify-end">
+                          <div className="flex items-center justify-between gap-3">
+                            <FormLabel className="flex items-center gap-2">
+                              <MoveVertical className="h-4 w-4" /> Elevator available
+                            </FormLabel>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {hasOriginCaptured && (
+                    <div className="flex justify-end">
+                      <Button variant="ghost" type="button" onClick={() => setEditingOrigin(false)}>
+                        Done
+                      </Button>
+                    </div>
                   )}
+                </>
+              ) : (
+                <ReadonlyAddress
+                  addressLine1={originDestination.origin?.line1 || ""}
+                  postcode={originDestination.origin?.postcode || ""}
+                  floor={originDestination.origin?.floor}
+                  hasElevator={originDestination.origin?.hasElevator}
+                  onChange={() => setEditingOrigin(true)}
                 />
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -143,69 +196,124 @@ export default function CollectionDeliveryAddresses({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="destinationPostcode"
-                rules={{ required: "Postcode is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postcode</FormLabel>
-                    <FormControl>
-                      <PostcodeTypeahead
-                        postcode={field.value}
-                        onPostcodeChange={field.onChange}
-                        onAddressSelected={(addr) => form.setValue("destinationLine1", addr)}
-                        placeholder="e.g. SW1A 1AA"
-                        variant="delivery"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="destinationFloor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
-                      <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Floor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FLOOR_OPTIONS.map((f) => (
-                              <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="destinationElevator"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col justify-end">
-                      <div className="flex items-center justify-between gap-3">
-                        <FormLabel className="flex items-center gap-2">
-                          <MoveVertical className="h-4 w-4" /> Elevator available
-                        </FormLabel>
+              {showDestinationInputs ? (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="destinationPostcode"
+                    rules={{ required: "Postcode is required" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postcode</FormLabel>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <PostcodeTypeahead
+                            postcode={field.value}
+                            onPostcodeChange={field.onChange}
+                            onAddressSelected={(addr) => form.setValue("destinationLine1", addr)}
+                            placeholder="e.g. SW1A 1AA"
+                            variant="delivery"
+                          />
                         </FormControl>
-                      </div>
-                    </FormItem>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="destinationFloor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Floor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {FLOOR_OPTIONS.map((f) => (
+                                  <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="destinationElevator"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col justify-end">
+                          <div className="flex items-center justify-between gap-3">
+                            <FormLabel className="flex items-center gap-2">
+                              <MoveVertical className="h-4 w-4" /> Elevator available
+                            </FormLabel>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {hasDestinationCaptured && (
+                    <div className="flex justify-end">
+                      <Button variant="ghost" type="button" onClick={() => setEditingDestination(false)}>
+                        Done
+                      </Button>
+                    </div>
                   )}
+                </>
+              ) : (
+                <ReadonlyAddress
+                  addressLine1={originDestination.destination?.line1 || ""}
+                  postcode={originDestination.destination?.postcode || ""}
+                  floor={originDestination.destination?.floor}
+                  hasElevator={originDestination.destination?.hasElevator}
+                  onChange={() => setEditingDestination(true)}
                 />
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ReadonlyAddress({
+  addressLine1,
+  postcode,
+  floor,
+  hasElevator,
+  onChange,
+}: {
+  addressLine1: string;
+  postcode: string;
+  floor?: number;
+  hasElevator?: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border p-3 bg-muted/30">
+        <div className="font-medium text-foreground">{addressLine1}</div>
+        <div className="text-sm text-muted-foreground">{postcode}</div>
+        <div className="text-xs text-muted-foreground mt-1">
+          {typeof floor === "number" ? (floor === 0 ? "Ground" : `Floor ${floor}`) : ""}
+          {typeof hasElevator === "boolean"
+            ? hasElevator
+              ? " • Elevator available"
+              : " • No elevator"
+            : ""}
+        </div>
+      </div>
+      <div>
+        <Button variant="outline" size="sm" type="button" onClick={onChange}>
+          Change
+        </Button>
+      </div>
+    </div>
   );
 }
