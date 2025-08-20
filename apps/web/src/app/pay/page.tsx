@@ -226,6 +226,11 @@ function PayContent() {
     };
   }, [clientSecret]);
 
+  // Force re-render of Elements when payment option changes
+  const elementsKey = React.useMemo(() => {
+    return `${selectedOption}-${clientSecret}`;
+  }, [selectedOption, clientSecret]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
   <StreamlinedHeader hideCart />
@@ -352,7 +357,7 @@ function PayContent() {
                 </div>
               )}
               {clientSecret && options && (
-                <Elements stripe={stripePromise} options={options}>
+                <Elements key={elementsKey} stripe={stripePromise} options={options}>
                   <CheckoutForm
                     returnUrl={`${window.location.origin}/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
                   />
