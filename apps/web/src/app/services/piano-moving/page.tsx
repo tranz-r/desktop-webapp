@@ -26,7 +26,7 @@ export default function PianoMovingPage() {
         description="Specialized piano moving with expert care and precision. We handle all types of pianos - from uprights to grand pianos - with the utmost attention to detail and safety."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

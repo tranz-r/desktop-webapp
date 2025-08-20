@@ -22,7 +22,7 @@ export default function PressNewsPage() {
         description="Stay updated with the latest news, press releases, and media coverage about Tranzr Moves and the moving industry."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "Latest News",
@@ -417,7 +417,7 @@ export default function PressNewsPage() {
             Follow us for the latest news, updates, and insights from the moving industry.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/inventory">
+            <Link href="/quote-option">
               <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

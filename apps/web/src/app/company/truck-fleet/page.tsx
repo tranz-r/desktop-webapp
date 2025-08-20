@@ -115,7 +115,7 @@ export default function TruckFleetPage() {
         }}
         secondaryAction={{
           text: "GET INSTANT QUOTE",
-          href: "/inventory"
+          href: "/quote-option"
         }}
       />
 

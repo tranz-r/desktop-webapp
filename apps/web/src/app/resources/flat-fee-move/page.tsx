@@ -26,7 +26,7 @@ export default function FlatFeeMovePage() {
         description="Discover the benefits of flat fee moving - transparent pricing, no hidden costs, and peace of mind knowing exactly what you'll pay before your move begins."
         primaryAction={{
           text: "Get Flat Fee Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "Learn More",

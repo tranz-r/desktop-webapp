@@ -29,7 +29,7 @@ export default function HourlyMovingPage() {
         description="Pay only for the time you need with our transparent hourly rates. Perfect for small moves, furniture delivery, and flexible scheduling."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Rates",
@@ -259,7 +259,7 @@ export default function HourlyMovingPage() {
             to help you move efficiently and cost-effectively.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/inventory">
+            <Link href="/quote-option">
               <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

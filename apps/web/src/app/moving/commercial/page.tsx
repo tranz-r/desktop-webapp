@@ -30,7 +30,7 @@ export default function CommercialMovingPage() {
         description="Minimize downtime and maximize efficiency with our specialized commercial moving services. We handle office relocations with precision and care."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Case Studies",
@@ -244,7 +244,7 @@ export default function CommercialMovingPage() {
             to help you plan a successful office relocation.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/inventory">
+            <Link href="/quote-option">
               <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

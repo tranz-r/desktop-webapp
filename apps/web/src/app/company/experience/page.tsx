@@ -129,7 +129,7 @@ export default function ExperiencePage() {
         }}
         secondaryAction={{
           text: "GET INSTANT QUOTE",
-          href: "/inventory"
+          href: "/quote-option"
         }}
       />
 

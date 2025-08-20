@@ -43,7 +43,7 @@ export default function HomePage() {
 
             {/* Hero CTA */}
             <div className="pb-10">
-              <Link href="/inventory">
+              <Link href="/quote-option">
                 <Button
                   variant="default"
                   className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg scale-[1.3] origin-left"
@@ -162,7 +162,7 @@ export default function HomePage() {
         buttonText="GET A STORAGE QUOTE"
         imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
         imageAlt="Professional storage service with moving boxes"
-        href="/inventory"
+        href="/quote-option"
       />
 
       {/* Footer */}

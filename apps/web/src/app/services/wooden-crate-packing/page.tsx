@@ -26,7 +26,7 @@ export default function WoodenCratePackingPage() {
         description="Specialized wooden crate construction and packing for valuable, fragile, and oversized items. Our custom crates provide maximum protection during transport."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

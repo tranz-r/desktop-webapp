@@ -58,7 +58,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
       )}
 
       {/* Get Instant Quote Button */}
-      <Link href="/inventory">
+      <Link href="/quote-option">
         <Button
           size="lg"
           variant="default"

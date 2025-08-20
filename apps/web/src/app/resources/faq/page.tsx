@@ -299,7 +299,7 @@ export default function FAQPage() {
                   Get a free, no-obligation quote for your move. Our team will work with you 
                   to create a customized moving plan that fits your needs and budget.
                 </p>
-                <Link href="/inventory">
+                <Link href="/quote-option">
               <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
                   Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>

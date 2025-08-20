@@ -29,7 +29,7 @@ export default function TwentyFourSevenMovingPage() {
         description="The only moving company in Northamptonshire that offers 24/7/365 moving services. No matter the time or day, we're here when you need us."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "Emergency Move",

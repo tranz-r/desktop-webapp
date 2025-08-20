@@ -26,7 +26,7 @@ export default function FitnessEquipmentPage() {
         description="Specialized moving services for all types of fitness equipment. From treadmills and weight machines to home gyms and commercial equipment, we handle it all with care."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

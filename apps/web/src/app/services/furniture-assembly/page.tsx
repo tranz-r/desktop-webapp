@@ -26,7 +26,7 @@ export default function FurnitureAssemblyPage() {
         description="Expert furniture assembly and disassembly services. From flat-pack furniture to complex pieces, our skilled technicians ensure everything is assembled correctly and safely."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

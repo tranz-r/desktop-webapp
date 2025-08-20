@@ -47,7 +47,7 @@ export default function PickupDropoffPage() {
   const [dateError, setDateError] = React.useState<string | null>(null);
  
  
-
+  // Examine this /inventory call here and what to do
   React.useEffect(() => {
     if (!hasInventory(items.length)) router.replace('/inventory');
     

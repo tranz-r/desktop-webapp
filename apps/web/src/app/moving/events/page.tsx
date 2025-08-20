@@ -29,7 +29,7 @@ export default function EventsMovingPage() {
         description="From trade shows to exhibitions, corporate events to special occasions, we provide expert moving services for all your event needs."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",
@@ -259,7 +259,7 @@ export default function EventsMovingPage() {
             to help you plan a successful event.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/inventory">
+            <Link href="/quote-option">
               <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

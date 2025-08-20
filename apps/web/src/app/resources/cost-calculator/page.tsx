@@ -84,7 +84,7 @@ export default function CostCalculatorPage() {
         }}
         secondaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
       />
 

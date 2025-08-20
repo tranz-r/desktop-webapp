@@ -26,7 +26,7 @@ export default function ValuableItemsPage() {
         description="Specialized moving services for your most precious possessions. From antiques and artwork to jewelry and collectibles, we provide the highest level of care and security."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

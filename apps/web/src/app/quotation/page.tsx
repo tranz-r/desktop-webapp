@@ -13,7 +13,7 @@ export default function QuotationPage() {
         description="Fast, reliable moving services tailored to your needs. Get an instant quote and book your move in minutes."
         primaryAction={{
           label: "Start Building Inventory",
-          href: "/inventory",
+          href: "/quote-option",
         }}
       />
 

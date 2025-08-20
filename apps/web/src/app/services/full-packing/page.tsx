@@ -26,7 +26,7 @@ export default function FullPackingPage() {
         description="Complete packing services from start to finish. Our expert packers handle everything with care, ensuring your belongings are safely packed and ready for transport."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",

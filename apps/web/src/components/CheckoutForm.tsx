@@ -83,12 +83,13 @@ export function CheckoutForm({ returnUrl }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Optionally collect/link email */}
-      <LinkAuthenticationElement
+      {/* <LinkAuthenticationElement
         onChange={(e) => setEmail(e.value.email)}
         options={{ defaultValues: { email } }}
-      />
+      /> */}
       {/* Optional billing address */}
-      <AddressElement options={{ mode: 'billing' }} />
+      {/* <AddressElement options={{ mode: 'billing' }} /> */}
+
       <PaymentElement />
       {message && <div className="text-sm text-red-600">{message}</div>}
       <div className="flex items-start gap-2 pt-1">

@@ -212,7 +212,7 @@ export default function Header({ sticky = true }: HeaderProps) {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-          <Link href="/inventory">
+          <Link href="/quote-option">
             <Button
               variant="default"
               className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg"
@@ -327,7 +327,7 @@ export default function Header({ sticky = true }: HeaderProps) {
                 MOVING LOCATIONS
               </a>
               <div className="pt-4 border-t border-primary-400">
-                <Link href="/inventory" className="block">
+                <Link href="/quote-option" className="block">
                   <Button className="bg-black hover:bg-black/90 text-white px-6 py-2 rounded-md font-medium w-full mb-4">
                     GET INSTANT QUOTE <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

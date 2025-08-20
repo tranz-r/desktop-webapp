@@ -40,7 +40,7 @@ export default function MovingComponent() {
             </div>
             {/* Hero CTA */}
             <div className="pb-10">
-              <Link href="/inventory">
+              <Link href="/quote-option">
                 <Button
                   variant="default"
                   className="bg-secondary-400 hover:bg-secondary-500 text-white font-extrabold lg:text-lg scale-[1.3] origin-left"

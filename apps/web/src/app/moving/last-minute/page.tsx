@@ -28,7 +28,7 @@ export default function LastMinuteMovingPage() {
         description="Need to move in a hurry? We specialize in last-minute moves with rapid response times and professional service when you need it most."
         primaryAction={{
           text: "Emergency Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "Call Now",

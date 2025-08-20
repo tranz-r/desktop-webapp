@@ -26,7 +26,7 @@ export default function WhiteGloveMovingPage() {
         description="Experience the highest level of moving service with our white glove treatment. We handle your most valuable possessions with the utmost care and attention to detail."
         primaryAction={{
           text: "Get Free Quote",
-          href: "/inventory"
+          href: "/quote-option"
         }}
         secondaryAction={{
           text: "View Our Process",
