@@ -82,11 +82,39 @@ function usePaymentIntentStatus(clientSecret: string | null) {
 function ConfirmationContent() {
   const booking = useBooking();
   const params = useSearchParams();
-  const clientSecret = params.get('payment_intent_client_secret') || params.get('cs');
   const refFromUrl = params.get('ref');
+  const [clientSecret, setClientSecret] = React.useState<string>('');
   const { loading, status, message, error } = usePaymentIntentStatus(clientSecret);
   const job = booking.payment?.jobDetails;
   const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
+
+  const { payment } = booking;
+  const paymentIntentId = payment?.paymentIntentId;
+
+  // Fetch client secret using stored PaymentIntentId
+  React.useEffect(() => {
+    const fetchClientSecret = async () => {
+      if (!paymentIntentId) return;
+
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment intent: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching client secret:', error);
+      }
+    };
+
+    if (paymentIntentId) {
+      fetchClientSecret();
+    }
+  }, [paymentIntentId]);
 
   // Promote status to Paid locally once payment succeeded (backend may still show Pending)
   React.useEffect(() => {

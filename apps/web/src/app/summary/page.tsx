@@ -195,9 +195,12 @@ export default function SummaryPage() {
       const data = await res.json();
       // Expect paymentIntent only (Payment Element flow)
       if (data?.paymentIntent) {
-        // Navigate to /pay including booking reference for continuity
-        const ref = booking.payment?.bookingId ? `&ref=${encodeURIComponent(booking.payment.bookingId)}` : '';
-        router.push(`/pay?cs=${encodeURIComponent(data.paymentIntent)}${ref}`);
+        // Store the PaymentIntentId in context for secure client secret retrieval
+        updatePayment({ paymentIntentId: data.paymentIntentId });
+        
+        // Navigate to /pay with only the booking reference
+        const ref = booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : '';
+        router.push(`/pay${ref}`);
         return;
       }
       throw new Error('Payment init did not return paymentIntent (Payment Element flow only)');

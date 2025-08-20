@@ -12,7 +12,7 @@ import { canEnterPricing } from '@/lib/guards';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock } from 'lucide-react';
+import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock, Check, FileDown, Star } from 'lucide-react';
 import type { PricingTierId } from '@/types/booking';
 
 export default function PricingPage() {
@@ -155,6 +155,16 @@ export default function PricingPage() {
     return c.total;
   };
 
+  // Persist customer selection to pricing state for send/receive flows
+  React.useEffect(() => {
+    if (!isSendReceiveQuote || !pickUpDropOffPrice) return;
+    const selectedPricing = pickUpDropOffPrice[selectedServiceTier];
+    updatePricing({
+      pricingTier: selectedServiceTier === 'premium' ? 'premium' : 'standard',
+      totalCost: selectedPricing.customerTotal,
+    });
+  }, [isSendReceiveQuote, pickUpDropOffPrice, selectedServiceTier, updatePricing]);
+
   // Handle continue for send/receive quotes
   const handleSendReceiveContinue = () => {
     if (pickUpDropOffPrice) {
@@ -189,138 +199,104 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* Send/Receive Quote Pricing Display */}
+          {/* Send/Receive Quote Pricing Display (Modern two-card design) */}
           {isSendReceiveQuote && pickUpDropOffPrice && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Standard Service */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedServiceTier === 'standard' 
-                    ? 'border-primary-500 bg-primary-50 shadow-lg' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+              <Card
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedServiceTier('standard')}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedServiceTier('standard')}
+                aria-pressed={selectedServiceTier === 'standard'}
+                className={`cursor-pointer overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 ${
+                  selectedServiceTier === 'standard' ? 'ring-2 ring-primary-400 shadow-lg' : 'hover:shadow'
+                }`}
               >
-                <CardHeader>
-                <CardTitle className="text-primary-700 text-base flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Standard Service
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary-700">
-                      £{pickUpDropOffPrice.standard.customerTotal.toFixed(0)}
-                    </div>
-                    <div className="text-sm text-gray-600">inc. VAT</div>
+                <div className="bg-primary-600 text-primary-50 p-4 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">Standard</div>
+                    <div className="text-xl font-semibold">Removal</div>
                   </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Base Service:</span>
-                      <span>£{pickUpDropOffPrice.standard.base.toFixed(0)}</span>
-                    </div>
-                    {pickUpDropOffPrice.standard.volumeSurcharge > 0 && (
-                      <div className="flex justify-between">
-                        <span>Volume Surcharge:</span>
-                        <span>£{pickUpDropOffPrice.standard.volumeSurcharge.toFixed(0)}</span>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    {selectedServiceTier === 'standard' && (
+                      <span className="text-[10px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">Selected</span>
                     )}
-                    <div className="flex justify-between">
-                      <span>Crew ({pickUpDropOffPrice.standard.requestedMovers} movers):</span>
-                      <span>£{pickUpDropOffPrice.standard.crewFee.toFixed(0)}</span>
-                    </div>
-                    {pickUpDropOffPrice.standard.stairsFee > 0 && (
-                      <div className="flex justify-between">
-                        <span>Stairs Fee:</span>
-                        <span>£{pickUpDropOffPrice.standard.stairsFee.toFixed(0)}</span>
-                      </div>
-                    )}
-                    {pickUpDropOffPrice.standard.longCarryFee > 0 && (
-                      <div className="flex justify-between">
-                        <span>Long Carry Fee:</span>
-                        <span>£{pickUpDropOffPrice.standard.longCarryFee.toFixed(0)}</span>
-                      </div>
-                    )}
+                    <Truck className="h-7 w-7 opacity-90" />
+                  </div>
+                </div>
+                <CardContent className="p-5 space-y-5">
+                  <div>
+                    <div className="text-4xl font-bold text-foreground">£{pickUpDropOffPrice.standard.customerTotal.toFixed(0)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Includes VAT</div>
                   </div>
 
-                  <div className="text-center text-sm text-gray-600">
-                    <Clock className="inline h-4 w-4 mr-1" />
-                    Total Volume: {pickUpDropOffPrice.standard.totalVolumeM3.toFixed(2)} m³ • 
-                    Distance: {distanceMiles || 0} miles
+                  <div>
+                    <div className="text-sm font-semibold text-foreground mb-2">Includes:</div>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Moving team to Load and Move</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Book now, pay later</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Complimentary Cover</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free 48 hour Cancellation</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Waiting time up to 30 mins</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free Home Setup Service</li>
+                    </ul>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground text-center">
+                    <Clock className="inline h-3.5 w-3.5 mr-1" /> Total Volume: {pickUpDropOffPrice.standard.totalVolumeM3.toFixed(2)} m³ • Distance: {distanceMiles || 0} miles
                   </div>
                 </CardContent>
               </Card>
 
               {/* Premium Service */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedServiceTier === 'premium' 
-                    ? 'border-primary-500 bg-primary-50 shadow-lg' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+              <Card
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedServiceTier('premium')}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedServiceTier('premium')}
+                aria-pressed={selectedServiceTier === 'premium'}
+                className={`cursor-pointer overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 ${
+                  selectedServiceTier === 'premium' ? 'ring-2 ring-primary-400 shadow-lg' : 'hover:shadow'
+                }`}
               >
-                <CardHeader>
-                <CardTitle className="text-primary-700 text-base flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Premium Service
-                  <Badge variant="secondary" className="text-xs">RECOMMENDED</Badge>
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary-700">
-                      £{pickUpDropOffPrice.premium.customerTotal.toFixed(0)}
-                    </div>
-                    <div className="text-sm text-gray-600">inc. VAT</div>
+                <div className="bg-primary-700 text-primary-50 p-4 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">Premium</div>
+                    <div className="text-xl font-semibold">Full Pack & Move</div>
                   </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Premium Base Service:</span>
-                      <span>£{(pickUpDropOffPrice.premium.base + pickUpDropOffPrice.premium.tierUplift).toFixed(0)}</span>
-                    </div>
-                    {pickUpDropOffPrice.premium.volumeSurcharge > 0 && (
-                      <div className="flex justify-between">
-                        <span>Volume Surcharge:</span>
-                        <span>£{pickUpDropOffPrice.premium.volumeSurcharge.toFixed(0)}</span>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-300" />
+                    {selectedServiceTier === 'premium' && (
+                      <span className="text-[10px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">Selected</span>
                     )}
-                    <div className="flex justify-between">
-                      <span>Crew ({pickUpDropOffPrice.premium.requestedMovers} movers):</span>
-                      <span>£{pickUpDropOffPrice.premium.crewFee.toFixed(0)}</span>
-                    </div>
-                    {pickUpDropOffPrice.premium.assemblyFee > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>✓ Assembly Included:</span>
-                        <span>£0</span>
-                      </div>
-                    )}
-                    {pickUpDropOffPrice.premium.dismantleFee > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>✓ Dismantle Included:</span>
-                        <span>£0</span>
-                      </div>
-                    )}
-                    {pickUpDropOffPrice.premium.stairsFee > 0 && (
-                      <div className="flex justify-between">
-                        <span>Stairs Fee:</span>
-                        <span>£{pickUpDropOffPrice.premium.stairsFee.toFixed(0)}</span>
-                      </div>
-                    )}
-                    {pickUpDropOffPrice.premium.longCarryFee > 0 && (
-                      <div className="flex justify-between">
-                        <span>Long Carry Fee:</span>
-                        <span>£{pickUpDropOffPrice.premium.longCarryFee.toFixed(0)}</span>
-                      </div>
-                    )}
+                    <Truck className="h-7 w-7 opacity-90" />
+                  </div>
+                </div>
+                <CardContent className="p-5 space-y-5">
+                  <div>
+                    <div className="text-4xl font-bold text-foreground">£{pickUpDropOffPrice.premium.customerTotal.toFixed(0)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Includes VAT</div>
                   </div>
 
-                  <div className="text-center text-sm text-gray-600">
-                    <Clock className="inline h-4 w-4 mr-1" />
-                    Total Volume: {pickUpDropOffPrice.premium.totalVolumeM3.toFixed(2)} m³ • 
-                    Distance: {distanceMiles || 0} miles
+                  <div>
+                    <div className="text-sm font-semibold text-foreground mb-2">Includes:</div>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Moving team to Pack, Load and Move</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Full Packing Service</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> All Packaging Materials</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Book now, pay later</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Dismantling & Reassembly</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Dedicated Consultant</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Protection+ Cover</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free 48 hour Cancellation</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Extended wait time up to 2 hours</li>
+                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free Home Setup Service</li>
+                    </ul>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground text-center">
+                    <Clock className="inline h-3.5 w-3.5 mr-1" /> Total Volume: {pickUpDropOffPrice.premium.totalVolumeM3.toFixed(2)} m³ • Distance: {distanceMiles || 0} miles
                   </div>
                 </CardContent>
               </Card>

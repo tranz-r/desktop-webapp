@@ -1,38 +1,85 @@
 "use client";
 
 import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useBooking } from '@/contexts/BookingContext';
 
 function ResultContent() {
-  const params = useSearchParams();
-  const clientSecret = params.get('payment_intent_client_secret') || '';
-  const [status, setStatus] = React.useState<string>('Checking payment…');
+  const booking = useBooking();
+  const [clientSecret, setClientSecret] = React.useState<string>('');
+  const [isLoadingClientSecret, setIsLoadingClientSecret] = React.useState(true);
+  const [status, setStatus] = React.useState<string>('Loading payment details…');
 
+  const { isHydrated, payment } = booking;
+  const paymentIntentId = payment?.paymentIntentId;
+
+  // Fetch client secret using stored PaymentIntentId
+  React.useEffect(() => {
+    const fetchClientSecret = async () => {
+      if (!paymentIntentId) {
+        setIsLoadingClientSecret(false);
+        setStatus('Payment intent not found. Please restart checkout.');
+        return;
+      }
+
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment intent: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching client secret:', error);
+        setStatus('Failed to load payment details. Please try again.');
+      } finally {
+        setIsLoadingClientSecret(false);
+      }
+    };
+
+    if (isHydrated && paymentIntentId) {
+      fetchClientSecret();
+    } else if (isHydrated) {
+      setIsLoadingClientSecret(false);
+      setStatus('Payment intent not found. Please restart checkout.');
+    }
+  }, [isHydrated, paymentIntentId]);
+
+  // Check payment status once client secret is available
   React.useEffect(() => {
     const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
     if (!clientSecret || !publishableKey) return;
 
+    setStatus('Checking payment status…');
+
     loadStripe(publishableKey).then(async (stripe) => {
       if (!stripe) return;
 
-      const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+      try {
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
 
-      switch (paymentIntent?.status) {
-        case 'succeeded':
-          setStatus('Payment succeeded. Thank you!');
-          break;
-        case 'processing':
-          setStatus('Your payment is processing.');
-          break;
-        case 'requires_payment_method':
-          setStatus('Payment failed. Please try again.');
-          break;
-        default:
-          setStatus('Unknown payment status.');
+        switch (paymentIntent?.status) {
+          case 'succeeded':
+            setStatus('Payment succeeded. Thank you!');
+            break;
+          case 'processing':
+            setStatus('Your payment is processing.');
+            break;
+          case 'requires_payment_method':
+            setStatus('Payment failed. Please try again.');
+            break;
+          default:
+            setStatus('Unknown payment status.');
+        }
+      } catch (error) {
+        console.error('Error retrieving payment intent:', error);
+        setStatus('Error checking payment status. Please contact support.');
       }
     });
   }, [clientSecret]);
@@ -48,7 +95,24 @@ function ResultContent() {
               <CardTitle>Payment Result</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-700">{status}</p>
+              {isLoadingClientSecret && (
+                <div className="text-sm text-blue-600">
+                  Loading payment details...
+                </div>
+              )}
+              {!isLoadingClientSecret && !clientSecret && !paymentIntentId && (
+                <div className="text-sm text-red-600">
+                  Payment intent not found. Please restart checkout.
+                </div>
+              )}
+              {!isLoadingClientSecret && !clientSecret && paymentIntentId && (
+                <div className="text-sm text-red-600">
+                  Failed to load payment details. Please try again.
+                </div>
+              )}
+              {clientSecret && (
+                <p className="text-sm text-gray-700">{status}</p>
+              )}
             </CardContent>
           </Card>
         </div>

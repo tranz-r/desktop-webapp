@@ -135,6 +135,7 @@ export interface PricingState {
 export interface PaymentState {
   bookingId?: string;
   clientSecret?: string;
+  paymentIntentId?: string;
   status?: 'pending' | 'paid' | 'failed';
   jobDetails?: any;
 }

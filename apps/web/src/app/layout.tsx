@@ -4,6 +4,9 @@ import { Quicksand } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import dynamic from "next/dynamic";
+
+const RouteLoadingOverlay = dynamic(() => import("@/components/RouteLoadingOverlay"), { ssr: false });
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
@@ -27,6 +30,7 @@ export default function RootLayout({
       <body className={`${quicksand.variable} font-quicksand`}>
         <Providers>
           {children}
+          <RouteLoadingOverlay />
           <TempoInit />
         </Providers>
       </body>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import CheckoutForm from '@/components/CheckoutForm';
@@ -15,12 +14,12 @@ import { computeCost } from '@/lib/cost';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 function PayContent() {
-  const params = useSearchParams();
-  const clientSecret = params.get('cs') || '';
   const booking = useBooking();
   const { items: cartItems } = useCart();
+  const [clientSecret, setClientSecret] = React.useState<string>('');
+  const [isLoadingClientSecret, setIsLoadingClientSecret] = React.useState(true);
 
-  const { isHydrated, vehicle, originDestination, pricing, customer } = booking;
+  const { isHydrated, vehicle, originDestination, pricing, customer, payment } = booking;
   // Pull stable references we actually need (avoid depending on whole booking object)
   const scheduleDateISO = booking.schedule?.dateISO;
   const updatePayment = booking.updatePayment; // assumed stable via context
@@ -30,6 +29,39 @@ function PayContent() {
   const destination = originDestination.destination;
   const distanceMiles = originDestination.distanceMiles;
   const pricingTier = pricing.pricingTier;
+  const paymentIntentId = payment?.paymentIntentId;
+
+  // Fetch client secret using stored PaymentIntentId
+  React.useEffect(() => {
+    const fetchClientSecret = async () => {
+      if (!paymentIntentId) {
+        setIsLoadingClientSecret(false);
+        return;
+      }
+
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment intent: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching client secret:', error);
+      } finally {
+        setIsLoadingClientSecret(false);
+      }
+    };
+
+    if (isHydrated && paymentIntentId) {
+      fetchClientSecret();
+    } else if (isHydrated) {
+      setIsLoadingClientSecret(false);
+    }
+  }, [isHydrated, paymentIntentId]);
 
   // Compute cost breakdown for payload CostDto
   const costBreakdown = React.useMemo(() => {
@@ -105,9 +137,19 @@ function PayContent() {
               <CardTitle>Secure Payment</CardTitle>
             </CardHeader>
             <CardContent>
-              {!clientSecret && (
+              {isLoadingClientSecret && (
+                <div className="text-sm text-blue-600">
+                  Loading payment details...
+                </div>
+              )}
+              {!isLoadingClientSecret && !clientSecret && !paymentIntentId && (
                 <div className="text-sm text-red-600">
-                  Missing client secret. Please restart checkout.
+                  Missing payment intent. Please restart checkout.
+                </div>
+              )}
+              {!isLoadingClientSecret && !clientSecret && paymentIntentId && (
+                <div className="text-sm text-red-600">
+                  Failed to load payment details. Please try again.
                 </div>
               )}
               {clientSecret && options && (

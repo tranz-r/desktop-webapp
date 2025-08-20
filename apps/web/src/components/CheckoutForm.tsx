@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import TermsContent from '@/components/legal/TermsContent';
+import { useBooking } from '@/contexts/BookingContext';
 
 type Props = {
   returnUrl: string;
@@ -15,33 +16,45 @@ type Props = {
 export function CheckoutForm({ returnUrl }: Props) {
   const stripe = useStripe();
   const elements = useElements();
+  const booking = useBooking();
   const [email, setEmail] = React.useState<string>('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [processing, setProcessing] = React.useState(false);
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [termsOpen, setTermsOpen] = React.useState(false);
+  const [clientSecret, setClientSecret] = React.useState<string>('');
 
+  const { payment } = booking;
+  const paymentIntentId = payment?.paymentIntentId;
+
+  // Fetch client secret using stored PaymentIntentId
   React.useEffect(() => {
-    if (!stripe) return;
-    const cs = new URLSearchParams(window.location.search).get('payment_intent_client_secret');
-    if (!cs) return;
-    stripe.retrievePaymentIntent(cs).then(({ paymentIntent }) => {
-      if (!paymentIntent) return;
-      switch (paymentIntent.status) {
-        case 'succeeded':
-          setMessage('Payment succeeded.');
-          break;
-        case 'processing':
-          setMessage('Your payment is processing.');
-          break;
-        case 'requires_payment_method':
-          setMessage('Your payment was not successful, please try again.');
-          break;
-        default:
-          setMessage('Something went wrong.');
+    const fetchClientSecret = async () => {
+      if (!paymentIntentId) return;
+
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment intent: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching client secret:', error);
+        setMessage('Failed to load payment details. Please try again.');
       }
-    });
-  }, [stripe]);
+    };
+
+    if (paymentIntentId) {
+      fetchClientSecret();
+    }
+  }, [paymentIntentId]);
+
+  // Remove the premature payment status check - this was causing the "payment was not successful" message
+  // to appear when the Elements first load, before the user has even attempted payment
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
