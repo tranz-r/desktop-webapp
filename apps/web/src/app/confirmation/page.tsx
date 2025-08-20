@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Hook placed at module scope per React rules
-function usePaymentIntentStatus(clientSecret: string | null) {
+function usePaymentStatus(clientSecret: string | null) {
   const [loading, setLoading] = React.useState(true);
   const [status, setStatus] = React.useState<string>('');
   const [message, setMessage] = React.useState<string>('');
@@ -37,35 +37,76 @@ function usePaymentIntentStatus(clientSecret: string | null) {
           if (!cancelled) setError('Failed to initialize Stripe.');
           return;
         }
-        const { paymentIntent, error: piError } = await stripe.retrievePaymentIntent(clientSecret);
-        if (piError) {
-          if (!cancelled) setError(piError.message || 'Failed to retrieve payment intent.');
-          return;
-        }
-        if (!paymentIntent) {
-          if (!cancelled) setError('No payment intent found.');
-          return;
-        }
-        if (cancelled) return;
-        setStatus(paymentIntent.status);
-        switch (paymentIntent.status) {
-          case 'succeeded':
-            setMessage('Payment succeeded. Thank you!');
-            break;
-          case 'processing':
-            setMessage('Your payment is processing.');
-            break;
-          case 'requires_payment_method':
-            setMessage('Payment failed. Please try again with a different method.');
-            break;
-          case 'requires_action':
-            setMessage('Additional authentication required. Please complete the steps.');
-            break;
-          case 'canceled':
-            setMessage('Payment was canceled. You can attempt again.');
-            break;
-          default:
-            setMessage('Unable to determine payment status.');
+
+        // Determine if this is a Setup Intent or Payment Intent based on the client secret
+        const isSetupIntent = clientSecret.startsWith('seti_');
+        
+        if (isSetupIntent) {
+          // Handle Setup Intent (for "Pay later" option)
+          const { setupIntent, error: siError } = await stripe.retrieveSetupIntent(clientSecret);
+          if (siError) {
+            if (!cancelled) setError(siError.message || 'Failed to retrieve setup intent.');
+            return;
+          }
+          if (!setupIntent) {
+            if (!cancelled) setError('No setup intent found.');
+            return;
+          }
+          if (cancelled) return;
+          
+          setStatus(setupIntent.status);
+          switch (setupIntent.status) {
+            case 'succeeded':
+              setMessage('Payment method setup succeeded. Your payment method has been saved for future use.');
+              break;
+            case 'processing':
+              setMessage('Your payment method setup is processing.');
+              break;
+            case 'requires_payment_method':
+              setMessage('Setup failed. Please try again with a different method.');
+              break;
+            case 'requires_action':
+              setMessage('Additional authentication required. Please complete the steps.');
+              break;
+            case 'canceled':
+              setMessage('Setup was canceled. You can attempt again.');
+              break;
+            default:
+              setMessage('Unable to determine setup status.');
+          }
+        } else {
+          // Handle Payment Intent (for "Pay in full" or "Pay deposit" options)
+          const { paymentIntent, error: piError } = await stripe.retrievePaymentIntent(clientSecret);
+          if (piError) {
+            if (!cancelled) setError(piError.message || 'Failed to retrieve payment intent.');
+            return;
+          }
+          if (!paymentIntent) {
+            if (!cancelled) setError('No payment intent found.');
+            return;
+          }
+          if (cancelled) return;
+          
+          setStatus(paymentIntent.status);
+          switch (paymentIntent.status) {
+            case 'succeeded':
+              setMessage('Payment succeeded. Thank you!');
+              break;
+            case 'processing':
+              setMessage('Your payment is processing.');
+              break;
+            case 'requires_payment_method':
+              setMessage('Payment failed. Please try again with a different method.');
+              break;
+            case 'requires_action':
+              setMessage('Additional authentication required. Please complete the steps.');
+              break;
+            case 'canceled':
+              setMessage('Payment was canceled. You can attempt again.');
+              break;
+            default:
+              setMessage('Unable to determine payment status.');
+          }
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || 'Unexpected error retrieving payment status');
@@ -84,7 +125,7 @@ function ConfirmationContent() {
   const params = useSearchParams();
   const refFromUrl = params.get('ref');
   const [clientSecret, setClientSecret] = React.useState<string>('');
-  const { loading, status, message, error } = usePaymentIntentStatus(clientSecret);
+  const { loading, status, message, error } = usePaymentStatus(clientSecret);
   const job = booking.payment?.jobDetails;
   const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
 
@@ -160,125 +201,246 @@ function ConfirmationContent() {
   }, [status, booking, jobFetchAttempts]);
   // UI for each payment state
   let mainContent;
+  
+  // Get payment type from context to show appropriate messages
+  const paymentType = booking.payment?.paymentType;
+  const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
+  
   if (status === 'succeeded') {
-    mainContent = (
-      <Card className="shadow-xl border-primary-200">
-        <CardHeader className="flex flex-col items-center gap-2">
-          <Badge variant="default" className="mb-2 text-lg px-4 py-2">Booking Confirmed</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Thank you for your payment!</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">Your booking is complete. Below are your details and next steps.</div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {job ? (
-            <>
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-xs text-muted-foreground">Reference</span>
-                <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{job.quoteId}</span>
-              </div>
-              <Table className="mb-4">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Van</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Drivers</TableHead>
-                    <TableHead>Distance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>{job.vanType}</TableCell>
-                    <TableCell>{job.pricingTier}</TableCell>
-                    <TableCell>{job.driverCount}</TableCell>
-                    <TableCell>{job.distanceMiles} miles</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="bg-muted/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Pickup</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <div>{job.origin.addressLine1}</div>
-                    {job.origin.addressLine2 && <div>{job.origin.addressLine2}</div>}
-                    <div>{job.origin.city}</div>
-                    <div>{job.origin.postCode}</div>
-                    {job.origin.country && <div>{job.origin.country}</div>}
-                  </CardContent>
-                </Card>
-                <Card className="bg-muted/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Delivery</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <div>{job.destination.addressLine1}</div>
-                    {job.destination.addressLine2 && <div>{job.destination.addressLine2}</div>}
-                    <div>{job.destination.city}</div>
-                    <div>{job.destination.postCode}</div>
-                    {job.destination.country && <div>{job.destination.country}</div>}
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="mt-6">
-                <Table>
+    if (isSetupIntent || paymentType === 'later') {
+      // Setup Intent succeeded (Pay later option)
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="default" className="mb-2 text-lg px-4 py-2">Payment Method Saved</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Thank you for setting up your payment method!</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">Your payment method has been saved securely. We'll charge the full amount 72 hours before your collection date.</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {job ? (
+              <>
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{job.quoteId}</span>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="text-blue-800 text-sm">
+                    <strong>Important:</strong> Your payment method has been saved. The full amount of £{job.cost.total?.toFixed(2) || 'TBD'} will be charged automatically 72 hours before your scheduled collection date.
+                  </div>
+                </div>
+                <Table className="mb-4">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Dimensions (cm)</TableHead>
-                      <TableHead>Qty</TableHead>
+                      <TableHead>Van</TableHead>
+                      <TableHead>Tier</TableHead>
+                      <TableHead>Drivers</TableHead>
+                      <TableHead>Distance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {job.inventoryItems?.map((item: any, idx: number) => (
-                      <TableRow key={idx}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.height} × {item.width} × {item.depth}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                      </TableRow>
-                    ))}
+                    <TableRow>
+                      <TableCell>{job.vanType}</TableCell>
+                      <TableCell>{job.pricingTier}</TableCell>
+                      <TableCell>{job.driverCount}</TableCell>
+                      <TableCell>{job.distanceMiles} miles</TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="bg-muted/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Pickup</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm">
+                      <div>{job.origin.addressLine1}</div>
+                      {job.origin.addressLine2 && <div>{job.origin.addressLine2}</div>}
+                      <div>{job.origin.city}</div>
+                      <div>{job.origin.postCode}</div>
+                      {job.origin.country && <div>{job.origin.country}</div>}
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-muted/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Delivery</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm">
+                      <div>{job.destination.addressLine1}</div>
+                      {job.destination.addressLine2 && <div>{job.destination.addressLine2}</div>}
+                      <div>{job.destination.city}</div>
+                      <div>{job.destination.postCode}</div>
+                      {job.destination.country && <div>{job.destination.country}</div>}
+                    </CardContent>
+                  </Card>
+                </div>
+                <div className="mt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Dimensions (cm)</TableHead>
+                        <TableHead>Qty</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {job.inventoryItems?.map((item: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.height} × {item.width} × {item.depth}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="mt-6 flex flex-col items-center gap-2">
+                  <Badge variant="outline" className="text-lg px-4 py-2">Status: Payment Method Saved</Badge>
+                  <div className="text-sm text-muted-foreground text-center">
+                    Payment will be processed automatically before collection
+                  </div>
+                </div>
+                <div className="mt-8 text-center text-base text-muted-foreground">
+                  <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. Your payment method has been saved and will be charged automatically 72 hours before your collection date.
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                </div>
+                <div>Loading booking details...</div>
               </div>
-              <div className="mt-6 flex flex-col items-center gap-2">
-                {(() => {
-                  const displayStatus = status === 'succeeded'
-                    ? (job.paymentStatus && job.paymentStatus.toLowerCase() !== 'pending' ? job.paymentStatus : 'Paid')
-                    : (job.paymentStatus || 'Pending');
-                  return (
-                    <Badge variant="outline" className="text-lg px-4 py-2">Status: {displayStatus}</Badge>
-                  );
-                })()}
-                {job.receiptUrl && (
-                  <a href={job.receiptUrl} target="_blank" rel="noopener" className="text-primary-700 underline text-sm">Download Receipt</a>
-                )}
+            )}
+          </CardContent>
+        </Card>
+      );
+    } else {
+      // Payment Intent succeeded (Pay in full or Pay deposit options)
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="default" className="mb-2 text-lg px-4 py-2">Booking Confirmed</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Thank you for your payment!</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">Your booking is complete. Below are your details and next steps.</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {job ? (
+              <>
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{job.quoteId}</span>
+                </div>
+                <Table className="mb-4">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Van</TableHead>
+                      <TableHead>Tier</TableHead>
+                      <TableHead>Drivers</TableHead>
+                      <TableHead>Distance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>{job.vanType}</TableCell>
+                      <TableCell>{job.pricingTier}</TableCell>
+                      <TableCell>{job.driverCount}</TableCell>
+                      <TableCell>{job.distanceMiles} miles</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="bg-muted/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Pickup</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm">
+                      <div>{job.origin.addressLine1}</div>
+                      {job.origin.addressLine2 && <div>{job.origin.addressLine2}</div>}
+                      <div>{job.origin.city}</div>
+                      <div>{job.origin.postCode}</div>
+                      {job.origin.country && <div>{job.origin.country}</div>}
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-muted/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Delivery</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm">
+                      <div>{job.destination.addressLine1}</div>
+                      {job.destination.addressLine2 && <div>{job.destination.addressLine2}</div>}
+                      <div>{job.destination.city}</div>
+                      <div>{job.destination.postCode}</div>
+                      {job.destination.country && <div>{job.destination.country}</div>}
+                    </CardContent>
+                  </Card>
+                </div>
+                <div className="mt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Dimensions (cm)</TableHead>
+                        <TableHead>Qty</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {job.inventoryItems?.map((item: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.height} × {item.width} × {item.depth}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="mt-6 flex flex-col items-center gap-2">
+                  {(() => {
+                    const displayStatus = status === 'succeeded'
+                      ? (job.paymentStatus && job.paymentStatus.toLowerCase() !== 'pending' ? job.paymentStatus : 'Paid')
+                      : (job.paymentStatus || 'Pending');
+                    return (
+                      <Badge variant="outline" className="text-lg px-4 py-2">Status: {displayStatus}</Badge>
+                    );
+                  })()}
+                  {job.receiptUrl && (
+                    <a href={job.receiptUrl} target="_blank" rel="noopener" className="text-primary-700 underline text-sm">Download Receipt</a>
+                  )}
+                </div>
+                <div className="mt-8 text-center text-base text-muted-foreground">
+                  <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. If you have questions, please call us or reply to your confirmation email.
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                  <div className="w-4 h-4 bg-muted-foreground rounded-full animate-pulse"></div>
+                </div>
+                <div>Loading booking details...</div>
               </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xs">Reference</span>
-                <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">
-                  {booking.payment?.bookingId || refFromUrl || '—'}
-                </span>
-              </div>
-              <div>
-                Payment succeeded. Finalizing your booking details… (attempt {jobFetchAttempts + 1}/11)
-              </div>
-            </div>
-          )}
-          <div className="mt-8 text-center text-base text-muted-foreground">
-            <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. If you have questions, please call us or reply to your confirmation email.
-          </div>
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   } else if (status === 'processing' || (loading && !error)) {
+    const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
+    const title = isSetupIntent ? 'Setting up payment method' : 'Your payment is being processed';
+    const description = isSetupIntent 
+      ? 'Please wait while we save your payment method securely. You will receive a confirmation email shortly.'
+      : 'Please wait while we confirm your booking. You will receive a confirmation email shortly.';
+    
     mainContent = (
       <Card className="shadow-xl border-primary-200">
         <CardHeader className="flex flex-col items-center gap-2">
-          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Payment Processing</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Your payment is being processed</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">Please wait while we confirm your booking. You will receive a confirmation email shortly.</div>
+          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">
+            {isSetupIntent ? 'Setting Up' : 'Payment Processing'}
+          </Badge>
+          <CardTitle className="text-2xl font-bold text-primary-700 text-center">{title}</CardTitle>
+          <div className="text-sm text-muted-foreground text-center">{description}</div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center text-base text-muted-foreground">
@@ -288,12 +450,20 @@ function ConfirmationContent() {
       </Card>
     );
   } else if (status === 'requires_payment_method') {
+    const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
+    const title = isSetupIntent ? 'Payment method setup failed' : 'Payment failed';
+    const description = isSetupIntent 
+      ? 'We were unable to save your payment method. Please try again with a different method.'
+      : 'We were unable to process your payment. Please try again with a different method.';
+    
     mainContent = (
       <Card className="shadow-xl border-primary-200">
         <CardHeader className="flex flex-col items-center gap-2">
-          <Badge variant="destructive" className="mb-2 text-lg px-4 py-2">Payment Failed</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Payment failed</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">Your payment could not be completed. Please try again or use a different payment method.</div>
+          <Badge variant="destructive" className="mb-2 text-lg px-4 py-2">
+            {isSetupIntent ? 'Setup Failed' : 'Payment Failed'}
+          </Badge>
+          <CardTitle className="text-2xl font-bold text-primary-700 text-center">{title}</CardTitle>
+          <div className="text-sm text-muted-foreground text-center">{description}</div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center text-base text-muted-foreground">
@@ -303,27 +473,41 @@ function ConfirmationContent() {
       </Card>
     );
   } else if (status === 'requires_action') {
+    const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
+    const title = isSetupIntent ? 'Payment method setup requires authentication' : 'Payment requires authentication';
+    const description = isSetupIntent 
+      ? 'Please return to the payment page to complete 3D Secure or other required steps for setting up your payment method.'
+      : 'Please return to the payment page to complete 3D Secure or other required steps.';
+    
     mainContent = (
       <Card className="shadow-xl border-primary-200">
         <CardHeader className="flex flex-col items-center gap-2">
           <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Action Required</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Further authentication needed</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">Please return to the payment page to complete 3D Secure or other required steps.</div>
+          <CardTitle className="text-2xl font-bold text-primary-700 text-center">{title}</CardTitle>
+          <div className="text-sm text-muted-foreground text-center">{description}</div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center text-base text-muted-foreground">
-            <strong>Next steps:</strong> Go back and retry payment to finish authentication.
+            <strong>Next steps:</strong> Go back and retry to finish authentication.
           </div>
         </CardContent>
       </Card>
     );
   } else if (status === 'canceled') {
+    const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
+    const title = isSetupIntent ? 'Payment method setup was canceled' : 'Payment was canceled';
+    const description = isSetupIntent 
+      ? 'You canceled the payment method setup or it expired. You can try again.'
+      : 'You canceled the payment or it expired. You can try again.';
+    
     mainContent = (
       <Card className="shadow-xl border-primary-200">
         <CardHeader className="flex flex-col items-center gap-2">
-          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Payment Canceled</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Payment was canceled</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">You canceled the payment or it expired. You can try again.</div>
+          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">
+            {isSetupIntent ? 'Setup Canceled' : 'Payment Canceled'}
+          </Badge>
+          <CardTitle className="text-2xl font-bold text-primary-700 text-center">{title}</CardTitle>
+          <div className="text-sm text-muted-foreground text-center">{description}</div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center text-base text-muted-foreground">

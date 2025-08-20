@@ -125,7 +125,7 @@ export default function OriginDestinationPage() {
       router.push("/van-selection");
       return;
     }
-    router.push("/pricing");
+    router.push("/summary");
   }
 
   const hasBilling = (watchBillingPostcode?.trim().length ?? 0) > 0 && (watchBillingLine1?.trim().length ?? 0) > 0;

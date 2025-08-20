@@ -245,11 +245,11 @@ export default function VanSelectionPage() {
                   try { document.getElementById('moving-date')?.focus(); } catch {}
                   return;
                 }
-                router.push('/origin-destination');
+                router.push('/pricing');
               }}
               disabled={!movingDate}
             >
-              Next: Addresses
+              Continue to Pricing
             </Button>
           </div>
         </div>

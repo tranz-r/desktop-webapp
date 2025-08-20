@@ -218,7 +218,7 @@ export function CartModal() {
               <span>{getTotalVolume().toFixed(2)} m³</span>
             </div>
             <Button className="w-full bg-primary-600 hover:bg-primary-700">
-              Continue to Van Selection
+              Continue to Pricing
             </Button>
           </div>
         )}

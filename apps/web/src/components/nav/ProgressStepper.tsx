@@ -6,9 +6,9 @@ import { Check, Package, Truck, MapPin, CreditCard, FileCheck, ArrowRight } from
 
 const STEPS = [
   { path: '/inventory', label: 'Inventory', icon: Package },
-  { path: '/van-selection', label: 'Van & Date', icon: Truck },
-  { path: '/origin-destination', label: 'Customer', icon: MapPin },
+  { path: '/pickup-dropoff', label: 'Van & Date', icon: Truck },
   { path: '/pricing', label: 'Price Tier', icon: CreditCard },
+  { path: '/origin-destination', label: 'Customer', icon: MapPin },
   { path: '/summary', label: 'Checkout', icon: CreditCard },
   { path: '/confirmation', label: 'Confirm', icon: FileCheck },
 ];
@@ -17,7 +17,7 @@ const STEPS = [
 const ALIASES = new Map<string, string>([
   ['/pay', '/summary'],
   ['/collection-delivery', '/inventory'],
-  ['/pickup-dropoff', '/van-selection'],
+  ['/van-selection', '/pickup-dropoff'],
 ]);
 
 function normalizePath(p: string) {

@@ -174,7 +174,7 @@ export default function PricingPage() {
         totalCost: selectedPricing.customerTotal
       });
     }
-    router.push('/summary');
+    router.push('/origin-destination');
   };
 
   return (
@@ -385,8 +385,8 @@ export default function PricingPage() {
           )}
 
           <div className="flex justify-end">
-            <Button onClick={isSendReceiveQuote ? handleSendReceiveContinue : () => router.push('/summary')}>
-              {isSendReceiveQuote ? 'Next: Review Summary' : 'Next: Review Summary'}
+            <Button onClick={isSendReceiveQuote ? handleSendReceiveContinue : () => router.push('/origin-destination')}>
+              {isSendReceiveQuote ? 'Continue to Customer Details' : 'Continue to Customer Details'}
             </Button>
           </div>
         </div>

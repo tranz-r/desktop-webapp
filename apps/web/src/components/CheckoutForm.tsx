@@ -62,21 +62,44 @@ export function CheckoutForm({ returnUrl }: Props) {
     setProcessing(true);
     setMessage(null);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: returnUrl,
-        receipt_email: email || undefined,
-      },
-    });
+    // Determine if this is a Setup Intent or Payment Intent based on the client secret
+    const isSetupIntent = clientSecret.startsWith('seti_');
+    
+    if (isSetupIntent) {
+      // Handle Setup Intent (for "Pay later" option)
+      const { error } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+        },
+      });
 
-    if (error) {
-      if (error.type === 'card_error' || error.type === 'validation_error') {
-        setMessage(error.message || 'Payment error');
-      } else {
-        setMessage('An unexpected error occurred.');
+      if (error) {
+        if (error.type === 'card_error' || error.type === 'validation_error') {
+          setMessage(error.message || 'Setup error');
+        } else {
+          setMessage('An unexpected error occurred during setup.');
+        }
+      }
+    } else {
+      // Handle Payment Intent (for "Pay in full" or "Pay deposit" options)
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+          receipt_email: email || undefined,
+        },
+      });
+
+      if (error) {
+        if (error.type === 'card_error' || error.type === 'validation_error') {
+          setMessage(error.message || 'Payment error');
+        } else {
+          setMessage('An unexpected error occurred.');
+        }
       }
     }
+    
     setProcessing(false);
   };
 
@@ -117,7 +140,7 @@ export function CheckoutForm({ returnUrl }: Props) {
       </Dialog>
       <div className="pt-2 flex justify-end">
         <Button type="submit" disabled={!stripe || processing || !acceptedTerms}>
-          {processing ? 'Processing…' : 'Pay now'}
+          {processing ? 'Processing…' : clientSecret.startsWith('seti_') ? 'Set up payment method' : 'Pay now'}
         </Button>
       </div>
     </form>

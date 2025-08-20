@@ -62,20 +62,43 @@ function ResultContent() {
       if (!stripe) return;
 
       try {
-        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        // Determine if this is a Setup Intent or Payment Intent based on the client secret
+        const isSetupIntent = clientSecret.startsWith('seti_');
+        
+        if (isSetupIntent) {
+          // Handle Setup Intent (for "Pay later" option)
+          const { setupIntent } = await stripe.retrieveSetupIntent(clientSecret);
 
-        switch (paymentIntent?.status) {
-          case 'succeeded':
-            setStatus('Payment succeeded. Thank you!');
-            break;
-          case 'processing':
-            setStatus('Your payment is processing.');
-            break;
-          case 'requires_payment_method':
-            setStatus('Payment failed. Please try again.');
-            break;
-          default:
-            setStatus('Unknown payment status.');
+          switch (setupIntent?.status) {
+            case 'succeeded':
+              setStatus('Payment method setup succeeded. Your payment method has been saved for future use.');
+              break;
+            case 'processing':
+              setStatus('Your payment method setup is processing.');
+              break;
+            case 'requires_payment_method':
+              setStatus('Setup failed. Please try again.');
+              break;
+            default:
+              setStatus('Unknown setup status.');
+          }
+        } else {
+          // Handle Payment Intent (for "Pay in full" or "Pay deposit" options)
+          const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+
+          switch (paymentIntent?.status) {
+            case 'succeeded':
+              setStatus('Payment succeeded. Thank you!');
+              break;
+            case 'processing':
+              setStatus('Your payment is processing.');
+              break;
+            case 'requires_payment_method':
+              setStatus('Payment failed. Please try again.');
+              break;
+            default:
+              setStatus('Unknown payment status.');
+          }
         }
       } catch (error) {
         console.error('Error retrieving payment intent:', error);

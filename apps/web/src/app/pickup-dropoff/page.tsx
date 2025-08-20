@@ -231,11 +231,11 @@ export default function PickupDropoffPage() {
                   dateISO: new Date(movingDate).toISOString(),
                 });
                 
-                router.push('/origin-destination');
+                router.push('/pricing');
               }}
               disabled={!movingDate}
             >
-              Next: Addresses
+              Continue to Pricing
             </Button>
           </div>
         </div>
