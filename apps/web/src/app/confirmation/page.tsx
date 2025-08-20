@@ -19,22 +19,28 @@ function usePaymentStatus(clientSecret: string | null) {
 
   React.useEffect(() => {
     let cancelled = false;
+    
+    // Don't start checking until we have a client secret
+    if (!clientSecret) {
+      setLoading(true);
+      setError(null);
+      setStatus('');
+      setMessage('');
+      return;
+    }
+    
     (async () => {
       const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-      if (!clientSecret) {
-        setError('Missing client secret in URL.');
-        setLoading(false);
-        return;
-      }
       if (!publishableKey) {
-        setError('Stripe key not configured.');
-        setLoading(false);
+        if (!cancelled) setError('Stripe key not configured.');
+        if (!cancelled) setLoading(false);
         return;
       }
       try {
         const stripe = await loadStripe(publishableKey);
         if (!stripe) {
           if (!cancelled) setError('Failed to initialize Stripe.');
+          if (!cancelled) setLoading(false);
           return;
         }
 
@@ -46,10 +52,12 @@ function usePaymentStatus(clientSecret: string | null) {
           const { setupIntent, error: siError } = await stripe.retrieveSetupIntent(clientSecret);
           if (siError) {
             if (!cancelled) setError(siError.message || 'Failed to retrieve setup intent.');
+            if (!cancelled) setLoading(false);
             return;
           }
           if (!setupIntent) {
             if (!cancelled) setError('No setup intent found.');
+            if (!cancelled) setLoading(false);
             return;
           }
           if (cancelled) return;
@@ -79,10 +87,12 @@ function usePaymentStatus(clientSecret: string | null) {
           const { paymentIntent, error: piError } = await stripe.retrievePaymentIntent(clientSecret);
           if (piError) {
             if (!cancelled) setError(piError.message || 'Failed to retrieve payment intent.');
+            if (!cancelled) setLoading(false);
             return;
           }
           if (!paymentIntent) {
             if (!cancelled) setError('No payment intent found.');
+            if (!cancelled) setLoading(false);
             return;
           }
           if (cancelled) return;
@@ -108,12 +118,16 @@ function usePaymentStatus(clientSecret: string | null) {
               setMessage('Unable to determine payment status.');
           }
         }
+        
+        // Clear any previous errors when successful
+        if (!cancelled) setError(null);
       } catch (e: any) {
         if (!cancelled) setError(e?.message || 'Unexpected error retrieving payment status');
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
+    
     return () => { cancelled = true; };
   }, [clientSecret]);
 
@@ -125,6 +139,7 @@ function ConfirmationContent() {
   const params = useSearchParams();
   const refFromUrl = params.get('ref');
   const [clientSecret, setClientSecret] = React.useState<string>('');
+  const [isFetchingClientSecret, setIsFetchingClientSecret] = React.useState(false);
   const { loading, status, message, error } = usePaymentStatus(clientSecret);
   const job = booking.payment?.jobDetails;
   const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
@@ -137,6 +152,7 @@ function ConfirmationContent() {
     const fetchClientSecret = async () => {
       if (!paymentIntentId) return;
 
+      setIsFetchingClientSecret(true);
       try {
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
         const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
@@ -149,6 +165,8 @@ function ConfirmationContent() {
         setClientSecret(data.clientSecret);
       } catch (error) {
         console.error('Error fetching client secret:', error);
+      } finally {
+        setIsFetchingClientSecret(false);
       }
     };
 
@@ -206,7 +224,26 @@ function ConfirmationContent() {
   const paymentType = booking.payment?.paymentType;
   const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
   
-  if (status === 'succeeded') {
+  // Show loading state while checking payment status
+  if (loading && clientSecret) {
+    mainContent = (
+      <Card className="shadow-xl border-primary-200">
+        <CardHeader className="flex flex-col items-center gap-2">
+          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Checking Payment</Badge>
+          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Verifying your payment status</CardTitle>
+          <div className="text-sm text-muted-foreground text-center">Please wait while we confirm your payment details...</div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex justify-center">
+            <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div className="text-center text-base text-muted-foreground">
+            <strong>Please wait:</strong> We're checking your payment status with our secure payment processor.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  } else if (status === 'succeeded') {
     if (isSetupIntent || paymentType === 'later') {
       // Setup Intent succeeded (Pay later option)
       mainContent = (
@@ -517,21 +554,56 @@ function ConfirmationContent() {
       </Card>
     );
   } else {
-    mainContent = (
-      <Card className="shadow-xl border-primary-200">
-        <CardHeader className="flex flex-col items-center gap-2">
-          <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Unknown Status</Badge>
-          <CardTitle className="text-2xl font-bold text-primary-700 text-center">Unable to confirm payment</CardTitle>
-          <div className="text-sm text-muted-foreground text-center">{message || 'We could not determine your payment status.'}</div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center text-base text-muted-foreground">
-            <strong>Next steps:</strong> Contact support for assistance.
-          </div>
-          {error && <div className="text-sm text-red-600 break-all">Error: {error}</div>}
-        </CardContent>
-      </Card>
-    );
+    // Only show error state if we're not loading and actually have an error
+    if (error && !loading) {
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="destructive" className="mb-2 text-lg px-4 py-2">Error</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Unable to confirm payment</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">We encountered an issue while checking your payment status.</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center text-base text-muted-foreground">
+              <strong>Next steps:</strong> Contact support for assistance.
+            </div>
+            <div className="text-sm text-red-600 break-all text-center">Error: {error}</div>
+          </CardContent>
+        </Card>
+      );
+    } else if (!clientSecret && !isFetchingClientSecret) {
+      // Show message when no client secret is available
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="outline" className="mb-2 text-lg px-4 py-2">No Payment Found</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Payment information not found</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">We couldn't find the payment details for this booking.</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center text-base text-muted-foreground">
+              <strong>Next steps:</strong> Please return to the payment page or contact support for assistance.
+            </div>
+          </CardContent>
+        </Card>
+      );
+    } else {
+      // Fallback loading state
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Loading</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Preparing your confirmation</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">Please wait while we load your booking details...</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
   }
 
   return (
@@ -540,7 +612,16 @@ function ConfirmationContent() {
       <main className="flex-1">
         <section className="pt-32 lg:pt-40 pb-10 bg-white">
           <div className="container mx-auto px-4 max-w-2xl">
-            {mainContent}
+            {isFetchingClientSecret ? (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-lg text-muted-foreground">Loading payment details...</p>
+                </div>
+              </div>
+            ) : (
+              mainContent
+            )}
           </div>
         </section>
       </main>

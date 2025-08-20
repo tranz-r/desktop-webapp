@@ -21,6 +21,9 @@ function PayContent() {
   const [isLoadingClientSecret, setIsLoadingClientSecret] = React.useState(true);
   const [isCreatingIntent, setIsCreatingIntent] = React.useState(false);
   const [selectedOption, setSelectedOption] = React.useState<'full' | 'deposit' | 'later'>('full');
+  const [paymentStatus, setPaymentStatus] = React.useState<string>('');
+  const [isPaymentCompleted, setIsPaymentCompleted] = React.useState(false);
+  const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = React.useState(false);
 
   const { isHydrated, vehicle, originDestination, pricing, customer, payment } = booking;
   // Pull stable references we actually need (avoid depending on whole booking object)
@@ -43,10 +46,72 @@ function PayContent() {
     }
   }, []);
 
-  // Fetch client secret using stored PaymentIntentId
+  // Check payment status to prevent duplicate payments
+  React.useEffect(() => {
+    const checkPaymentStatus = async () => {
+      if (!paymentIntentId || !isHydrated) return;
+      
+      setIsCheckingPaymentStatus(true);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment intent: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const clientSecret = data.clientSecret;
+        
+        // Check if this is a completed payment/setup
+        const isSetupIntent = clientSecret.startsWith('seti_');
+        
+        if (isSetupIntent) {
+          // For Setup Intents, check status via Stripe
+          const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+          if (stripe) {
+            const { setupIntent } = await stripe.retrieveSetupIntent(clientSecret);
+            if (setupIntent && setupIntent.status === 'succeeded') {
+              setPaymentStatus('Payment method setup completed');
+              setIsPaymentCompleted(true);
+              return;
+            }
+          }
+        } else {
+          // For Payment Intents, check status via Stripe
+          const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+          if (stripe) {
+            const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+            if (paymentIntent && paymentIntent.status === 'succeeded') {
+              setPaymentStatus('Payment completed');
+              setIsPaymentCompleted(true);
+              return;
+            }
+          }
+        }
+        
+        // If not completed, set the client secret for payment
+        setClientSecret(clientSecret);
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+        setPaymentStatus('Error checking payment status');
+      } finally {
+        setIsCheckingPaymentStatus(false);
+        setIsLoadingClientSecret(false);
+      }
+    };
+
+    if (isHydrated && paymentIntentId) {
+      checkPaymentStatus();
+    } else if (isHydrated) {
+      setIsLoadingClientSecret(false);
+    }
+  }, [isHydrated, paymentIntentId]);
+
+  // Fetch client secret using stored PaymentIntentId (only if not completed)
   React.useEffect(() => {
     const fetchClientSecret = async () => {
-      if (!paymentIntentId) {
+      if (!paymentIntentId || isPaymentCompleted) {
         setIsLoadingClientSecret(false);
         return;
       }
@@ -68,12 +133,12 @@ function PayContent() {
       }
     };
 
-    if (isHydrated && paymentIntentId) {
+    if (isHydrated && paymentIntentId && !isPaymentCompleted) {
       fetchClientSecret();
     } else if (isHydrated) {
       setIsLoadingClientSecret(false);
     }
-  }, [isHydrated, paymentIntentId]);
+  }, [isHydrated, paymentIntentId, isPaymentCompleted]);
 
   // Compute cost breakdown for payload CostDto
   const costBreakdown = React.useMemo(() => {
@@ -218,6 +283,36 @@ function PayContent() {
     }
   }, [isHydrated, clientSecret, isCreatingIntent, selectedOption, createPaymentForOption]);
 
+  // Browser navigation protection - detect when user navigates back to payment page
+  React.useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isPaymentCompleted) {
+        event.preventDefault();
+        event.returnValue = 'Payment already completed. Are you sure you want to leave?';
+        return event.returnValue;
+      }
+    };
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (isPaymentCompleted) {
+        // If user navigates back and payment is completed, redirect to confirmation
+        const confirmationUrl = `/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`;
+        window.history.pushState(null, '', confirmationUrl);
+        window.location.href = confirmationUrl;
+      }
+    };
+
+    if (isPaymentCompleted) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [isPaymentCompleted, booking.payment?.bookingId]);
+
   const options = React.useMemo<StripeElementsOptions | undefined>(() => {
     if (!clientSecret) return undefined;
     return {
@@ -237,131 +332,187 @@ function PayContent() {
       <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 max-w-2xl">
+          {isPaymentCompleted && (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div className="text-yellow-800 text-sm">
+                  <strong>Payment Already Completed:</strong> You have already completed your payment for this booking. 
+                  If you need to make changes, please contact our support team.
+                </div>
+              </div>
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Secure Payment</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoadingClientSecret && (
+              {isCheckingPaymentStatus && (
                 <div className="text-sm text-blue-600">
-                  Loading payment details...
+                  Checking payment status...
                 </div>
               )}
-              <div className="space-y-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={async () => { setSelectedOption('full'); await createPaymentForOption('full'); }}
-                    disabled={isCreatingIntent}
-                    className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
-                      selectedOption === 'full' 
-                        ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
-                        : 'border-muted hover:border-primary/40 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold text-lg text-foreground">Pay in full</div>
-                        {selectedOption === 'full' && (
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-3xl font-bold text-primary">
-                          £{(totalCost || 0).toFixed(2)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          One-time payment
-                        </div>
-                      </div>
+              
+              {isPaymentCompleted && (
+                <div className="mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={async () => { setSelectedOption('deposit'); await createPaymentForOption('deposit'); }}
-                    disabled={isCreatingIntent}
-                    className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
-                      selectedOption === 'deposit' 
-                        ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
-                        : 'border-muted hover:border-primary/40 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold text-lg text-foreground">Pay deposit</div>
-                        {selectedOption === 'deposit' && (
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-3xl font-bold text-primary">
-                          £{depositAmount.toFixed(2)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {depositPercentage}% of £{(totalCost || 0).toFixed(2)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Remaining: £{((totalCost || 0) - depositAmount).toFixed(2)}
-                        </div>
-                      </div>
+                    <h3 className="text-lg font-semibold text-green-800 mb-2">{paymentStatus}</h3>
+                    <p className="text-green-700 mb-4">
+                      {payment?.paymentType === 'later' 
+                        ? 'Your payment method has been saved successfully. We will charge the full amount 72 hours before your collection date.'
+                        : 'Your payment has been processed successfully. Your booking is confirmed.'
+                      }
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button 
+                        onClick={() => window.location.href = `/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        View Confirmation
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.location.href = '/'}
+                      >
+                        Return Home
+                      </Button>
                     </div>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={async () => { setSelectedOption('later'); await createPaymentForOption('later'); }}
-                    disabled={isCreatingIntent}
-                    className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
-                      selectedOption === 'later' 
-                        ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
-                        : 'border-muted hover:border-primary/40 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold text-lg text-foreground">Pay later</div>
-                        {selectedOption === 'later' && (
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-3xl font-bold text-primary">
-                          £0.00
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Set up payment. We'll charge <b>£{(totalCost || 0).toFixed(2)}</b> 72 hours before collection day.
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                {isCreatingIntent && (
-                  <div className="text-sm text-blue-600">Preparing your payment…</div>
-                )}
-              </div>
-              {!isLoadingClientSecret && !clientSecret && !paymentIntentId && (
-                <div className="text-sm text-red-600">
-                  Missing payment intent. Please restart checkout.
+                  </div>
                 </div>
               )}
-              {!isLoadingClientSecret && !clientSecret && paymentIntentId && (
-                <div className="text-sm text-red-600">
-                  Failed to load payment details. Please try again.
-                </div>
-              )}
-              {clientSecret && options && (
-                <Elements key={elementsKey} stripe={stripePromise} options={options}>
-                  <CheckoutForm
-                    returnUrl={`${window.location.origin}/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
-                  />
-                </Elements>
+              
+              {!isPaymentCompleted && (
+                <>
+                  {isLoadingClientSecret && (
+                    <div className="text-sm text-blue-600">
+                      Loading payment details...
+                    </div>
+                  )}
+                  <div className="space-y-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <button
+                        type="button"
+                        onClick={async () => { setSelectedOption('full'); await createPaymentForOption('full'); }}
+                        disabled={isCreatingIntent || isPaymentCompleted}
+                        className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
+                          selectedOption === 'full' 
+                            ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
+                            : 'border-muted hover:border-primary/40 hover:shadow-md'
+                        } ${isPaymentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-lg text-foreground">Pay in full</div>
+                            {selectedOption === 'full' && (
+                              <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-primary">
+                              £{(totalCost || 0).toFixed(2)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              One-time payment
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={async () => { setSelectedOption('deposit'); await createPaymentForOption('deposit'); }}
+                        disabled={isCreatingIntent || isPaymentCompleted}
+                        className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
+                          selectedOption === 'deposit' 
+                            ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
+                            : 'border-muted hover:border-primary/40 hover:shadow-md'
+                        } ${isPaymentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-lg text-foreground">Pay deposit</div>
+                            {selectedOption === 'deposit' && (
+                              <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-primary">
+                              £{depositAmount.toFixed(2)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {depositPercentage}% of £{(totalCost || 0).toFixed(2)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Remaining: £{((totalCost || 0) - depositAmount).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={async () => { setSelectedOption('later'); await createPaymentForOption('later'); }}
+                        disabled={isCreatingIntent || isPaymentCompleted}
+                        className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
+                          selectedOption === 'later' 
+                            ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
+                            : 'border-muted hover:border-primary/40 hover:shadow-md'
+                        } ${isPaymentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-lg text-foreground">Pay later</div>
+                            {selectedOption === 'later' && (
+                              <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-3xl font-bold text-primary">
+                              £0.00
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Set up payment. We'll charge <b>£{(totalCost || 0).toFixed(2)}</b> 72 hours before collection day.
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                    {isCreatingIntent && (
+                      <div className="text-sm text-blue-600">Preparing your payment…</div>
+                    )}
+                  </div>
+                  {!isLoadingClientSecret && !clientSecret && !paymentIntentId && (
+                    <div className="text-sm text-red-600">
+                      Missing payment intent. Please restart checkout.
+                    </div>
+                  )}
+                  {!isLoadingClientSecret && !clientSecret && paymentIntentId && (
+                    <div className="text-sm text-red-600">
+                      Failed to load payment details. Please try again.
+                    </div>
+                  )}
+                  {clientSecret && options && (
+                    <Elements key={elementsKey} stripe={stripePromise} options={options}>
+                      <CheckoutForm
+                        returnUrl={`${window.location.origin}/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
+                      />
+                    </Elements>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
