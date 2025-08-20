@@ -138,6 +138,10 @@ export interface PaymentState {
   paymentIntentId?: string;
   status?: 'pending' | 'paid' | 'failed';
   jobDetails?: any;
+  // New fields for payment options
+  paymentType?: 'full' | 'deposit' | 'later';
+  depositAmount?: number;
+  dueDate?: string; // ISO date string
 }
 
 export interface CustomerState {
