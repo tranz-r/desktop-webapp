@@ -168,8 +168,8 @@ function InventoryPageContent() {
           // Store the API response in booking context
           updatePricing({ pickUpDropOffPrice: pricingData });
           
-          // Navigate to pricing page only after successful API call
-          router.push('/pricing');
+          // Navigate to Van & Date selection after successful API call
+          router.push('/pickup-dropoff');
         } else {
           // Handle error case - show user feedback and don't navigate
           console.error('Failed to get pricing data');
@@ -182,8 +182,8 @@ function InventoryPageContent() {
         setIsLoading(false);
       }
     } else {
-      // For 'removals' option, continue with normal flow to pricing
-      router.push('/pricing');
+      // For 'removals' option, continue to Van & Date selection
+      router.push('/pickup-dropoff');
     }
   };
   
@@ -238,7 +238,7 @@ function InventoryPageContent() {
                   Calculating pricing...
                 </>
               ) : (
-                'Continue to Pricing'
+                'Continue to Van Selection'
               )}
             </Button>
           </div>
