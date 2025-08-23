@@ -1,3 +1,7 @@
+"use client";
+
+export const dynamic = 'force-dynamic';
+
 import { StreamlinedHeader } from "@/components/StreamlinedHeader"
 import { Hero } from "@/components/ui/hero"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"

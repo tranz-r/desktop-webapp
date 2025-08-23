@@ -1,0 +1,438 @@
+# 0) Assumptions
+
+-   **Frontend:** Next.js (app or pages router).
+-   **Backend:** .NET (Controllers).
+-   **State:** "Quote" JSON (any shape), server is **source of truth**.
+-   **Cookie name:** `tranzr_guest`.
+-   **Cache:** IndexedDB (passthrough, non-canonical).
+
+------------------------------------------------------------------------
+
+# 1) End-to-end flow (step by step)
+
+1.  **Bootstrap (first request / any page)**
+    -   Client calls `POST /api/guest/ensure` with
+        `credentials: 'include'`.
+    -   **If no cookie exists**, server generates `guestId` (UUID), sets
+        cookie:
+        -   `Secure`, `HttpOnly`, `SameSite=Lax`, `Expires=+60–90 days`.
+    -   Server ensures a row/doc exists for this `guestId` (empty quote
+        if new).
+2.  **Fast paint from cache**
+    -   Client reads IndexedDB `quoteDraft` (if any) and **hydrates UI
+        immediately**.
+3.  **Load canonical**
+    -   Client calls `GET /api/guest/quote` (include credentials).
+    -   Server returns `{ quote: "<JSON string>", etag: "<hash>" }`.
+    -   Client parses quote JSON and **rehydrates UI from server**
+        (server wins).
+    -   Client stores `etag` for optimistic concurrency.
+4.  **Edit & save (debounced 300--500 ms)**
+    -   Client **writes draft** to IndexedDB (so offline/refresh is
+        snappy).
+    -   Client `POST /api/guest/quote` with body `{ quote, etag }`.
+    -   Server validates `etag` (if provided) and upserts:
+        -   If **match or missing** → `200 OK`, returns new `etag`
+            (optional).
+        -   If **mismatch** → `412 Precondition Failed`.
+    -   On success, client replaces local `etag` with the server's new
+        value.
+5.  **Conflict resolution (multi-tab / stale UI)**
+    -   If `412`, client:
+        -   Calls `GET /api/guest/quote` to fetch latest.
+        -   Rehydrates UI and updates local `etag`.
+        -   Optionally reapplies unsaved user deltas (or shows a
+            "updated in another tab" toast).
+6.  **Revisit / browser restart**
+    -   Cookie persists → repeat steps (2) and (3). IndexedDB speeds
+        first paint; server confirms canonical.
+7.  **Cross-device resume (optional)**
+    -   Server issues **signed token** (HMAC) embedding `guestId + exp`.
+    -   Link: `/resume?t=<token>`.
+    -   `/resume` verifies token → **sets/refreshes** `tranzr_guest`
+        cookie → redirects to quote page.
+8.  **Retention & cleanup**
+    -   Nightly job deletes sessions where `updatedUtc < now - 90 days`
+        (configurable).
+    -   Optional soft-delete window before hard-delete.
+9.  **Cookie refresh**
+    -   Optionally **refresh cookie expiry** on `GET /api/guest/quote`
+        and `/api/guest/ensure` so active users don't expire.
+
+------------------------------------------------------------------------
+
+# 2) API contract (exact)
+
+## `POST /api/guest/ensure`
+
+-   **Purpose:** Ensure a `guestId` cookie exists and a session row is
+    present.
+-   **Request:** no body.
+-   **Response:** `200 OK` `{ "guestId": "xxxxxxxx..." }` (returning is
+    optional).
+-   **Sets cookie:**
+    `tranzr_guest=<uuid>; HttpOnly; Secure; SameSite=Lax; Expires=...`.
+
+## `GET /api/guest/quote`
+
+-   **Purpose:** Fetch canonical quote for the current `guestId`.
+
+-   **Request:** none.
+
+-   **Response:** `200 OK`
+
+    ``` json
+    { "quote": "{...stringified JSON...}", "etag": "W/\"<sha256-hash>\"" }
+    ```
+
+-   **Headers:** `ETag: W/"<sha256>"` (optional duplicate of the body
+    field).
+
+-   **If no session or no quote yet:** return `{ "quote": null }` (or
+    `{}`) and an `etag`.
+
+## `POST /api/guest/quote`
+
+-   **Purpose:** Save/upsert canonical quote.
+
+-   **Request (JSON):**
+
+    ``` json
+    { "quote": "{...stringified JSON...}", "etag": "W/\"<sha256>\"" }
+    ```
+
+    -   If you prefer headers: use `If-Match: W/"<sha256>"` instead of
+        body `etag`.
+
+-   **Responses:**
+
+    -   `200 OK` on success (optionally return new `etag`).
+    -   `412 Precondition Failed` if `etag` provided and does not match.
+    -   `401 Unauthorized` if cookie missing/invalid.
+
+------------------------------------------------------------------------
+
+# 3) Server model & hashing (C#/.NET)
+
+**EF Core entity**
+
+``` csharp
+public class QuoteSession
+{
+    public Guid Id { get; set; }                   // guestId (PK)
+    public string QuoteJson { get; set; } = "{}";  // canonical JSON
+    public string ETag { get; set; } = "";         // W/"<sha256>"
+    public DateTimeOffset CreatedUtc { get; set; }
+    public DateTimeOffset UpdatedUtc { get; set; }
+    public DateTimeOffset? ExpiresUtc { get; set; } // optional TTL field
+}
+```
+
+**ETag helper**
+
+``` csharp
+public static class ETagUtil
+{
+    public static string ComputeWeakETag(string json)
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        var hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(json ?? ""));
+        var hex = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        return $"W/\"{hex}\"";
+    }
+}
+```
+
+**Controller (essential paths)**
+
+``` csharp
+[ApiController]
+[Route("api/guest")]
+public class GuestController : ControllerBase
+{
+    private const string CookieName = "tranzr_guest";
+    private readonly IQuoteStore _store; // your abstraction over EF/Redis
+
+    public GuestController(IQuoteStore store) => _store = store;
+
+    [HttpPost("ensure")]
+    public async Task<IActionResult> Ensure()
+    {
+        var guestId = Request.Cookies[CookieName];
+        if (string.IsNullOrWhiteSpace(guestId))
+        {
+            guestId = Guid.NewGuid().ToString("N");
+            Response.Cookies.Append(CookieName, guestId, new CookieOptions {
+                HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(60)
+            });
+            await _store.CreateIfMissingAsync(guestId);
+        }
+        else
+        {
+            // Optional: refresh expiry by re-setting cookie with new Expires
+            Response.Cookies.Append(CookieName, guestId, new CookieOptions {
+                HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(60)
+            });
+        }
+        return Ok(new { guestId });
+    }
+
+    [HttpGet("quote")]
+    public async Task<IActionResult> Load()
+    {
+        var guestId = Request.Cookies[CookieName];
+        if (string.IsNullOrWhiteSpace(guestId)) return Ok(new { quote = (string?)null, etag = (string?)null });
+
+        var s = await _store.GetAsync(guestId);
+        if (s is null) return Ok(new { quote = (string?)null, etag = (string?)null });
+
+        Response.Headers.ETag = s.ETag;
+        return Ok(new { quote = s.QuoteJson, etag = s.ETag });
+    }
+
+    public record SaveBody(string Quote, string? ETag);
+
+    [HttpPost("quote")]
+    public async Task<IActionResult> Save([FromBody] SaveBody body)
+    {
+        var guestId = Request.Cookies[CookieName];
+        if (string.IsNullOrWhiteSpace(guestId)) return Unauthorized();
+
+        var ok = await _store.UpsertWithEtagAsync(guestId, body.Quote, body.ETag);
+        if (!ok) return StatusCode(StatusCodes.Status412PreconditionFailed);
+
+        var newEtag = ETagUtil.ComputeWeakETag(body.Quote);
+        Response.Headers.ETag = newEtag;
+        return Ok(new { etag = newEtag });
+    }
+}
+```
+
+**Store abstraction (behavioral spec)** -
+`CreateIfMissingAsync(guestId)` → insert empty session with
+`CreatedUtc=now`, `UpdatedUtc=now`, `QuoteJson="{}"`, `ETag` computed. -
+`GetAsync(guestId)` → returns entity or null. -
+`UpsertWithEtagAsync(guestId, newJson, providedEtag)`: - Load
+existing. - If `providedEtag != existing.ETag` (and providedEtag not
+null) → return `false`. - Set `QuoteJson = newJson`, recompute `ETag`,
+set `UpdatedUtc = now`, save → return `true`.
+
+**Resume token (HMAC)**
+
+``` csharp
+public static class ResumeToken
+{
+    public static string Issue(Guid guestId, DateTimeOffset exp, string secret)
+    {
+        var payload = $"{guestId:N}|{exp.ToUnixTimeSeconds()}";
+        var sig = Sign(payload, secret);
+        return Base64Url($"{payload}|{sig}");
+    }
+
+    public static Guid? Verify(string token, string secret)
+    {
+        var raw = Base64UrlDecode(token);
+        var parts = raw.Split('|');
+        if (parts.Length != 3) return null;
+        var (idStr, expStr, sig) = (parts[0], parts[1], parts[2]);
+        if (Sign($"{idStr}|{expStr}", secret) != sig) return null;
+        if (DateTimeOffset.FromUnixTimeSeconds(long.Parse(expStr)) < DateTimeOffset.UtcNow) return null;
+        return Guid.TryParseExact(idStr, "N", out var id) ? id : null;
+    }
+
+    private static string Sign(string data, string secret)
+    {
+        using var h = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
+        var bytes = h.ComputeHash(System.Text.Encoding.UTF8.GetBytes(data));
+        return Convert.ToBase64String(bytes);
+    }
+
+    private static string Base64Url(string s) =>
+        Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s))
+            .TrimEnd('=').Replace('+','-').Replace('/','_');
+
+    private static string Base64UrlDecode(string s)
+    {
+        string p = s.Replace('-', '+').Replace('_', '/');
+        switch (p.Length % 4) { case 2: p += "=="; break; case 3: p += "="; break; }
+        return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(p));
+    }
+}
+```
+
+------------------------------------------------------------------------
+
+# 4) Frontend contract (Next.js) with passthrough cache
+
+**Types**
+
+``` ts
+type Quote = any; // your shape
+type LoadResp = { quote: string | null; etag: string | null };
+```
+
+**IndexedDB tiny wrapper (idb-keyval-style)**
+
+``` ts
+// idb.ts
+let dbPromise: Promise<IDBDatabase> | null = null;
+function getDB(): Promise<IDBDatabase> {
+  if (!dbPromise) {
+    dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open('tranzr', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return dbPromise;
+}
+export async function idbGet<T>(key: string): Promise<T | undefined> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readonly');
+    const store = tx.objectStore('kv');
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result as T | undefined);
+    req.onerror = () => reject(req.error);
+  });
+}
+export async function idbSet<T>(key: string, value: T): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readwrite');
+    const store = tx.objectStore('kv');
+    const req = store.put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+```
+
+**Fetch helper**
+
+``` ts
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, { credentials: 'include', ...init, headers: { 'Content-Type': 'application/json', ...(init?.headers||{}) } });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json() as Promise<T>;
+}
+```
+
+**Hook (`useQuoteSession`) -- core logic**
+
+``` ts
+import { useEffect, useRef, useState } from 'react';
+import { idbGet, idbSet } from './idb';
+
+export function useQuoteSession() {
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const etagRef = useRef<string | null>(null);
+  const savingRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      await api('/api/guest/ensure', { method: 'POST' });
+
+      // Fast paint
+      const cached = await idbGet<Quote>('quoteDraft');
+      if (cached) setQuote(cached);
+
+      // Canonical
+      const { quote: s, etag } = await api<LoadResp>('/api/guest/quote');
+      if (s) setQuote(JSON.parse(s));
+      etagRef.current = etag;
+    })().catch(console.error);
+  }, []);
+
+  async function save(next: Quote) {
+    setQuote(next);
+    // Passthrough cache
+    void idbSet('quoteDraft', next);
+
+    // Debounce network
+    if (savingRef.current) window.clearTimeout(savingRef.current);
+    savingRef.current = window.setTimeout(async () => {
+      const body = JSON.stringify({ quote: JSON.stringify(next), etag: etagRef.current });
+      const res = await fetch('/api/guest/quote', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body });
+      if (res.status === 412) {
+        // Conflict → reload and retry once
+        const latest = await api<LoadResp>('/api/guest/quote');
+        etagRef.current = latest.etag;
+        if (latest.quote) setQuote(JSON.parse(latest.quote));
+        // Optionally merge user edits here before retry
+        return;
+      }
+      if (!res.ok) throw new Error(`${res.status}`);
+      const { etag } = await res.json().catch(() => ({ etag: null }));
+      if (etag) etagRef.current = etag;
+    }, 400);
+  }
+
+  return { quote, setQuote: save };
+}
+```
+
+**Usage in a component**
+
+``` tsx
+const { quote, setQuote } = useQuoteSession();
+// ... call setQuote(newState) on field changes
+```
+
+**Multi-tab coherence (optional)** - Use
+`BroadcastChannel('tranzr-quote')` to notify other tabs after a
+successful save; they can refetch or accept the broadcasted state.
+
+------------------------------------------------------------------------
+
+# 5) Security, privacy, compliance
+
+-   **Cookie**: opaque `guestId` only; no PII; `Secure`, `HttpOnly`,
+    `SameSite=Lax`, long `Expires`.
+-   **CSRF**: because SameSite=Lax and same-origin calls, risk is
+    limited. If you ever accept cross-site POSTs or embed widgets, add
+    anti-CSRF token.
+-   **Payload limits**: cap `QuoteJson` size (e.g., 64--256 KB) to avoid
+    abuse.
+-   **Validation**: schema-validate incoming quote JSON server-side
+    (version field helps migrations).
+-   **GDPR**: document retention; expose an endpoint or UI action to
+    **delete draft** by guest (delete row by cookie guestId).
+-   **Logging**: log by `guestId` only; avoid PII in logs.
+
+------------------------------------------------------------------------
+
+# 6) Resume link flow (cross-device)
+
+1.  Server **issues** `token = HMAC(guestId|exp)`; returns a URL to the
+    client (or emails/SMS it).
+2.  User clicks `/resume?t=...` on another device.
+3.  Backend **verifies** token, then **sets `tranzr_guest` cookie** for
+    that browser.
+4.  Redirect to quote page → client loads canonical via
+    `GET /api/guest/quote`.
+
+------------------------------------------------------------------------
+
+# 7) Cleanup job (spec)
+
+-   **When:** daily at off-peak.
+-   **What:**
+    `DELETE FROM QuoteSessions WHERE UpdatedUtc < (UTCNOW() - INTERVAL '90 days')`.
+-   **Note:** if using soft delete, mark first, purge later.
+
+------------------------------------------------------------------------
+
+# 8) Minimal test plan
+
+-   First visit → cookie set → empty quote returned → edit → save →
+    refresh page → state persists.
+-   Close browser / OS reboot → revisit → state persists.
+-   Open two tabs → edit in tab A, then tab B → B gets `412` → reloads
+    and shows latest.
+-   Block cookies → endpoint returns 401 → UI shows "Enable cookies to
+    save your draft."
+-   Resume link on second device → quote loads.

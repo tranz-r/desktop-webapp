@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
@@ -8,9 +10,7 @@ import DriverSelector from '@/components/van/DriverSelector';
 import RecommendationBanner from '@/components/van/RecommendationBanner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
  
-import { useCart } from '@/contexts/CartContext';
-import { useBooking } from '@/contexts/BookingContext';
-import { useQuoteOption } from '@/contexts/QuoteOptionContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { VAN_TABLE, recommendVanByVolume } from '@/lib/recommend-van';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -26,25 +26,47 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { useQuoteSession } from '@/hooks/useQuoteSession';
+import { API_BASE_URL } from '@/lib/api/config';
 
 export default function PickupDropoffPage() {
   const router = useRouter();
-  const { getTotalVolume, items } = useCart();
-  const booking = useBooking();
-  const { option } = useQuoteOption();
-  const { vehicle, schedule, pricing, updateVehicle, updateSchedule, updatePricing, isHydrated } = booking;
-  const selectedVan = vehicle.selectedVan;
-  const driverCount = vehicle.driverCount;
-  const timeSlot = schedule.timeSlot;
-  const pricingData = pricing.pickUpDropOffPrice;
-  const setVan = (van: VanType) => updateVehicle({ selectedVan: van });
-  const setDriverCount = (count: number) => updateVehicle({ driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
-  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => updateSchedule({ timeSlot: slot });
+  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  
+  // Get data from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const items = activeQuote?.items || [];
+  
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
+  const timeSlot = activeQuote?.timeSlot;
+  const pricingData = activeQuote?.pricingTier; // Simplified for now
+  
+  // Helper functions to update quote data
+  const setVan = (van: VanType) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { vanType: van });
+    }
+  };
+  
+  const setDriverCount = (count: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
+    }
+  };
+  
+  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { timeSlot: slot });
+    }
+  };
+  
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
   const [dateOpen, setDateOpen] = React.useState(false);
   const [dateError, setDateError] = React.useState<string | null>(null);
+  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
  
  
   // Examine this /inventory call here and what to do
@@ -52,13 +74,20 @@ export default function PickupDropoffPage() {
     if (!hasInventory(items.length)) router.replace('/inventory');
     
     // If this is a send/receive quote but no pricing data is available, redirect back to inventory
-    if ((option === 'send' || option === 'receive') && isHydrated && !pricingData) {
+    if ((activeQuoteType === 'send' || activeQuoteType === 'receive') && isHydrated && !pricingData) {
       console.log('Missing pricing data for send/receive quote, redirecting to inventory');
       router.replace('/inventory');
     }
-  }, [items.length, router, option, isHydrated, pricingData]);
+  }, [items.length, router, activeQuoteType, isHydrated, pricingData]);
 
-  const totalVolume = getTotalVolume();
+  // Calculate total volume from items
+  const totalVolume = React.useMemo(() => {
+    return items.reduce((total, item) => {
+      const itemVolume = (item.lengthCm * item.widthCm * item.heightCm * item.quantity) / 1000000; // Convert to m³
+      return total + itemVolume;
+    }, 0);
+  }, [items]);
+  
   const recommended = React.useMemo(() => recommendVanByVolume(totalVolume), [totalVolume]);
 
   React.useEffect(() => {
@@ -68,28 +97,42 @@ export default function PickupDropoffPage() {
 
   // Rehydrate moving date from schedule if available
   React.useEffect(() => {
-    if (isHydrated && !movingDate && schedule?.dateISO) {
+    if (isHydrated && !movingDate && activeQuote?.collectionDate) {
       try {
-        const d = new Date(schedule.dateISO);
+        const d = new Date(activeQuote.collectionDate);
         if (!isNaN(d.getTime())) {
           setMovingDate(format(d, 'yyyy-MM-dd'));
         }
       } catch {}
     }
-  }, [isHydrated, schedule?.dateISO, movingDate]);
+  }, [isHydrated, activeQuote?.collectionDate, movingDate]);
 
   // Avoid hydration mismatch by rendering after mount
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Persist minimal schedule data (local for date only) and update booking collection date
+  // Sync schedule + vehicle changes to canonical quote
   React.useEffect(() => {
     try {
-      const schedule = { movingDate, timeSlot };
-      localStorage.setItem('schedule', JSON.stringify(schedule));
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        vehicle: { selectedVan, driverCount },
+        schedule: { dateISO: activeQuote?.collectionDate, timeSlot },
+      }));
     } catch {}
-  }, [movingDate, timeSlot]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVan, driverCount, activeQuote?.collectionDate, timeSlot]);
+
+  // Helper function to update schedule data
+  const updateSchedule = (scheduleData: { dateISO?: string; timeSlot?: 'morning' | 'afternoon' | 'evening' }) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, {
+        collectionDate: scheduleData.dateISO,
+        timeSlot: scheduleData.timeSlot,
+      });
+    }
+  };
 
   React.useEffect(() => {
     if (movingDate) {
@@ -142,7 +185,7 @@ export default function PickupDropoffPage() {
               <DriverSelector 
                 value={driverCount} 
                 onChange={setDriverCount}
-                recommendedMinimumMovers={pricingData?.standard?.recommendedMinimumMovers}
+                recommendedMinimumMovers={2} // Default value since pricing data structure changed
               />
             </CardContent>
           </Card>

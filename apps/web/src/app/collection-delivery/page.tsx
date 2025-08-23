@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from "react";
 import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
@@ -8,13 +10,45 @@ import { useForm } from "react-hook-form";
 import CollectionDeliveryAddresses, { CollectionDeliveryFormValues, floorValueToNumber } from "@/components/address/CollectionDeliveryAddresses";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useBooking } from "@/contexts/BookingContext";
+import { useQuote } from "@/contexts/QuoteContext";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { useQuoteSession } from '@/hooks/useQuoteSession';
+import { API_BASE_URL } from '@/lib/api/config';
 
 export default function CollectionDeliveryPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { originDestination, updateOriginDestination, isHydrated, customer } = booking;
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote,
+    isHydrated 
+  } = useQuote();
+  
+  // Get origin and destination from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+
+  // Helper functions to update quote data
+  const setOrigin = (originData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { origin: originData });
+    }
+  };
+
+  const setDestination = (destinationData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { destination: destinationData });
+    }
+  };
+
+  const setDistanceMiles = (miles: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { distanceMiles: miles });
+    }
+  };
 
   // Prevent initial flicker by showing a modern loading state until hydrated
   if (!isHydrated) {
@@ -41,24 +75,24 @@ export default function CollectionDeliveryPage() {
 
   const form = useForm<CollectionDeliveryFormValues>({
     defaultValues: {
-      originLine1: originDestination?.origin?.line1 || "",
-      originPostcode: originDestination?.origin?.postcode || "",
+      originLine1: origin?.line1 || "",
+      originPostcode: origin?.postcode || "",
       originFloor:
-        (originDestination?.origin?.floor ?? 0) === 0
+        (origin?.floor ?? 0) === 0
           ? "ground"
-          : (originDestination?.origin?.floor ?? 0) >= 6
+          : (origin?.floor ?? 0) >= 6
           ? "6+"
-          : String(originDestination?.origin?.floor ?? "ground"),
-      originElevator: originDestination?.origin?.hasElevator ?? true,
-      destinationLine1: originDestination?.destination?.line1 || "",
-      destinationPostcode: originDestination?.destination?.postcode || "",
+          : String(origin?.floor ?? "ground"),
+      originElevator: origin?.hasElevator ?? true,
+      destinationLine1: destination?.line1 || "",
+      destinationPostcode: destination?.postcode || "",
       destinationFloor:
-        (originDestination?.destination?.floor ?? 0) === 0
+        (destination?.floor ?? 0) === 0
           ? "ground"
-          : (originDestination?.destination?.floor ?? 0) >= 6
+          : (destination?.floor ?? 0) >= 6
           ? "6+"
-          : String(originDestination?.destination?.floor ?? "ground"),
-      destinationElevator: originDestination?.destination?.hasElevator ?? true,
+          : String(destination?.floor ?? "ground"),
+      destinationElevator: destination?.hasElevator ?? true,
     },
     mode: "onChange",
   });
@@ -77,7 +111,17 @@ export default function CollectionDeliveryPage() {
       floor: floorValueToNumber(form.watch("originFloor")),
       hasElevator: !!form.watch("originElevator"),
     };
-    updateOriginDestination({ origin });
+    setOrigin(origin);
+    try {
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        originDestination: {
+          ...(prev?.originDestination ?? {}),
+          origin,
+          distanceMiles: distanceMiles ?? prev?.originDestination?.distanceMiles,
+        },
+      }));
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     form.watch("originLine1"),
@@ -94,7 +138,17 @@ export default function CollectionDeliveryPage() {
       floor: floorValueToNumber(form.watch("destinationFloor")),
       hasElevator: !!form.watch("destinationElevator"),
     };
-    updateOriginDestination({ destination });
+    setDestination(destination);
+    try {
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        originDestination: {
+          ...(prev?.originDestination ?? {}),
+          destination,
+          distanceMiles: distanceMiles ?? prev?.originDestination?.distanceMiles,
+        },
+      }));
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     form.watch("destinationLine1"),
@@ -139,7 +193,16 @@ export default function CollectionDeliveryPage() {
       .then((miles) => {
         const numeric = Number(miles);
         if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
-          updateOriginDestination({ distanceMiles: numeric });
+          setDistanceMiles(numeric);
+          try {
+            quoteSession.setData((prev: any) => ({
+              ...(prev ?? {}),
+              originDestination: {
+                ...(prev?.originDestination ?? {}),
+                distanceMiles: numeric,
+              },
+            }));
+          } catch {}
         }
       })
       .catch((error) => {
@@ -157,8 +220,8 @@ export default function CollectionDeliveryPage() {
   // Rehydrate form values from saved context once hydrated
   React.useEffect(() => {
     if (!isHydrated) return;
-    const o = originDestination?.origin;
-    const d = originDestination?.destination;
+    const o = origin;
+    const d = destination;
     if (o) {
       if (o.line1) form.setValue("originLine1", o.line1, { shouldDirty: false });
       if (o.postcode) form.setValue("originPostcode", o.postcode, { shouldDirty: false });
@@ -188,24 +251,25 @@ export default function CollectionDeliveryPage() {
 
   function onSubmit(values: CollectionDeliveryFormValues) {
     // Preserve the distance that was calculated during address entry
-    const preservedDistance = customer?.distanceMiles || originDestination?.distanceMiles;
+    const preservedDistance = distanceMiles;
 
-    updateOriginDestination({
-      origin: {
-        line1: values.originLine1,
-        postcode: values.originPostcode,
-        floor: floorValueToNumber(values.originFloor),
-        hasElevator: values.originElevator,
-      },
-      destination: {
-        line1: values.destinationLine1,
-        postcode: values.destinationPostcode,
-        floor: floorValueToNumber(values.destinationFloor),
-        hasElevator: values.destinationElevator,
-      },
-      // Preserve the calculated distance
-      distanceMiles: preservedDistance,
+    setOrigin({
+      line1: values.originLine1,
+      postcode: values.originPostcode,
+      floor: floorValueToNumber(values.originFloor),
+      hasElevator: values.originElevator,
     });
+
+    setDestination({
+      line1: values.destinationLine1,
+      postcode: values.destinationPostcode,
+      floor: floorValueToNumber(values.destinationFloor),
+      hasElevator: values.destinationElevator,
+    });
+
+    if (preservedDistance) {
+      setDistanceMiles(preservedDistance);
+    }
 
     // Proceed to inventory step
     router.push("/inventory");
@@ -230,11 +294,11 @@ export default function CollectionDeliveryPage() {
                     </div>
                   </div>
                 )}
-                {typeof originDestination?.distanceMiles === "number" &&
-                  Number.isFinite(originDestination.distanceMiles!) &&
-                  originDestination.distanceMiles! > 0 && (
+                {typeof distanceMiles === "number" &&
+                  Number.isFinite(distanceMiles) &&
+                  distanceMiles > 0 && (
                     <div className="w-full text-center text-lg text-muted-foreground font-extrabold">
-                      Total distance: {Math.round(originDestination.distanceMiles!)} miles
+                      Total distance: {Math.round(distanceMiles)} miles
                     </div>
                   )}
                 <div className="pt-4 flex justify-end">

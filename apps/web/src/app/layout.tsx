@@ -4,15 +4,17 @@ import { Quicksand } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 
-const RouteLoadingOverlay = dynamic(() => import("@/components/RouteLoadingOverlay"), { ssr: false });
+const RouteLoadingOverlay = dynamicImport(() => import("@/components/RouteLoadingOverlay"), { ssr: false });
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
   variable: "--font-quicksand",
   display: "swap",
 });
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Tempo - Modern SaaS Starter",

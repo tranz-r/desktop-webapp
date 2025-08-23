@@ -1,10 +1,12 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
-import { useBooking } from "@/contexts/BookingContext";
+import { useQuote } from "@/contexts/QuoteContext";
 import { Address } from "@/types/booking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,8 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { AlertCircle, Building2, MapPin } from "lucide-react";
+import { useQuoteSession } from '@/hooks/useQuoteSession';
+import { API_BASE_URL } from '@/lib/api/config';
 
 type FormValues = {
   originLine1: string;
@@ -58,34 +62,103 @@ function floorValueToNumber(val: string): number {
 
 export default function OriginDestinationPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { isHydrated, vehicle, originDestination, updateOriginDestination } = booking;
-  const selectedVan = vehicle.selectedVan;
-  const setOrigin = (addr: Address) => updateOriginDestination({ origin: addr });
-  const setDestination = (addr: Address) => updateOriginDestination({ destination: addr });
-  const setDistanceMiles = (miles: number) => updateOriginDestination({ distanceMiles: Math.max(0, Number(miles) || 0) });
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote,
+    isHydrated
+  } = useQuote();
+  
+  // Get origin and destination from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  const removalsQuote = quotes.removals;
+  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+  const selectedVan = removalsQuote?.vanType;
+
+  // Helper functions for the new context API
+  const setOrigin = (originData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { origin: originData });
+    }
+  };
+
+  const setDestination = (destinationData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { destination: destinationData });
+    }
+  };
+
+  const setDistanceMiles = (miles: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { distanceMiles: miles });
+    }
+  };
+
+  const setCustomerName = (name: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, fullName: name } 
+      });
+    }
+  };
+
+  const setCustomerEmail = (email: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, email } 
+      });
+    }
+  };
+
+  const setCustomerPhone = (phone: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, phone } 
+      });
+    }
+  };
+
+  const setBillingAddress = (line1: string, postcode: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { 
+          ...activeQuote?.customer, 
+          billingAddress: { line1, postcode } 
+        } 
+      });
+    }
+  };
+
+  const updateVehicle = (vehicleData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, vehicleData);
+    }
+  };
 
   const form = useForm<FormValues>({
     defaultValues: {
-  originLine1: originDestination?.origin?.line1 || "",
-  originPostcode: originDestination?.origin?.postcode || "",
+      originLine1: origin?.line1 || "",
+      originPostcode: origin?.postcode || "",
       originFloor: "ground",
       originElevator: true,
-  destinationLine1: originDestination?.destination?.line1 || "",
-  destinationPostcode: originDestination?.destination?.postcode || "",
+      destinationLine1: destination?.line1 || "",
+      destinationPostcode: destination?.postcode || "",
       destinationFloor: "ground",
       destinationElevator: true,
-  fullName: originDestination?.fullName || "",
-  email: originDestination?.email || "",
-  phone: originDestination?.phone || "",
-  billingLine1: originDestination?.billingAddress?.line1 || "",
-  billingPostcode: originDestination?.billingAddress?.postcode || "",
+      fullName: activeQuote?.customer?.fullName || "",
+      email: activeQuote?.customer?.email || "",
+      phone: activeQuote?.customer?.phone || "",
+      billingLine1: activeQuote?.customer?.billingAddress?.line1 || "",
+      billingPostcode: activeQuote?.customer?.billingAddress?.postcode || "",
     },
     mode: "onChange",
   });
 
-  const o = originDestination?.origin;
-  const d = originDestination?.destination;
+  const o = origin;
+  const d = destination;
   const collectedAddresses = !!o?.line1 && !!o?.postcode && !!d?.line1 && !!d?.postcode;
   const showExtraCost =
     ((!o?.hasElevator && (o?.floor ?? 0) > 0) || (!d?.hasElevator && (d?.floor ?? 0) > 0));
@@ -96,6 +169,25 @@ export default function OriginDestinationPage() {
   const watchFullName = form.watch("fullName");
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
+
+  // Continuously sync customer details & billing into canonical quote
+  React.useEffect(() => {
+    try {
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        customer: {
+          fullName: watchFullName || '',
+          email: watchEmail || '',
+          phone: watchPhone || '',
+          billingAddress: {
+            line1: watchBillingLine1 || '',
+            postcode: watchBillingPostcode || '',
+          },
+        },
+      }));
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchFullName, watchEmail, watchPhone, watchBillingLine1, watchBillingPostcode]);
 
   function onSubmit(values: FormValues) {
     const origin: Address = {
@@ -110,15 +202,29 @@ export default function OriginDestinationPage() {
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
     };
-    updateOriginDestination({
-      origin,
-      destination,
-      distanceMiles: originDestination?.distanceMiles ?? 0,
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      billingAddress: { line1: values.billingLine1, postcode: values.billingPostcode },
-    });
+    setOrigin(origin);
+    setDestination(destination);
+    setDistanceMiles(distanceMiles ?? 0);
+    setCustomerName(values.fullName);
+    setCustomerEmail(values.email);
+    setCustomerPhone(values.phone);
+    setBillingAddress(values.billingLine1, values.billingPostcode);
+
+    try {
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        originDestination: {
+          origin,
+          destination,
+          distanceMiles: distanceMiles ?? 0,
+          fullName: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          billingAddress: { line1: values.billingLine1, postcode: values.billingPostcode },
+        },
+      }));
+      void quoteSession.flush();
+    } catch {}
 
     // Ensure flow: must have selected a van before pricing per rules
     if (!selectedVan) {
@@ -142,9 +248,9 @@ export default function OriginDestinationPage() {
 
   // When hydrated, rehydrate form fields for floors/elevators from saved state if present
   React.useEffect(() => {
-    if (!isHydrated || !originDestination) return;
-    const o = originDestination.origin;
-    const d = originDestination.destination;
+    if (!isHydrated) return;
+    const o = origin;
+    const d = destination;
     if (o?.floor !== undefined) {
       form.setValue('originFloor', o.floor === 0 ? 'ground' : (o.floor >= 6 ? '6+' : String(o.floor)));
     }
@@ -157,7 +263,7 @@ export default function OriginDestinationPage() {
     if (typeof d?.hasElevator === 'boolean') {
       form.setValue('destinationElevator', d.hasElevator);
     }
-  }, [isHydrated, originDestination]);
+  }, [isHydrated, origin, destination]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -365,9 +471,9 @@ export default function OriginDestinationPage() {
         )}
 
         {/* Total distance from context */}
-        {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
+        {typeof distanceMiles === 'number' && Number.isFinite(distanceMiles) && distanceMiles > 0 && (
           <div className="mt-4 w-full text-center text-lg text-muted-foreground font-extrabold">
-            Total distance: {Math.round(originDestination.distanceMiles!)} miles
+            Total distance: {Math.round(distanceMiles)} miles
           </div>
         )}
 

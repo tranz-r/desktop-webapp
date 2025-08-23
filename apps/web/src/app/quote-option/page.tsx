@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -11,8 +13,10 @@ import {
   RemovalSvgComponent,
 } from '@/components/icons';
 import { QuoteOption } from '@/types/booking';
-import { useQuoteOption } from '@/contexts/QuoteOptionContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { useRouter } from 'next/navigation';
+import { ensureGuest } from '@/lib/api/guest';
+import { API_BASE_URL } from '@/lib/api/config';
 
 const OPTIONS: Array<{ id: QuoteOption; title: string; description: string; Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }> = [
   {
@@ -36,9 +40,14 @@ const OPTIONS: Array<{ id: QuoteOption; title: string; description: string; Icon
 ];
 
 export default function QuoteOptionPage() {
-  const { option, setOption } = useQuoteOption();
-  const selected = option;
+  const { activeQuoteType, setActiveQuoteType } = useQuote();
+  const selected = activeQuoteType;
   const router = useRouter();
+
+  // Early bootstrap cookie+server session when user starts a quote journey
+  React.useEffect(() => {
+    void ensureGuest(API_BASE_URL);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -59,17 +68,17 @@ export default function QuoteOptionPage() {
                     key={id}
                     role="button"
                     tabIndex={0}
-          onClick={() => {
-            setOption(id);
+                    onClick={() => {
+            setActiveQuoteType(id);
             router.push('/collection-delivery');
           }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-            setOption(id);
-            router.push('/collection-delivery');
-                      }
-                    }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setActiveQuoteType(id);
+              router.push('/collection-delivery');
+            }
+          }}
                     className={`transition-colors cursor-pointer border ${
                       isSelected ? 'border-primary-500 bg-primary-50' : 'border-primary-200 hover:border-primary-300'
                     }`}

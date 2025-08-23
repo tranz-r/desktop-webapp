@@ -1,19 +1,26 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { Suspense } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useBooking } from '@/contexts/BookingContext';
+import { useQuote } from '@/contexts/QuoteContext';
+import { API_BASE_URL } from '@/lib/api/config';
 
 function ResultContent() {
-  const booking = useBooking();
+  const { activeQuoteType, quotes, isHydrated } = useQuote();
+  
+  // Get payment data from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const payment = activeQuote?.payment;
+  
   const [clientSecret, setClientSecret] = React.useState<string>('');
   const [isLoadingClientSecret, setIsLoadingClientSecret] = React.useState(true);
   const [status, setStatus] = React.useState<string>('Loading payment details…');
 
-  const { isHydrated, payment } = booking;
   const paymentIntentId = payment?.paymentIntentId;
 
   // Fetch client secret using stored PaymentIntentId
@@ -26,8 +33,7 @@ function ResultContent() {
       }
 
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch payment intent: ${response.status}`);

@@ -1,7 +1,9 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { Suspense } from 'react';
-import { useBooking } from '@/contexts/BookingContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
@@ -9,6 +11,8 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useQuoteSession } from '@/hooks/useQuoteSession';
+import { API_BASE_URL } from '@/lib/api/config';
 
 // Hook placed at module scope per React rules
 function usePaymentStatus(clientSecret: string | null) {
@@ -135,17 +139,32 @@ function usePaymentStatus(clientSecret: string | null) {
 }
 
 function ConfirmationContent() {
-  const booking = useBooking();
+  const { 
+    activeQuoteType, 
+    quotes, 
+    updateQuote 
+  } = useQuote();
   const params = useSearchParams();
   const refFromUrl = params.get('ref');
   const [clientSecret, setClientSecret] = React.useState<string>('');
   const [isFetchingClientSecret, setIsFetchingClientSecret] = React.useState(false);
   const { loading, status, message, error } = usePaymentStatus(clientSecret);
-  const job = booking.payment?.jobDetails;
+  
+  // Get payment data from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const job = activeQuote?.payment?.jobDetails;
   const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
+  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
 
-  const { payment } = booking;
+  const payment = activeQuote?.payment;
   const paymentIntentId = payment?.paymentIntentId;
+
+  // Helper function to update payment data
+  const updatePayment = (paymentData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { payment: { ...activeQuote?.payment, ...paymentData } });
+    }
+  };
 
   // Fetch client secret using stored PaymentIntentId
   React.useEffect(() => {
@@ -178,23 +197,34 @@ function ConfirmationContent() {
   // Promote status to Paid locally once payment succeeded (backend may still show Pending)
   React.useEffect(() => {
     if (status === 'succeeded' && job && job.paymentStatus && job.paymentStatus.toLowerCase() === 'pending') {
-      booking.updatePayment?.({ jobDetails: { ...job, paymentStatus: 'Paid' } });
+      updatePayment({ jobDetails: { ...job, paymentStatus: 'Paid' } });
     }
-  }, [status, job, booking]);
+    // Snapshot final state after success
+    if (status === 'succeeded') {
+      try {
+        quoteSession.setData((prev: any) => ({
+          ...(prev ?? {}),
+          bookingFinalizedAt: new Date().toISOString(),
+          payment: payment,
+        }));
+        void quoteSession.flush();
+      } catch {}
+    }
+  }, [status, job, payment, updatePayment, quoteSession]);
 
   // If we arrive without a bookingId in context (fresh navigation) but have ref param, hydrate it immediately
   React.useEffect(() => {
-    if (refFromUrl && !booking.payment?.bookingId) {
-      booking.updatePayment({ bookingId: refFromUrl });
+    if (refFromUrl && !payment?.bookingId) {
+      updatePayment({ bookingId: refFromUrl });
     }
-  }, [refFromUrl, booking]);
+  }, [refFromUrl, payment?.bookingId, updatePayment]);
 
   // Refetch job details while payment succeeded but job not yet in context (race condition protection)
   React.useEffect(() => {
     if (status !== 'succeeded') return;
-    if (booking.payment?.jobDetails) return; // already have it
+    if (payment?.jobDetails) return; // already have it
     if (jobFetchAttempts > 10) return; // stop after retries
-    const quoteId = booking.payment?.bookingId;
+    const quoteId = payment?.bookingId;
     if (!quoteId) return;
     const baseUrl = process.env.NEXT_PUBLIC_JOBS_BASE_URL;
     if (!baseUrl) return;
@@ -204,24 +234,25 @@ function ConfirmationContent() {
       .then(j => {
         const jobObj = Array.isArray(j) ? j[0] : j;
         if (jobObj && jobObj.quoteId) {
-          booking.updatePayment?.({ jobDetails: jobObj, bookingId: jobObj.quoteId });
+          updatePayment?.({ jobDetails: jobObj, bookingId: jobObj.quoteId });
         } else if (jobObj) {
-          booking.updatePayment?.({ jobDetails: jobObj });
+          updatePayment?.({ jobDetails: jobObj });
         }
       })
       .catch(e => console.warn('[confirmation] job fetch attempt failed', jobFetchAttempts, e))
       .finally(() => {
-        if (!booking.payment?.jobDetails) {
+        if (!payment?.jobDetails) {
           setTimeout(() => setJobFetchAttempts(a => a + 1), 1000);
         }
       });
     return () => controller.abort();
-  }, [status, booking, jobFetchAttempts]);
+  }, [status, payment, jobFetchAttempts, updatePayment]);
+
   // UI for each payment state
   let mainContent;
   
   // Get payment type from context to show appropriate messages
-  const paymentType = booking.payment?.paymentType;
+  const paymentType = payment?.paymentType;
   const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
   
   // Show loading state while checking payment status

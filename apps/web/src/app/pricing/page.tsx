@@ -1,11 +1,12 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import DatePickers from '@/components/pricing/DatePickers';
-import { useBooking } from '@/contexts/BookingContext';
-import { useQuoteOption } from '@/contexts/QuoteOptionContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { Button } from '@/components/ui/button';
 import { computeCost } from '@/lib/cost';
 import { canEnterPricing } from '@/lib/guards';
@@ -14,36 +15,65 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock, Check, FileDown, Star } from 'lucide-react';
 import type { PricingTierId } from '@/types/booking';
+import { useQuoteSession } from '@/hooks/useQuoteSession';
+import { API_BASE_URL } from '@/lib/api/config';
 
 export default function PricingPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { option: quoteOption } = useQuoteOption();
-  const { isHydrated, vehicle, originDestination, pricing, schedule, updatePricing, updateSchedule } = booking;
-  const selectedVan = vehicle.selectedVan;
-  const driverCount = vehicle.driverCount;
-  const origin = originDestination.origin;
-  const destination = originDestination.destination;
-  const distanceMiles = originDestination.distanceMiles;
-  const pricingTier = pricing.pricingTier;
-  const pickUpDropOffPrice = pricing.pickUpDropOffPrice;
-  const collectionDate = schedule.dateISO;
-  const deliveryDate = schedule.deliveryDateISO;
-  const setPricingTier = (tier: PricingTierId) => updatePricing({ pricingTier: tier });
-  const setCollectionDate = (iso: string) => updateSchedule({ dateISO: iso });
-  const setDeliveryDate = (iso: string) => updateSchedule({ deliveryDateISO: iso });
+  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+  
+  // Get data from active quote and shared data
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  
+  // Get origin and destination from active quote
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
+  const pricingTier = activeQuote?.pricingTier;
+  const collectionDate = activeQuote?.collectionDate;
+  const deliveryDate = activeQuote?.deliveryDate;
+  
+  // Helper functions to update quote data
+  const setPricingTier = (tier: PricingTierId) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { pricingTier: tier });
+    }
+  };
+  
+  const setCollectionDate = (iso: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { collectionDate: iso });
+    }
+  };
+  
+  const setDeliveryDate = (iso: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { deliveryDate: iso });
+    }
+  };
+  
   const [expandedTier, setExpandedTier] = React.useState<PricingTierId | null>(null);
-  const [selectedServiceTier, setSelectedServiceTier] = React.useState<'standard' | 'premium'>('standard');
 
   React.useEffect(() => {
     if (!isHydrated) return;
-    if (!canEnterPricing(booking)) {
+    // Create a mock object that matches the expected BookingState structure
+    const mockBookingState = {
+      vehicle: { selectedVan: activeQuote?.vanType, driverCount: activeQuote?.driverCount || 2 },
+      pricing: { pricingTier: activeQuote?.pricingTier, totalCost: activeQuote?.totalCost || 0 },
+      originDestination: { origin, destination, distanceMiles },
+      schedule: { dateISO: activeQuote?.collectionDate, deliveryDateISO: activeQuote?.deliveryDate }
+    };
+    if (!canEnterPricing(mockBookingState)) {
       router.replace('/origin-destination');
     }
-  }, [router, isHydrated, booking]);
+  }, [router, isHydrated, activeQuote, origin, destination, distanceMiles]);
 
-  // Check if this is a send/receive quote with pricing data
-  const isSendReceiveQuote = (quoteOption === 'send' || quoteOption === 'receive') && pickUpDropOffPrice;
+  // Simplified pricing logic
+  const isSendReceiveQuote = false;
 
   const cost = React.useMemo(() => {
     if (!selectedVan) return null;
@@ -59,7 +89,22 @@ export default function PricingPage() {
     });
   }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
-  // Four-tier model: Eco, Eco Plus, Standard, Premium (inspired by reference design)
+  const snapshotQuote = React.useCallback(() => {
+    try {
+      quoteSession.setData((prev: any) => ({
+        ...(prev ?? {}),
+        vehicle: { selectedVan: activeQuote?.vanType, driverCount: activeQuote?.driverCount || 2 },
+        origin: origin,
+        destination: destination,
+        distanceMiles: distanceMiles,
+        schedule: { dateISO: activeQuote?.collectionDate, deliveryDateISO: activeQuote?.deliveryDate },
+        pricing: { pricingTier: activeQuote?.pricingTier, totalCost: activeQuote?.totalCost || 0 },
+      }));
+      void quoteSession.flush();
+    } catch {}
+  }, [quoteSession, activeQuote, origin, destination, distanceMiles]);
+
+  // Four-tier model: Eco, Eco Plus, Standard, Premium
   const tiers: { id: PricingTierId; name: string; popular?: boolean; timescale: string; features: { name: string; included: boolean; value?: string; info?: string }[] }[] = [
     {
       id: 'eco',
@@ -89,32 +134,32 @@ export default function PricingPage() {
         { name: 'Two men team', included: true },
         { name: 'Careful protection', included: true },
         { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'ground floor' },
-        { name: 'Damage cover', included: true, value: 'up to £100' },
-        { name: 'Time slot', included: true, value: '4 hours' },
+        { name: 'Level of service', included: true, value: 'door to door' },
+        { name: 'Damage cover', included: true, value: '£0' },
+        { name: 'Time slot', included: true, value: 'whole day' },
         { name: 'Tracking (basic)', included: true },
-        { name: 'Time slot the day before', included: false },
+        { name: 'Time slot the day before', included: true },
         { name: 'Real time tracking', included: false },
         { name: 'SMS updates', included: false },
         { name: '1-2 stops away notifications', included: false },
       ],
-      popular: true,
     },
     {
       id: 'standard',
       name: 'Tranzr Standard',
-      timescale: '2-4 working days',
+      popular: true,
+      timescale: '3-5 working days',
       features: [
         { name: 'State of the art service', included: true },
         { name: 'Two men team', included: true },
         { name: 'Careful protection', included: true },
         { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'room of choice' },
-        { name: 'Damage cover', included: true, value: 'up to £300' },
-        { name: 'Time slot', included: true, value: '2 hours' },
+        { name: 'Level of service', included: true, value: 'door to door' },
+        { name: 'Damage cover', included: true, value: '£0' },
+        { name: 'Time slot', included: true, value: 'whole day' },
         { name: 'Tracking (basic)', included: true },
         { name: 'Time slot the day before', included: true },
-        { name: 'Real time tracking', included: false },
+        { name: 'Real time tracking', included: true },
         { name: 'SMS updates', included: true },
         { name: '1-2 stops away notifications', included: false },
       ],
@@ -122,16 +167,16 @@ export default function PricingPage() {
     {
       id: 'premium',
       name: 'Tranzr Premium',
-      timescale: '1-2 business days',
+      timescale: '1-2 working days',
       features: [
         { name: 'State of the art service', included: true },
         { name: 'Two men team', included: true },
         { name: 'Careful protection', included: true },
         { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'room of choice' },
-        { name: 'Damage cover', included: true, value: 'up to purchase, market, or repair cost' },
-        { name: 'Time slot', included: true, value: '2 hours' },
-        { name: 'Tracking (premium)', included: true },
+        { name: 'Level of service', included: true, value: 'door to door' },
+        { name: 'Damage cover', included: true, value: '£0' },
+        { name: 'Time slot', included: true, value: 'whole day' },
+        { name: 'Tracking (basic)', included: true },
         { name: 'Time slot the day before', included: true },
         { name: 'Real time tracking', included: true },
         { name: 'SMS updates', included: true },
@@ -140,40 +185,12 @@ export default function PricingPage() {
     },
   ];
 
-  const tierCost = (tierId: PricingTierId) => {
-    if (!selectedVan) return null;
-    const c = computeCost({
-      van: selectedVan,
-      driverCount,
-      distanceMiles: distanceMiles || 0,
-      originFloor: origin?.floor,
-      originElevator: origin?.hasElevator,
-      destinationFloor: destination?.floor,
-      destinationElevator: destination?.hasElevator,
-      pricingTier: tierId,
-    });
-    return c.total;
-  };
-
-  // Persist customer selection to pricing state for send/receive flows
-  React.useEffect(() => {
-    if (!isSendReceiveQuote || !pickUpDropOffPrice) return;
-    const selectedPricing = pickUpDropOffPrice[selectedServiceTier];
-    updatePricing({
-      pricingTier: selectedServiceTier === 'premium' ? 'premium' : 'standard',
-      totalCost: selectedPricing.customerTotal,
-    });
-  }, [isSendReceiveQuote, pickUpDropOffPrice, selectedServiceTier, updatePricing]);
-
-  // Handle continue for send/receive quotes
-  const handleSendReceiveContinue = () => {
-    if (pickUpDropOffPrice) {
-      const selectedPricing = pickUpDropOffPrice[selectedServiceTier];
-      updatePricing({ 
-        pricingTier: selectedServiceTier === 'premium' ? 'premium' : 'standard',
-        totalCost: selectedPricing.customerTotal
-      });
+  const handleContinue = () => {
+    if (!pricingTier) {
+      alert('Please select a pricing tier to continue');
+      return;
     }
+    snapshotQuote();
     router.push('/origin-destination');
   };
 
@@ -188,211 +205,80 @@ export default function PricingPage() {
             <div className="flex items-center gap-2 mb-1">
               <Shield className="h-4 w-4 text-blue-600" />
               <div className="text-blue-900 font-semibold text-sm">
-                {isSendReceiveQuote ? 'Pickup & Dropoff Service' : 'Professional Moving Service'}
+                Professional Moving Service
               </div>
             </div>
             <div className="text-blue-800 text-sm">
-              {isSendReceiveQuote 
-                ? 'Choose between our Standard and Premium service tiers. All include professional movers, insurance coverage, and careful handling.'
-                : 'All tiers include professional movers, insurance coverage, and careful handling of your belongings. Choose based on your timeline and service preferences.'
-              }
+              All tiers include professional movers, insurance coverage, and careful handling of your belongings. Choose based on your timeline and service preferences.
             </div>
           </div>
 
-          {/* Send/Receive Quote Pricing Display (Modern two-card design) */}
-          {isSendReceiveQuote && pickUpDropOffPrice && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Standard Service */}
+          {/* Pricing Tiers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {tiers.map((tier) => (
               <Card
+                key={tier.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => setSelectedServiceTier('standard')}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedServiceTier('standard')}
-                aria-pressed={selectedServiceTier === 'standard'}
+                onClick={() => setPricingTier(tier.id)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPricingTier(tier.id)}
+                aria-pressed={pricingTier === tier.id}
                 className={`cursor-pointer overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 ${
-                  selectedServiceTier === 'standard' ? 'ring-2 ring-primary-400 shadow-lg' : 'hover:shadow'
+                  pricingTier === tier.id ? 'ring-2 ring-primary-400 shadow-lg' : 'hover:shadow'
                 }`}
               >
-                <div className="bg-primary-600 text-primary-50 p-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">Standard</div>
-                    <div className="text-xl font-semibold">Removal</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {selectedServiceTier === 'standard' && (
-                      <span className="text-[10px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">Selected</span>
+                <div className="bg-primary-600 text-primary-50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="text-sm opacity-90">{tier.name}</div>
+                      <div className="text-xs opacity-75">{tier.timescale}</div>
+                    </div>
+                    {tier.popular && (
+                      <Badge variant="secondary" className="text-xs">
+                        Popular
+                      </Badge>
                     )}
-                    <Truck className="h-7 w-7 opacity-90" />
                   </div>
                 </div>
-                <CardContent className="p-5 space-y-5">
-                  <div>
-                    <div className="text-4xl font-bold text-foreground">£{pickUpDropOffPrice.standard.customerTotal.toFixed(0)}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Includes VAT</div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-semibold text-foreground mb-2">Includes:</div>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Moving team to Load and Move</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Book now, pay later</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Complimentary Cover</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free 48 hour Cancellation</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Waiting time up to 30 mins</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free Home Setup Service</li>
-                    </ul>
-                  </div>
-
-                  <div className="text-xs text-muted-foreground text-center">
-                    <Clock className="inline h-3.5 w-3.5 mr-1" /> Total Volume: {pickUpDropOffPrice.standard.totalVolumeM3.toFixed(2)} m³ • Distance: {distanceMiles || 0} miles
+                <CardContent className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    {tier.features.map((feature, index) => (
+                      <div key={index} className="flex items-start gap-2 text-sm">
+                        {feature.included ? (
+                          <Check className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <div className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <span className={feature.included ? 'text-foreground' : 'text-muted-foreground'}>
+                            {feature.name}
+                          </span>
+                          {feature.value && (
+                            <span className="text-muted-foreground ml-1">({feature.value})</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
 
-              {/* Premium Service */}
-              <Card
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedServiceTier('premium')}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedServiceTier('premium')}
-                aria-pressed={selectedServiceTier === 'premium'}
-                className={`cursor-pointer overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 ${
-                  selectedServiceTier === 'premium' ? 'ring-2 ring-primary-400 shadow-lg' : 'hover:shadow'
-                }`}
-              >
-                <div className="bg-primary-700 text-primary-50 p-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">Premium</div>
-                    <div className="text-xl font-semibold">Full Pack & Move</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-yellow-300" />
-                    {selectedServiceTier === 'premium' && (
-                      <span className="text-[10px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">Selected</span>
-                    )}
-                    <Truck className="h-7 w-7 opacity-90" />
-                  </div>
-                </div>
-                <CardContent className="p-5 space-y-5">
-                  <div>
-                    <div className="text-4xl font-bold text-foreground">£{pickUpDropOffPrice.premium.customerTotal.toFixed(0)}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Includes VAT</div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-semibold text-foreground mb-2">Includes:</div>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Moving team to Pack, Load and Move</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Full Packing Service</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> All Packaging Materials</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Book now, pay later</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Dismantling & Reassembly</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Dedicated Consultant</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Protection+ Cover</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free 48 hour Cancellation</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Extended wait time up to 2 hours</li>
-                      <li className="flex items-start gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-emerald-600 mt-0.5"/> Free Home Setup Service</li>
-                    </ul>
-                  </div>
-
-                  <div className="text-xs text-muted-foreground text-center">
-                    <Clock className="inline h-3.5 w-3.5 mr-1" /> Total Volume: {pickUpDropOffPrice.premium.totalVolumeM3.toFixed(2)} m³ • Distance: {distanceMiles || 0} miles
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Standard Pricing Tiers (for removals) */}
-          {!isSendReceiveQuote && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {tiers.map((t) => {
-                const selected = pricingTier === t.id;
-                const price = tierCost(t.id);
-                const expanded = expandedTier === t.id;
-                return (
-                  <Card
-                    key={t.id}
-                    className={`overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 ${selected ? 'border-primary-500 shadow-primary-100' : ''}`}
-                  >
-                    {t.popular && (
-                      <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-center">
-                        <span className="text-white text-xs font-bold tracking-wide">MOST POPULAR</span>
-                      </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="flex items-start justify-between gap-2 text-base">
-                        <span>{t.name}</span>
-                        {t.popular && <Badge>Popular</Badge>}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-600">Estimated</div>
-                        <div className="text-2xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600">Collection</span>
-                          <span className="text-xs font-medium text-gray-600">Delivery</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                          <span className="flex-1 mx-3 h-px bg-gray-300" />
-                          <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                        </div>
-                      </div>
-
-                      <div className="text-sm text-gray-600">{t.timescale}</div>
-                      <Button variant={selected ? 'default' : 'secondary'} className="w-full" onClick={() => setPricingTier(t.id)}>
-                        {selected ? 'Selected' : 'Select'}
-                      </Button>
-
-                      <Button variant="ghost" className="w-full justify-center gap-2" type="button" onClick={() => setExpandedTier(expanded ? null : t.id)}>
-                        <span className="text-sm font-medium">{expanded ? 'Hide details' : 'View details'}</span>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-                      </Button>
-
-                      {expanded && (
-                        <div className="border-t pt-4 space-y-2">
-                          {t.features.map((f) => (
-                            <div key={f.name} className="flex items-center justify-between py-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-700">{f.name}</span>
-                                {f.info && <Info className="h-3.5 w-3.5 text-gray-400" />}
-                              </div>
-                              <div className="text-sm font-medium text-gray-800">
-                                {f.included ? (
-                                  f.value ? (
-                                    <span>{f.value}</span>
-                                  ) : (
-                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                  )
-                                ) : (
-                                  <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-gray-300" />
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex justify-end">
-            <Button onClick={isSendReceiveQuote ? handleSendReceiveContinue : () => router.push('/origin-destination')}>
-              {isSendReceiveQuote ? 'Continue to Customer Details' : 'Continue to Customer Details'}
+          {/* Continue Button */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleContinue}
+              disabled={!pricingTier}
+              size="lg"
+              className="px-8"
+            >
+              Continue to Address Details
             </Button>
           </div>
         </div>
       </section>
       </main>
-
       <Footer />
     </div>
   );

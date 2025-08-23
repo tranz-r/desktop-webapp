@@ -1,9 +1,8 @@
 "use client";
 
 import React from 'react';
+import { QuoteProvider } from '@/contexts/QuoteContext';
 import { CartProvider } from '@/contexts/CartContext';
-import { BookingProvider } from '@/contexts/BookingContext';
-import { QuoteOptionProvider } from '@/contexts/QuoteOptionContext';
 import ProgressStepper from '@/components/nav/ProgressStepper';
 import { usePathname } from 'next/navigation';
 
@@ -20,12 +19,10 @@ function StepperGate({ children }: { children: React.ReactNode }) {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <CartProvider>
-      <BookingProvider>
-        <QuoteOptionProvider>
-          <StepperGate>{children}</StepperGate>
-        </QuoteOptionProvider>
-      </BookingProvider>
-    </CartProvider>
+    <QuoteProvider>
+      <CartProvider>
+        <StepperGate>{children}</StepperGate>
+      </CartProvider>
+    </QuoteProvider>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { QuoteOption } from '@/types/booking';
+import { safeGet, safeSet, safeRemove } from '@/lib/storage';
 
 interface QuoteOptionContextType {
   option: QuoteOption | null;
@@ -16,37 +17,22 @@ export function QuoteOptionProvider({ children }: { children: React.ReactNode })
   const [option, setOptionState] = useState<QuoteOption | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from HybridStorage (with localStorage fallback) on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as QuoteOption | null;
-        // Only set if it's a valid QuoteOption value
-        if (parsed && Object.values(QuoteOption).includes(parsed)) {
-          setOptionState(parsed);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading quote option from localStorage:', error);
-    } finally {
-      setIsHydrated(true);
+    const loaded = safeGet<QuoteOption | null>(STORAGE_KEY, null);
+    if (loaded && Object.values(QuoteOption).includes(loaded)) {
+      setOptionState(loaded);
     }
+    setIsHydrated(true);
   }, []);
 
-  // Persist to localStorage when option changes (but only after hydration)
+  // Persist via HybridStorage when option changes (but only after hydration)
   useEffect(() => {
     if (!isHydrated) return; // Don't persist during initial hydration
-    
-    try {
-      if (option !== null) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(option));
-      } else {
-        // Only remove from localStorage if explicitly cleared
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch (error) {
-      console.error('Error saving quote option to localStorage:', error);
+    if (option !== null) {
+      safeSet(STORAGE_KEY, option);
+    } else {
+      safeRemove(STORAGE_KEY);
     }
   }, [option, isHydrated]);
 
@@ -67,11 +53,7 @@ export function QuoteOptionProvider({ children }: { children: React.ReactNode })
 
   const clearOption = () => {
     setOptionState(null);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.error('Error clearing quote option from localStorage:', error);
-    }
+    safeRemove(STORAGE_KEY);
   };
 
   const value = useMemo<QuoteOptionContextType>(() => ({ 

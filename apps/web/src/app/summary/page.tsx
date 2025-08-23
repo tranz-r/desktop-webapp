@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
@@ -8,24 +10,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useBooking } from '@/contexts/BookingContext';
-import { useCart } from '@/contexts/CartContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { computeCost } from '@/lib/cost';
-import { email } from 'zod';
 
 export default function SummaryPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { vehicle, originDestination, pricing, schedule, customer, setTotalCost, updatePayment } = booking;
-  const { items: cartItems } = useCart();
-  const selectedVan = vehicle.selectedVan;
-  const driverCount = vehicle.driverCount;
-  const origin = originDestination.origin;
-  const destination = originDestination.destination;
-  const distanceMiles = originDestination.distanceMiles;
-  const pricingTier = pricing.pricingTier;
-  const collectionDate = schedule.dateISO;
-  const deliveryDate = schedule.deliveryDateISO;
+  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  
+  // Get data from active quote and shared data
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const cartItems = activeQuote?.items || [];
+  const customer = activeQuote?.customer;
+  
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
+  // Get origin and destination from active quote
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  const pricingTier = activeQuote?.pricingTier;
+  const collectionDate = activeQuote?.collectionDate;
+  const deliveryDate = activeQuote?.deliveryDate;
+  
+  // Helper functions to update quote data
+  const setTotalCost = (totalCost: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { totalCost });
+    }
+  };
+  
+  const updatePayment = (paymentData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { payment: { ...activeQuote?.payment, ...paymentData } });
+    }
+  };
   const [loading, setLoading] = React.useState(false);
 
   const cost = React.useMemo(() => {
@@ -42,7 +60,7 @@ export default function SummaryPage() {
     });
   }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
-  // Persist the computed total into BookingContext (and localStorage via context)
+  // Persist the computed total into QuoteContext
   React.useEffect(() => {
     if (cost?.total != null && !Number.isNaN(cost.total)) {
       setTotalCost(cost.total);
@@ -86,14 +104,14 @@ export default function SummaryPage() {
       if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_PAYMENT_INIT_URL for payment initialization');
 
       // Ensure bookingId early
-      let quoteId = booking.payment?.bookingId;
+      let quoteId = activeQuote?.payment?.bookingId;
       if (!quoteId) {
         quoteId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `q-${Date.now()}`;
         updatePayment({ bookingId: quoteId });
       }
 
       // Persist Job BEFORE payment init (if not already persisted)
-      if (!booking.payment?.jobDetails) {
+      if (!activeQuote?.payment?.jobDetails) {
         const jobsBaseUrl = process.env.NEXT_PUBLIC_JOBS_BASE_URL;
         if (!jobsBaseUrl) throw new Error('Missing NEXT_PUBLIC_JOBS_BASE_URL for job persistence');
 
@@ -136,9 +154,9 @@ export default function SummaryPage() {
           } : undefined,
           inventoryItems: cartItems.map(ci => ({
             name: ci.name,
-            width: Math.round(ci.width),
-            height: Math.round(ci.height),
-            depth: Math.round(ci.length),
+                    width: Math.round(ci.widthCm),
+        height: Math.round(ci.heightCm),
+        depth: Math.round(ci.lengthCm),
             quantity: ci.quantity,
           })),
           user: customer ? {
@@ -173,7 +191,7 @@ export default function SummaryPage() {
         pricingTier,
         collectionDate,
         deliveryDate,
-        quoteId: booking.payment?.bookingId, // allow backend to embed metadata if supported
+        quoteId: activeQuote?.payment?.bookingId, // allow backend to embed metadata if supported
         customer: {
           fullName: customer?.fullName,
           email: customer?.email,
@@ -199,7 +217,7 @@ export default function SummaryPage() {
         updatePayment({ paymentIntentId: data.paymentIntentId });
         
         // Navigate to /pay with only the booking reference
-        const ref = booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : '';
+        const ref = activeQuote?.payment?.bookingId ? `?ref=${encodeURIComponent(activeQuote.payment.bookingId)}` : '';
         router.push(`/pay${ref}`);
         return;
       }
@@ -227,7 +245,7 @@ export default function SummaryPage() {
               <div className="mb-6">
                 <Accordion type="single" collapsible>
                   <AccordionItem value="inv">
-                    <AccordionTrigger className="text-sm font-medium">Inventory ({cartItems.length} items, total volume {cartItems.reduce((a,c)=>a + (c.volume * c.quantity),0).toFixed(2)} m³)</AccordionTrigger>
+                    <AccordionTrigger className="text-sm font-medium">Inventory ({cartItems.length} items, total volume {cartItems.reduce((a,c)=>a + ((c.lengthCm * c.widthCm * c.heightCm * c.quantity) / 1000000),0).toFixed(2)} m³)</AccordionTrigger>
                     <AccordionContent>
                       <div className="border rounded-md overflow-hidden">
                         <Table>
@@ -243,7 +261,7 @@ export default function SummaryPage() {
                               <TableRow key={ci.id}>
                                 <TableCell className="py-1 text-xs">{ci.name}</TableCell>
                                 <TableCell className="py-1 text-xs">{ci.quantity}</TableCell>
-                                <TableCell className="py-1 text-xs">{(ci.volume * ci.quantity).toFixed(2)}</TableCell>
+                                <TableCell className="py-1 text-xs">{((ci.lengthCm * ci.widthCm * ci.heightCm * ci.quantity) / 1000000).toFixed(2)}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -262,7 +280,7 @@ export default function SummaryPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between"><span className="text-gray-600">Collection</span><span className="font-semibold">{formatDateShort(collectionDate)}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-gray-600">Delivery</span><span className="font-semibold">{formatDateShort(collectionDate)}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-gray-600">Delivery</span><span className="font-semibold">{formatDateShort(deliveryDate)}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">From</span><span className="font-semibold truncate max-w-[60%]" title={origin?.line1 || ''}>{origin?.line1 || '—'}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">To</span><span className="font-semibold truncate max-w-[60%]" title={destination?.line1 || ''}>{destination?.line1 || '—'}</span></div>
                 </div>

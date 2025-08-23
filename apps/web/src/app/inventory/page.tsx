@@ -1,33 +1,73 @@
 "use client"
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react"
 import { StreamlinedHeader } from "@/components/StreamlinedHeader"
 import Footer from "@/components/Footer"
 import { CategoryList } from "@/components/inventory/CategoryList"
 import { SearchCommand } from "@/components/inventory/SearchCommand"
 import { ItemGrid } from "@/components/inventory/ItemGrid"
-import { useCart } from "@/contexts/CartContext"
-import { useBooking } from "@/contexts/BookingContext"
-import { useQuoteOption } from "@/contexts/QuoteOptionContext"
+import { useQuote } from "@/contexts/QuoteContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
 import { Loader2 } from "lucide-react"
+import { useQuoteSession } from '@/hooks/useQuoteSession'
+import { API_BASE_URL } from '@/lib/api/config'
 
 // Popular items list for quick adding
 
 function InventoryPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { getTotalItems, items } = useCart()
-  const { updatePricing, customer, originDestination } = useBooking()
-  const { option } = useQuoteOption()
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote
+  } = useQuote()
+  
+  // Get active quote data
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined
+  const items = activeQuote?.items || []
+  const quoteType = activeQuoteType
+  const customer = activeQuote?.customer
+  const origin = activeQuote?.origin
+  const destination = activeQuote?.destination
   const router = useRouter()
+  const quoteSession = useQuoteSession<{ items: any[]; option: string } | null>({ baseUrl: API_BASE_URL })
   
   const handleAddItem = () => {
     // The actual cart functionality is handled in SearchCommand and ItemGrid components
     // This is just a callback for any additional logic if needed
+  }
+
+  // Helper functions for the new context API
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const updatePricing = (pricingData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, pricingData);
+    }
+  };
+
+  const getActiveQuoteData = () => {
+    return activeQuote;
+  };
+
+  const getQuoteData = (type: QuoteOption) => {
+    return quotes[type];
+  };
+  
+  // Sync minimal canonical quote to server (items + option only)
+  const syncQuote = () => {
+    try {
+      const minimal = { items, option: quoteType }
+      quoteSession.setData(minimal as any)
+    } catch {}
   }
   
   const createQuoteRequest = (): QuoteRequest => {
@@ -35,9 +75,9 @@ function InventoryPageContent() {
     const quoteItems: QuoteItem[] = items.map(item => ({
       id: item.id,                    
       name: item.name,                
-      lengthCm: item.length,
-      widthCm: item.width,
-      heightCm: item.height,
+      lengthCm: item.lengthCm,
+      widthCm: item.widthCm,
+      heightCm: item.heightCm,
       quantity: item.quantity         
     }));
     
@@ -46,13 +86,13 @@ function InventoryPageContent() {
       let totalStairsFloors = 0;
       
       // Origin (pickup) stairs - count floors if no elevator available
-      if (customer?.origin?.floor && customer.origin.floor > 0 && !customer.origin.hasElevator) {
-        totalStairsFloors += customer.origin.floor;
+      if (origin?.floor && origin.floor > 0 && !origin.hasElevator) {
+        totalStairsFloors += origin.floor;
       }
       
       // Destination (delivery) stairs - count floors if no elevator available
-      if (customer?.destination?.floor && customer.destination.floor > 0 && !customer.destination.hasElevator) {
-        totalStairsFloors += customer.destination.floor;
+      if (destination?.floor && destination.floor > 0 && !destination.hasElevator) {
+        totalStairsFloors += destination.floor;
       }
       
       return totalStairsFloors;
@@ -61,19 +101,19 @@ function InventoryPageContent() {
     // Determine if there's a long carry situation
     const hasLongCarry = (): boolean => {
       // Business rule: Consider it a long carry if either location is above 3rd floor without elevator
-      const originLongCarry = customer?.origin?.floor && customer.origin.floor > 3 && !customer.origin.hasElevator;
-      const destinationLongCarry = customer?.destination?.floor && customer.destination.floor > 3 && !customer.destination.hasElevator;
+      const originLongCarry = origin?.floor && origin.floor > 3 && !origin.hasElevator;
+      const destinationLongCarry = destination?.floor && destination.floor > 3 && !destination.hasElevator;
       
       return !!(originLongCarry || destinationLongCarry);
     };
     
     return {
-      distanceMiles: customer?.distanceMiles || 0,           
+              distanceMiles: activeQuote?.distanceMiles || 0,           
       items: quoteItems,                                     
       stairsFloors: calculateStairsFloors(),                 
       longCarry: hasLongCarry(),                             
-      numberOfItemsToAssemble: 0,                            
-      numberOfItemsToDismantle: 0,                           
+      numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble || 0,                            
+      numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle || 0,                           
       parkingFee: 0,                                         
       ulezFee: 0,                                            
       vatRegistered: true,                                   
@@ -84,13 +124,13 @@ function InventoryPageContent() {
   const callCreateJobAsync = async (): Promise<PickUpDropOffPrice | null> => {
     try {
       // Check if we have required customer data
-      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
+      if (!origin?.line1 || !destination?.line1) {
         console.error('Missing origin or destination addresses');
         return null;
       }
 
       // Distance should already be calculated from /collection-delivery page
-      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
+      if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
         console.error('Distance missing - this should have been calculated on /collection-delivery page');
         return null;
       }
@@ -135,18 +175,19 @@ function InventoryPageContent() {
   };
   
   const handleContinueClick = async () => {
+    syncQuote();
     // Check if we need to make API call based on quote option
-    if (option === QuoteOption.Send || option === QuoteOption.Receive) {
+    if (quoteType === QuoteOption.Send || quoteType === QuoteOption.Receive) {
       
       // Validate required data before making API call
-      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
+      if (!origin?.line1 || !destination?.line1) {
         alert('Please complete the pickup and delivery addresses first.');
         router.push('/collection-delivery');
         return;
       }
       
       // Validate distance is present (it should be calculated from /collection-delivery)
-      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
+      if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
         console.error('Distance is missing from customer context!');
         alert('Distance calculation missing. Please complete the address details.');
         router.push('/collection-delivery');

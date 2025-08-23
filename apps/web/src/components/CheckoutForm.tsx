@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import TermsContent from '@/components/legal/TermsContent';
 import { useBooking } from '@/contexts/BookingContext';
+import { API_BASE_URL } from '@/lib/api/config';
 
 type Props = {
   returnUrl: string;
@@ -33,8 +34,7 @@ export function CheckoutForm({ returnUrl }: Props) {
       if (!paymentIntentId) return;
 
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch payment intent: ${response.status}`);

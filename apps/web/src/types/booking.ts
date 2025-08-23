@@ -171,3 +171,66 @@ export enum QuoteOption {
   Removals = 'removals',
 }
 
+// Individual quote data structure for the context
+export interface QuoteData {
+  // Inventory & Cart
+  items: QuoteItem[];
+  
+  // Addresses
+  origin?: Address;
+  destination?: Address;
+  
+  // Distance
+  distanceMiles?: number;
+  
+  // Assembly/Dismantle tracking
+  numberOfItemsToDismantle: number;
+  numberOfItemsToAssemble: number;
+  
+  // Vehicle & Crew
+  vanType?: VanType;
+  driverCount: number;
+  
+  // Schedule & Logistics
+  collectionDate?: string; // collection date
+  deliveryDate?: string;
+  hours?: number; // duration in hours (min 3)
+  flexibleTime?: boolean; // if true, timeSlot may be ignored
+  timeSlot?: 'morning' | 'afternoon' | 'evening';
+  
+  // Pricing
+  pricingTier?: PricingTierId;
+  totalCost?: number;
+  
+  // Customer
+  customer?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    billingAddress?: Pick<Address, 'line1' | 'postcode'>;
+  };
+  
+  // Payment
+  paymentStatus?: 'pending' | 'paid' | 'failed';
+  paymentType?: 'full' | 'deposit' | 'later';
+  depositAmount?: number;
+  
+  // Payment details (for confirmation page)
+  payment?: {
+    bookingId?: string;
+    clientSecret?: string;
+    paymentIntentId?: string;
+    status?: 'pending' | 'paid' | 'failed';
+    jobDetails?: any;
+    paymentType?: 'full' | 'deposit' | 'later';
+    depositAmount?: number;
+    dueDate?: string;
+  };
+}
+
+// Shared data across all quote types
+export interface SharedData {
+  // Customer data is now stored per quote, not shared
+  distanceMiles?: number;
+}
+

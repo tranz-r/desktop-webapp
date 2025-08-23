@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { safeGet, safeSet, safeRemove } from '@/lib/storage'
 
 interface CartItem {
   id: number
@@ -29,38 +30,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Load cart from localStorage on mount (client-side only)
+  // Load cart via HybridStorage on mount (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      try {
-        const savedCart = localStorage.getItem('tranzr-cart')
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart)
-          if (Array.isArray(parsedCart)) {
-            setItems(parsedCart)
-          } else {
-            console.error('Invalid cart data format, clearing...')
-            localStorage.removeItem('tranzr-cart')
-          }
-        }
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error)
-        // Clear corrupted data
-        localStorage.removeItem('tranzr-cart')
-      } finally {
-        setIsInitialized(true)
+      const parsedCart = safeGet<CartItem[]>('cart', [])
+      if (Array.isArray(parsedCart)) {
+        setItems(parsedCart)
+      } else {
+        console.error('Invalid cart data format, clearing...')
+        safeRemove('cart')
       }
+      setIsInitialized(true)
     }
   }, [])
 
-  // Save cart to localStorage whenever items change (only after initialization)
+  // Save cart via HybridStorage whenever items change (only after initialization)
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('tranzr-cart', JSON.stringify(items))
-      } catch (error) {
-        console.error('Error saving cart to localStorage:', error)
-      }
+      safeSet('cart', items)
     }
   }, [items, isInitialized])
 
@@ -125,6 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setItems([])
+    safeRemove('cart')
   }
 
   const value: CartContextType = {

@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, MoveVertical, Building2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { useBooking } from "@/contexts/BookingContext";
+import { useQuote } from "@/contexts/QuoteContext";
 import { Loader2 } from "lucide-react";
 
 export type CollectionDeliveryFormValues = {
@@ -59,9 +59,15 @@ export default function CollectionDeliveryAddresses({
   form: UseFormReturn<CollectionDeliveryFormValues>;
   title?: string;
 }) {
-  const { originDestination, isHydrated } = useBooking();
+  const { quotes, activeQuoteType, isHydrated } = useQuote();
   const [editingOrigin, setEditingOrigin] = React.useState(false);
   const [editingDestination, setEditingDestination] = React.useState(false);
+
+  // Get origin and destination from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
 
   // Prevent brief flicker of inputs before we know if captured values exist
   if (!isHydrated) {
@@ -81,10 +87,10 @@ export default function CollectionDeliveryAddresses({
   }
 
   const hasOriginCaptured = Boolean(
-    originDestination?.origin?.line1?.trim() && originDestination?.origin?.postcode?.trim()
+    origin?.line1?.trim() && origin?.postcode?.trim()
   );
   const hasDestinationCaptured = Boolean(
-    originDestination?.destination?.line1?.trim() && originDestination?.destination?.postcode?.trim()
+    destination?.line1?.trim() && destination?.postcode?.trim()
   );
 
   const showOriginInputs = !hasOriginCaptured || editingOrigin;
@@ -177,10 +183,10 @@ export default function CollectionDeliveryAddresses({
                 </>
               ) : (
                 <ReadonlyAddress
-                  addressLine1={originDestination.origin?.line1 || ""}
-                  postcode={originDestination.origin?.postcode || ""}
-                  floor={originDestination.origin?.floor}
-                  hasElevator={originDestination.origin?.hasElevator}
+                  addressLine1={origin?.line1 || ""}
+                  postcode={origin?.postcode || ""}
+                  floor={origin?.floor}
+                  hasElevator={origin?.hasElevator}
                   onChange={() => setEditingOrigin(true)}
                 />
               )}
@@ -267,10 +273,10 @@ export default function CollectionDeliveryAddresses({
                 </>
               ) : (
                 <ReadonlyAddress
-                  addressLine1={originDestination.destination?.line1 || ""}
-                  postcode={originDestination.destination?.postcode || ""}
-                  floor={originDestination.destination?.floor}
-                  hasElevator={originDestination.destination?.hasElevator}
+                  addressLine1={destination?.line1 || ""}
+                  postcode={destination?.postcode || ""}
+                  floor={destination?.floor}
+                  hasElevator={destination?.hasElevator}
                   onChange={() => setEditingDestination(true)}
                 />
               )}

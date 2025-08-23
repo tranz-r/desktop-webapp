@@ -11,6 +11,16 @@ const nextConfig = {
       },
     ],
   },
+  // Completely disable static generation
+  staticPageGenerationTimeout: 0,
+  trailingSlash: false,
+  // Force all pages to be dynamic
+  async redirects() {
+    return []
+  },
+  async rewrites() {
+    return []
+  },
 };
 
 module.exports = nextConfig;

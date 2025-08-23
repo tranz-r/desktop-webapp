@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { Suspense } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
@@ -8,15 +10,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
-import { useBooking } from '@/contexts/BookingContext';
-import { useCart } from '@/contexts/CartContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { computeCost } from '@/lib/cost';
+import { API_BASE_URL } from '@/lib/api/config';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 function PayContent() {
-  const booking = useBooking();
-  const { items: cartItems } = useCart();
+  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  
+  // Get data from active quote and shared data
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const cartItems = activeQuote?.items || [];
+  const customer = activeQuote?.customer;
+  const payment = activeQuote?.payment;
+  
+  // Get origin and destination from active quote
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  
+  // Helper function to update payment data
+  const updatePayment = (paymentData: Partial<typeof payment>) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { payment: { ...payment, ...paymentData } });
+    }
+  };
+  
   const [clientSecret, setClientSecret] = React.useState<string>('');
   const [isLoadingClientSecret, setIsLoadingClientSecret] = React.useState(true);
   const [isCreatingIntent, setIsCreatingIntent] = React.useState(false);
@@ -25,16 +45,11 @@ function PayContent() {
   const [isPaymentCompleted, setIsPaymentCompleted] = React.useState(false);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = React.useState(false);
 
-  const { isHydrated, vehicle, originDestination, pricing, customer, payment } = booking;
-  // Pull stable references we actually need (avoid depending on whole booking object)
-  const scheduleDateISO = booking.schedule?.dateISO;
-  const updatePayment = booking.updatePayment; // assumed stable via context
-  const selectedVan = vehicle.selectedVan;
-  const driverCount = vehicle.driverCount;
-  const origin = originDestination.origin;
-  const destination = originDestination.destination;
-  const distanceMiles = originDestination.distanceMiles;
-  const pricingTier = pricing.pricingTier;
+  // Pull stable references we actually need (avoid depending on whole state object)
+  const scheduleDateISO = activeQuote?.collectionDate;
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
+  const pricingTier = activeQuote?.pricingTier;
   const paymentIntentId = payment?.paymentIntentId;
 
   // Helper: backend enum mapping (Full=0, Deposit=1, Later=2)
@@ -53,8 +68,7 @@ function PayContent() {
       
       setIsCheckingPaymentStatus(true);
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch payment intent: ${response.status}`);
@@ -117,8 +131,7 @@ function PayContent() {
       }
 
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch payment intent: ${response.status}`);
@@ -156,12 +169,12 @@ function PayContent() {
   }, [selectedVan, driverCount, distanceMiles, origin, destination, pricingTier]);
 
   const totalCost = React.useMemo(() => {
-    if (pricing.pickUpDropOffPrice && pricing.pricingTier) {
-      const tier = pricing.pricingTier === 'premium' ? 'premium' : 'standard';
-      return pricing.pickUpDropOffPrice[tier]?.customerTotal ?? pricing.totalCost;
+    if (activeQuote?.pricingTier) {
+      // For now, use the totalCost directly since pickUpDropOffPrice is not in QuoteData
+      return activeQuote.totalCost || 0;
     }
-    return pricing.totalCost;
-  }, [pricing]);
+    return activeQuote?.totalCost || 0;
+  }, [activeQuote]);
 
   const depositPercentage = 25; // default deposit %
   const depositAmount = React.useMemo(() => {
@@ -193,12 +206,11 @@ function PayContent() {
   // Build backend payload and create PaymentIntent for selected option
   const createPaymentForOption = React.useCallback(async (option: 'full' | 'deposit' | 'later') => {
     if (!isHydrated) return;
-    if (!vehicle.selectedVan || !origin || !destination) return;
+    if (!activeQuote?.vanType || !origin || !destination) return;
     setIsCreatingIntent(true);
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
       const payload: any = {
-        van: toBackendVanType(vehicle.selectedVan as string),
+        van: toBackendVanType(activeQuote.vanType as string),
         driverCount: driverCount ?? 1,
         distanceMiles: Math.max(0, distanceMiles ?? 0),
         origin: {
@@ -214,7 +226,7 @@ function PayContent() {
           hasElevator: Boolean(destination?.hasElevator),
         },
         pricingTier: toBackendPricingTier(pricingTier),
-        collectionDate: booking.schedule?.dateISO || new Date().toISOString(),
+        collectionDate: scheduleDateISO || new Date().toISOString(),
         customer: {
           fullName: customer?.fullName || '',
           email: customer?.email || '',
@@ -229,11 +241,11 @@ function PayContent() {
         },
         paymentType: mapPaymentTypeToEnum(option),
         depositPercentage: option === 'deposit' ? depositPercentage : undefined,
-        dueDate: booking.schedule?.dateISO || undefined,
-        bookingId: booking.payment?.bookingId || undefined,
+        dueDate: scheduleDateISO || undefined,
+        bookingId: payment?.bookingId || undefined,
       };
 
-      const resp = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-sheet`, {
+      const resp = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-sheet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -244,11 +256,11 @@ function PayContent() {
       const data = await resp.json();
 
       // Update context and local state
-      booking.updatePayment({
+      updatePayment({
         paymentIntentId: data.paymentIntentId,
         paymentType: option,
         depositAmount: option === 'deposit' ? depositAmount : undefined,
-        dueDate: booking.schedule?.dateISO,
+        dueDate: scheduleDateISO,
       });
       setClientSecret(data.paymentIntent);
     } catch (e) {
@@ -256,15 +268,15 @@ function PayContent() {
     } finally {
       setIsCreatingIntent(false);
     }
-  }, [isHydrated, vehicle.selectedVan, origin, destination, driverCount, distanceMiles, pricingTier, booking.schedule?.dateISO, customer, totalCost, depositAmount, booking, depositPercentage, mapPaymentTypeToEnum]);
+  }, [isHydrated, activeQuote?.vanType, origin, destination, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, depositAmount, updatePayment, mapPaymentTypeToEnum]);
 
   // Ensure we have a bookingId as early as possible (fallback if user bypassed /summary)
   const postedRef = React.useRef(false); // retained for backward compatibility (no longer used to post job)
   // (No job persistence here anymore; moved to /summary)
   // We keep only the bookingId generation safety net.
   React.useEffect(() => {
-    if (!booking.isHydrated) return;
-    if (booking.payment?.bookingId) return;
+    if (!isHydrated) return;
+    if (payment?.bookingId) return;
     let quoteId: string | undefined;
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
       quoteId = crypto.randomUUID();
@@ -274,7 +286,7 @@ function PayContent() {
     updatePayment({ bookingId: quoteId });
   // we only want to run once when hydrated & missing id
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.isHydrated]);
+  }, [isHydrated]);
 
   // Auto-select "Pay in full" by default and create payment intent
   React.useEffect(() => {
@@ -296,7 +308,7 @@ function PayContent() {
     const handlePopState = (event: PopStateEvent) => {
       if (isPaymentCompleted) {
         // If user navigates back and payment is completed, redirect to confirmation
-        const confirmationUrl = `/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`;
+        const confirmationUrl = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`;
         window.history.pushState(null, '', confirmationUrl);
         window.location.href = confirmationUrl;
       }
@@ -311,7 +323,7 @@ function PayContent() {
         window.removeEventListener('popstate', handlePopState);
       };
     }
-  }, [isPaymentCompleted, booking.payment?.bookingId]);
+  }, [isPaymentCompleted, payment?.bookingId]);
 
   const options = React.useMemo<StripeElementsOptions | undefined>(() => {
     if (!clientSecret) return undefined;
@@ -373,7 +385,7 @@ function PayContent() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button 
-                        onClick={() => window.location.href = `/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
+                        onClick={() => window.location.href = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         View Confirmation
@@ -508,7 +520,7 @@ function PayContent() {
                   {clientSecret && options && (
                     <Elements key={elementsKey} stripe={stripePromise} options={options}>
                       <CheckoutForm
-                        returnUrl={`${window.location.origin}/confirmation${booking.payment?.bookingId ? `?ref=${encodeURIComponent(booking.payment.bookingId)}` : ''}`}
+                        returnUrl={`${window.location.origin}/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`}
                       />
                     </Elements>
                   )}

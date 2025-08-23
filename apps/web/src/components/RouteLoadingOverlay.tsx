@@ -30,7 +30,7 @@ export default function RouteLoadingOverlay() {
       }
     };
 
-    history.pushState = function (...args: any[]) {
+    history.pushState = function (this: History, ...args: any[]) {
       try {
         const url = args[2];
         if (shouldShowFor(url)) {
@@ -41,7 +41,7 @@ export default function RouteLoadingOverlay() {
       return originalPushState.apply(this, args as any);
     } as any;
 
-    history.replaceState = function (...args: any[]) {
+    history.replaceState = function (this: History, ...args: any[]) {
       try {
         const url = args[2];
         if (shouldShowFor(url)) {
