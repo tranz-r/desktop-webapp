@@ -201,6 +201,7 @@ export interface QuoteData {
   // Pricing
   pricingTier?: PricingTierId;
   totalCost?: number;
+  pickUpDropOffPrice?: PickUpDropOffPrice;
   
   // Customer
   customer?: {

@@ -2,7 +2,7 @@
 
 import { ShoppingCart } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useCart } from "@/contexts/CartContext"
+import { useQuote } from "@/contexts/QuoteContext"
 
 interface CartIconProps {
   onClick?: () => void
@@ -10,7 +10,15 @@ interface CartIconProps {
 }
 
 export function CartIcon({ onClick, className }: CartIconProps) {
-  const { getTotalItems } = useCart()
+  const { activeQuoteType, quotes } = useQuote()
+  
+  // Calculate total items from active quote
+  const getTotalItems = () => {
+    if (!activeQuoteType) return 0
+    const items = quotes[activeQuoteType]?.items || []
+    return items.reduce((total, item) => total + item.quantity, 0)
+  }
+  
   const totalItems = getTotalItems()
 
   return (

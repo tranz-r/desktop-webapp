@@ -124,8 +124,8 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
 
               // Transform backend quote to frontend format
               const frontendQuote: QuoteData = {
-                items: backendQuote.inventoryItems?.map(item => ({
-                  id: parseInt(item.id) || 0,
+                items: backendQuote.items?.map(item => ({
+                  id: item.id ? parseInt(item.id) : 0,
                   name: item.name || '',
                   heightCm: item.height || 0,
                   widthCm: item.width || 0,
@@ -133,46 +133,42 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
                   quantity: item.quantity || 1,
                 })) || [],
                 origin: backendQuote.origin ? {
-                  line1: backendQuote.origin.addressLine1,
-                  line2: backendQuote.origin.addressLine2 || '',
+                  line1: backendQuote.origin.line1,
+                  line2: backendQuote.origin.line2 || '',
                   city: backendQuote.origin.city || '',
                   postcode: backendQuote.origin.postCode || '',
                   country: backendQuote.origin.country || '',
+                  hasElevator: backendQuote.origin.hasElevator || true,
+                  floor: backendQuote.origin.floor || 0,
                 } : undefined,
                 destination: backendQuote.destination ? {
-                  line1: backendQuote.destination.addressLine1,
-                  line2: backendQuote.destination.addressLine2 || '',
+                  line1: backendQuote.destination.line1,
+                  line2: backendQuote.destination.line2 || '',
                   city: backendQuote.destination.city || '',
                   postcode: backendQuote.destination.postCode || '',
                   country: backendQuote.destination.country || '',
+                  hasElevator: backendQuote.destination.hasElevator || true,
+                  floor: backendQuote.destination.floor || 0,
                 } : undefined,
                 distanceMiles: backendQuote.distanceMiles || undefined,
                 numberOfItemsToDismantle: backendQuote.numberOfItemsToDismantle || 0,
                 numberOfItemsToAssemble: backendQuote.numberOfItemsToAssemble || 0,
                 vanType: backendQuote.vanType as any,
                 driverCount: backendQuote.driverCount || 1,
-                collectionDate: backendQuote.collectionDate || undefined,
-                deliveryDate: backendQuote.deliveryDate || undefined,
-                hours: backendQuote.hours || undefined,
-                flexibleTime: backendQuote.flexibleTime || undefined,
-                timeSlot: backendQuote.timeSlot as any,
-                pricingTier: backendQuote.pricingTier as any,
-                totalCost: backendQuote.totalCost || undefined,
-                customer: backendQuote.customer ? {
-                  fullName: backendQuote.customer.fullName,
-                  email: backendQuote.customer.email,
-                  phone: backendQuote.customer.phone,
-                  billingAddress: backendQuote.customer.billingAddress ? {
-                    line1: backendQuote.customer.billingAddress.addressLine1,
-                    postcode: backendQuote.customer.billingAddress.postCode || '',
-                  } : undefined,
-                } : {
+                collectionDate: backendQuote.schedule?.dateISO || undefined,
+                deliveryDate: backendQuote.schedule?.deliveryDateISO || undefined,
+                hours: backendQuote.schedule?.hours || undefined,
+                flexibleTime: backendQuote.schedule?.flexibleTime || undefined,
+                timeSlot: backendQuote.schedule?.timeSlot as any,
+                pricingTier: backendQuote.pricing?.pricingTier as any,
+                totalCost: backendQuote.pricing?.totalCost || undefined,
+                customer: {
                   fullName: undefined,
                   email: undefined,
                   phone: undefined,
                   billingAddress: undefined
                 },
-                paymentStatus: (backendQuote.paymentStatus as 'pending' | 'paid' | 'failed') || undefined,
+                paymentStatus: (backendQuote.payment?.status as 'pending' | 'paid' | 'failed') || undefined,
                 paymentType: undefined,
                 depositAmount: undefined
               };

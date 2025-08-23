@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuoteSession } from '@/hooks/useQuoteSession';
 import { API_BASE_URL } from '@/lib/api/config';
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 // Hook placed at module scope per React rules
 function usePaymentStatus(clientSecret: string | null) {
@@ -643,6 +644,12 @@ function ConfirmationContent() {
       <main className="flex-1">
         <section className="pt-32 lg:pt-40 pb-10 bg-white">
           <div className="container mx-auto px-4 max-w-2xl">
+            
+            {/* Quote Reference Banner - Subtle display */}
+            <div className="mb-6 flex justify-center">
+              <QuoteReferenceBanner variant="subtle" />
+            </div>
+            
             {isFetchingClientSecret ? (
               <div className="min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

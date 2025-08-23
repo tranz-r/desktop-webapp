@@ -26,8 +26,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Users } from 'lucide-react';
 import { format } from 'date-fns';
-import { useQuoteSession } from '@/hooks/useQuoteSession';
-import { API_BASE_URL } from '@/lib/api/config';
+
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function PickupDropoffPage() {
   const router = useRouter();
@@ -43,42 +43,39 @@ export default function PickupDropoffPage() {
   const pricingData = activeQuote?.pricingTier; // Simplified for now
   
   // Helper functions to update quote data
-  const setVan = (van: VanType) => {
+  const setVan = React.useCallback((van: VanType) => {
     if (activeQuoteType) {
       updateQuote(activeQuoteType, { vanType: van });
     }
-  };
+  }, [activeQuoteType, updateQuote]);
   
-  const setDriverCount = (count: number) => {
+  const setDriverCount = React.useCallback((count: number) => {
     if (activeQuoteType) {
       updateQuote(activeQuoteType, { driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
     }
-  };
+  }, [activeQuoteType, updateQuote]);
   
-  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => {
+  const setTimeSlot = React.useCallback((slot: 'morning' | 'afternoon' | 'evening') => {
     if (activeQuoteType) {
       updateQuote(activeQuoteType, { timeSlot: slot });
     }
-  };
+  }, [activeQuoteType, updateQuote]);
   
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
   const [dateOpen, setDateOpen] = React.useState(false);
   const [dateError, setDateError] = React.useState<string | null>(null);
-  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+
  
  
   // Examine this /inventory call here and what to do
   React.useEffect(() => {
     if (!hasInventory(items.length)) router.replace('/inventory');
     
-    // If this is a send/receive quote but no pricing data is available, redirect back to inventory
-    if ((activeQuoteType === 'send' || activeQuoteType === 'receive') && isHydrated && !pricingData) {
-      console.log('Missing pricing data for send/receive quote, redirecting to inventory');
-      router.replace('/inventory');
-    }
-  }, [items.length, router, activeQuoteType, isHydrated, pricingData]);
+    // Pricing should now be calculated before navigation for Send/Receive quotes
+    // No need for default pricing tier since it's handled properly
+  }, [items.length, router]);
 
   // Calculate total volume from items
   const totalVolume = React.useMemo(() => {
@@ -112,35 +109,21 @@ export default function PickupDropoffPage() {
     setMounted(true);
   }, []);
 
-  // Sync schedule + vehicle changes to canonical quote
-  React.useEffect(() => {
-    try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        vehicle: { selectedVan, driverCount },
-        schedule: { dateISO: activeQuote?.collectionDate, timeSlot },
-      }));
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVan, driverCount, activeQuote?.collectionDate, timeSlot]);
+  // Note: We removed the automatic sync useEffect to prevent infinite loops
+  // Updates are now handled manually when user makes changes
 
-  // Helper function to update schedule data
-  const updateSchedule = (scheduleData: { dateISO?: string; timeSlot?: 'morning' | 'afternoon' | 'evening' }) => {
+  // Helper function to update schedule data - wrapped in useCallback to prevent infinite loops
+  const updateSchedule = React.useCallback((scheduleData: { dateISO?: string; timeSlot?: 'morning' | 'afternoon' | 'evening' }) => {
     if (activeQuoteType) {
       updateQuote(activeQuoteType, {
         collectionDate: scheduleData.dateISO,
         timeSlot: scheduleData.timeSlot,
       });
     }
-  };
+  }, [activeQuoteType, updateQuote]);
 
-  React.useEffect(() => {
-    if (movingDate) {
-      // Save ISO date only
-      updateSchedule({ dateISO: new Date(movingDate).toISOString() });
-      setDateError(null);
-    }
-  }, [movingDate, updateSchedule]);
+  // Note: Removed automatic date sync useEffect to prevent infinite loops
+  // Date updates are now handled directly in the calendar onSelect handler
 
   if (!mounted) return null;
 
@@ -154,6 +137,11 @@ export default function PickupDropoffPage() {
       <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
+          
+          {/* Quote Reference Banner - Subtle display */}
+          <div className="flex justify-center">
+            <QuoteReferenceBanner variant="subtle" />
+          </div>
           
           {/* Vehicle & Crew */}
           <Card className="border-primary-200">
@@ -220,9 +208,17 @@ export default function PickupDropoffPage() {
                         selected={movingDate ? new Date(movingDate) : undefined}
                         onSelect={(date) => {
                           if (date) {
-                            setMovingDate(format(date, 'yyyy-MM-dd'));
+                            const formattedDate = format(date, 'yyyy-MM-dd');
+                            setMovingDate(formattedDate);
                             setDateOpen(false);
                             setDateError(null);
+                            
+                            // Directly update the schedule to avoid infinite loops
+                            if (activeQuoteType) {
+                              updateQuote(activeQuoteType, {
+                                collectionDate: date.toISOString(),
+                              });
+                            }
                           }
                         }}
                         disabled={{ before: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1) }}
@@ -238,7 +234,17 @@ export default function PickupDropoffPage() {
 
               <div className="space-y-2">
                 <Label>Preferred Time Slot</Label>
-                <RadioGroup value={timeSlot || 'morning'} onValueChange={(v: string) => setTimeSlot(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <RadioGroup value={timeSlot || 'morning'} onValueChange={(v: string) => {
+                  const newTimeSlot = v as 'morning' | 'afternoon' | 'evening';
+                  setTimeSlot(newTimeSlot);
+                  
+                  // Directly update the quote context to avoid infinite loops
+                  if (activeQuoteType) {
+                    updateQuote(activeQuoteType, {
+                      timeSlot: newTimeSlot,
+                    });
+                  }
+                }} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="flex items-center gap-2 rounded-md border p-3">
                     <RadioGroupItem value="morning" id="slot-morning" />
                     <Label htmlFor="slot-morning" className="cursor-pointer">Morning (8:00 - 12:00)</Label>

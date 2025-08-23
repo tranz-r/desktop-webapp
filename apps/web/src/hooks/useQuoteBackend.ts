@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { quoteApi, BackendQuote } from '@/lib/api/quote';
+import { quoteApi, BackendQuote, toBackendVanType } from '@/lib/api/quote';
 import { QuoteOption, QuoteData } from '@/types/booking';
 
 export function useQuoteBackend() {
@@ -7,45 +7,49 @@ export function useQuoteBackend() {
   const transformToBackend = useCallback((quoteData: QuoteData, etag?: string): BackendQuote => {
 
     return {
-      id: '', // Will be set by backend
-      sessionId: '', // Will be set by backend
+      sessionId: null, // Will be set by backend
+      quoteReference: null, // Will be set by backend
       type: QuoteOption.Send, // Will be set by caller
-      etag: etag || '',
       
       // Core Quote Data
-      vanType: quoteData.vanType || '',
+      vanType: toBackendVanType(quoteData.vanType),
       driverCount: quoteData.driverCount || 0,
-      quoteId: '', // Not used in current implementation
       
       // Addresses
       origin: quoteData.origin ? {
-        id: '',
-        userId: '',
-        addressLine1: quoteData.origin.line1 || '',
-        addressLine2: quoteData.origin.line2 || '',
+        id: null, // Will be set by backend
+        userId: null, // Will be set by backend
+        line1: quoteData.origin.line1 || '',
+        line2: quoteData.origin.line2 || '',
         city: quoteData.origin.city || '',
-
+        county: '',
         postCode: quoteData.origin.postcode || '',
         country: quoteData.origin.country || '',
+        hasElevator: quoteData.origin.hasElevator || true,
+        floor: quoteData.origin.floor || 0,
       } : undefined,
       
       destination: quoteData.destination ? {
-        id: '',
-        userId: '',
-        addressLine1: quoteData.destination.line1 || '',
-        addressLine2: quoteData.destination.line2 || '',
+        id: null, // Will be set by backend
+        userId: null, // Will be set by backend
+        line1: quoteData.destination.line1 || '',
+        line2: quoteData.destination.line2 || '',
         city: quoteData.destination.city || '',
-
+        county: '',
         postCode: quoteData.destination.postcode || '',
         country: quoteData.destination.country || '',
+        hasElevator: quoteData.destination.hasElevator || true,
+        floor: quoteData.destination.floor || 0,
       } : undefined,
       
       // Schedule
-      collectionDate: quoteData.collectionDate || undefined,
-      deliveryDate: quoteData.deliveryDate || undefined,
-      hours: quoteData.hours || undefined,
-      flexibleTime: quoteData.flexibleTime || undefined,
-      timeSlot: quoteData.timeSlot || undefined,
+      schedule: {
+        dateISO: quoteData.collectionDate || undefined,
+        deliveryDateISO: quoteData.deliveryDate || undefined,
+        hours: quoteData.hours || undefined,
+        flexibleTime: quoteData.flexibleTime || undefined,
+        timeSlot: quoteData.timeSlot || undefined,
+      },
       
       // Distance
       distanceMiles: quoteData.distanceMiles || 0,
@@ -55,48 +59,30 @@ export function useQuoteBackend() {
       numberOfItemsToAssemble: quoteData.numberOfItemsToAssemble || 0,
       
       // Pricing
-      pricingTier: quoteData.pricingTier || undefined,
-      totalCost: quoteData.totalCost || undefined,
-      cost: undefined, // Not used in current implementation
+      pricing: {
+        pricingTier: quoteData.pricingTier || undefined,
+        totalCost: quoteData.totalCost || undefined,
+        pickUpDropOffPrice: undefined,
+      },
       
       // Items
-      inventoryItems: quoteData.items?.map(item => ({
-        id: String(item.id || ''),
-        jobId: '',
+      items: quoteData.items?.map(item => ({
+        id: null, // Will be set by backend
+        jobId: null, // Will be set by backend
         name: item.name || '',
-        description: undefined, // Not available in CartItem
+        description: '',
         width: item.widthCm || undefined,
         height: item.heightCm || undefined,
         depth: item.lengthCm || undefined,
         quantity: item.quantity || undefined,
       })) || [],
       
-      // Customer
-      customer: quoteData.customer ? {
-        fullName: quoteData.customer.fullName || undefined,
-        email: quoteData.customer.email || undefined,
-        phone: quoteData.customer.phone || undefined,
-        billingAddress: quoteData.customer.billingAddress ? {
-          id: '',
-          userId: '',
-          addressLine1: quoteData.customer.billingAddress.line1 || '',
-          addressLine2: '',
-          city: '',
-          postCode: quoteData.customer.billingAddress.postcode || '',
-          country: '',
-        } : undefined,
-        preferences: undefined, // Not matching current customer preferences structure
-      } : undefined,
-      
       // Payment
-      paymentStatus: quoteData.payment?.status || undefined,
-      receiptUrl: undefined, // Not available in current payment structure
-      
-      // Audit (will be set by backend)
-      createdAt: '',
-      createdBy: '',
-      modifiedAt: '',
-      modifiedBy: '',
+      payment: {
+        status: quoteData.payment?.status || 'Pending',
+        paymentType: quoteData.payment?.paymentType || 'Full',
+        depositAmount: quoteData.payment?.depositAmount || undefined,
+      },
     };
   }, []);
 

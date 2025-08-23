@@ -14,8 +14,7 @@ import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
 import { Loader2 } from "lucide-react"
-import { useQuoteSession } from '@/hooks/useQuoteSession'
-import { API_BASE_URL } from '@/lib/api/config'
+
 
 // Popular items list for quick adding
 
@@ -30,13 +29,15 @@ function InventoryPageContent() {
   
   // Get active quote data
   const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined
-  const items = activeQuote?.items || []
   const quoteType = activeQuoteType
   const customer = activeQuote?.customer
   const origin = activeQuote?.origin
   const destination = activeQuote?.destination
   const router = useRouter()
-  const quoteSession = useQuoteSession<{ items: any[]; option: string } | null>({ baseUrl: API_BASE_URL })
+
+  
+  // Get items from active quote in QuoteContext
+  const items = activeQuote?.items || []
   
   const handleAddItem = () => {
     // The actual cart functionality is handled in SearchCommand and ItemGrid components
@@ -45,14 +46,11 @@ function InventoryPageContent() {
 
   // Helper functions for the new context API
   const getTotalItems = () => {
+    // Use QuoteContext items directly
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const updatePricing = (pricingData: any) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, pricingData);
-    }
-  };
+
 
   const getActiveQuoteData = () => {
     return activeQuote;
@@ -62,14 +60,7 @@ function InventoryPageContent() {
     return quotes[type];
   };
   
-  // Sync minimal canonical quote to server (items + option only)
-  const syncQuote = () => {
-    try {
-      const minimal = { items, option: quoteType }
-      quoteSession.setData(minimal as any)
-    } catch {}
-  }
-  
+  // Create quote request for the backend pricing API
   const createQuoteRequest = (): QuoteRequest => {
     // Convert cart items to QuoteItem format
     const quoteItems: QuoteItem[] = items.map(item => ({
@@ -108,12 +99,12 @@ function InventoryPageContent() {
     };
     
     return {
-              distanceMiles: activeQuote?.distanceMiles || 0,           
+      distanceMiles: activeQuote?.distanceMiles || 0,           
       items: quoteItems,                                     
       stairsFloors: calculateStairsFloors(),                 
       longCarry: hasLongCarry(),                             
-      numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble || 0,                            
-      numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle || 0,                           
+      numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble || 0,
+      numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle || 0,
       parkingFee: 0,                                         
       ulezFee: 0,                                            
       vatRegistered: true,                                   
@@ -121,6 +112,7 @@ function InventoryPageContent() {
     };
   };
 
+  // Call the backend pricing API to get professional pricing calculation
   const callCreateJobAsync = async (): Promise<PickUpDropOffPrice | null> => {
     try {
       // Check if we have required customer data
@@ -152,6 +144,8 @@ function InventoryPageContent() {
         throw new Error('No items to quote');
       }
       
+      console.log('Calling backend pricing API with request:', quoteRequest);
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -167,15 +161,72 @@ function InventoryPageContent() {
       }
       
       const data: PickUpDropOffPrice = await response.json();
+      console.log('Backend pricing API response:', data);
       return data;
     } catch (error) {
       console.error('Error calling CreateJobAsync:', error);
       return null;
     }
   };
+
+  // Update pricing data in the quote context
+  const updatePricing = (pricingData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, pricingData);
+    }
+  };
+  
+  // Sync quote data to QuoteContext (local only, no backend call)
+  const syncQuote = () => {
+    if (!activeQuoteType) return false;
+    
+    try {
+      // Update the active quote with current items locally
+      // Don't call updateQuote here as it triggers backend API calls
+      // The items are already in the QuoteContext from the components
+      console.log('Items synced locally:', items);
+      return true;
+    } catch (error) {
+      console.error('Failed to sync quote data locally:', error);
+      return false;
+    }
+  }
+  
+
+
+
   
   const handleContinueClick = async () => {
-    syncQuote();
+    console.log('Continue button clicked, starting navigation process...');
+    
+    // First, sync the current items to QuoteContext
+    const syncSuccess = syncQuote();
+    if (!syncSuccess) {
+      console.error('Failed to sync quote data');
+      alert('Failed to save inventory data. Please try again.');
+      return;
+    }
+    
+    // Check if we have items to quote
+    if (getTotalItems() === 0) {
+      alert('Please add some items to your inventory first.');
+      return;
+    }
+    
+    // Check if addresses are set (if not, redirect to collection-delivery)
+    if (!origin?.line1 || !destination?.line1) {
+      console.log('Addresses missing, redirecting to collection-delivery');
+      router.push('/collection-delivery');
+      return;
+    }
+    
+    // Check if distance is calculated (if not, redirect to collection-delivery)
+    if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
+      console.log('Distance missing, redirecting to collection-delivery');
+      router.push('/collection-delivery');
+      return;
+    }
+    
     // Check if we need to make API call based on quote option
     if (quoteType === QuoteOption.Send || quoteType === QuoteOption.Receive) {
       
@@ -190,7 +241,6 @@ function InventoryPageContent() {
       if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
         console.error('Distance is missing from customer context!');
         alert('Distance calculation missing. Please complete the address details.');
-        router.push('/collection-delivery');
         return;
       }
       
@@ -203,11 +253,13 @@ function InventoryPageContent() {
       setIsLoading(true);
       
       try {
+        console.log('Calling backend pricing API for Send/Receive quote...');
         const pricingData = await callCreateJobAsync();
         
         if (pricingData) {
-          // Store the API response in booking context
+          // Store the API response in quote context
           updatePricing({ pickUpDropOffPrice: pricingData });
+          console.log('Pricing data stored successfully');
           
           // Navigate to Van & Date selection after successful API call
           router.push('/pickup-dropoff');
@@ -222,9 +274,34 @@ function InventoryPageContent() {
       } finally {
         setIsLoading(false);
       }
-    } else {
-      // For 'removals' option, continue to Van & Date selection
-      router.push('/pickup-dropoff');
+      
+      return; // Exit early for Send/Receive quotes
+    }
+    
+    // For 'removals' option, continue directly to Van & Date selection
+    console.log('Removals quote - proceeding directly to van selection');
+    
+    // All validations passed, navigate to pickup-dropoff
+    console.log('All validations passed, navigating to /pickup-dropoff');
+    console.log('Quote type:', quoteType);
+    console.log('Items count:', getTotalItems());
+    console.log('Origin:', origin?.line1);
+    console.log('Destination:', destination?.line1);
+    console.log('Distance:', activeQuote?.distanceMiles);
+    
+    // Add a small delay to ensure state updates are processed
+    console.log('Adding small delay before navigation...');
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      console.log('Attempting navigation with router.push...');
+      await router.push('/pickup-dropoff');
+      console.log('Navigation completed successfully');
+    } catch (navError) {
+      console.error('Navigation failed:', navError);
+      // Fallback navigation
+      console.log('Using fallback navigation');
+      window.location.href = '/pickup-dropoff';
     }
   };
   

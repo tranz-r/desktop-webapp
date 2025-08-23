@@ -4,106 +4,91 @@ import { API_BASE_URL } from './config';
 // Quote type alias for backend compatibility
 export type QuoteType = QuoteOption;
 
-// Backend Quote entity types (matching C# backend)
+// Van type conversion helper
+export function toBackendVanType(vanType: string | undefined): number | null {
+  if (!vanType) return null;
+  
+  switch (vanType) {
+    case 'largeVan': return 1;
+    case 'smallVan': return 2;
+    case 'mediumVan': return 3;
+    case 'xlLuton': return 4;
+    default: return null;
+  }
+}
+
+// Backend Quote entity types (matching C# backend DTOs)
 export interface BackendQuote {
-  id: string;
-  sessionId: string;
+  sessionId: string | null;
+  quoteReference: string | null;
   type: QuoteType;
-  expiresUtc?: string;
-  etag: string;
   
   // Core Quote Data
-  vanType: string;
+  vanType: number | null; // VanType enum values: 1=largeVan, 2=SmallVan, 3=mediumVan, 4=xlLuton
   driverCount: number;
   distanceMiles: number;
   numberOfItemsToDismantle: number;
   numberOfItemsToAssemble: number;
-  quoteId: string;
   
   // Addresses
   origin?: BackendAddress;
   destination?: BackendAddress;
   
   // Schedule
-  collectionDate?: string;
-  deliveryDate?: string;
+  schedule?: BackendSchedule;
+  
+  // Pricing
+  pricing?: BackendPricing;
+  
+  // Items
+  items: BackendInventoryItem[];
+  
+  // Payment
+  payment?: BackendPayment;
+}
+
+export interface BackendSchedule {
+  dateISO?: string;
+  deliveryDateISO?: string;
   hours?: number;
   flexibleTime?: boolean;
   timeSlot?: string;
-  
-  // Pricing
+}
+
+export interface BackendPricing {
   pricingTier?: string;
   totalCost?: number;
-  cost?: BackendCost;
-  
-  // Items
-  inventoryItems: BackendInventoryItem[];
-  
-  // Customer
-  customer?: BackendCustomerInfo;
-  
-  // Payment
-  paymentStatus?: string;
-  receiptUrl?: string;
-  
-  // Audit
-  createdAt: string;
-  createdBy: string;
-  modifiedAt: string;
-  modifiedBy: string;
+  pickUpDropOffPrice?: number;
+}
+
+export interface BackendPayment {
+  status: string;
+  paymentType: string;
+  depositAmount?: number;
 }
 
 export interface BackendAddress {
-  id: string;
-  userId: string;
-  addressLine1: string;
-  addressLine2?: string;
+  id: string | null;
+  userId: string | null;
+  line1: string;
+  line2?: string;
   city?: string;
   county?: string;
   postCode: string;
   country?: string;
-}
-
-export interface BackendCost {
-  jobId: string;
-  baseVan: number;
-  distance: number;
+  hasElevator: boolean;
   floor: number;
-  elevatorAdjustment: number;
-  driver: number;
-  tierAdjustment: number;
-  total: number;
 }
 
 export interface BackendInventoryItem {
-  id: string;
-  jobId: string;
+  id: string | null;
+  jobId: string | null;
   name: string;
   description?: string;
   width?: number;
   height?: number;
   depth?: number;
   quantity?: number;
-}
-
-export interface BackendCustomerInfo {
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  billingAddress?: BackendAddress;
-  preferences?: BackendCustomerPreferences;
-}
-
-export interface BackendCustomerPreferences {
-  preferredVanSize?: string;
-  defaultFlexibleTime?: boolean;
-  emergencyContact?: BackendEmergencyContact;
-}
-
-export interface BackendEmergencyContact {
-  name?: string;
-  phone?: string;
-  relationship?: string;
 }
 
 // API Response types

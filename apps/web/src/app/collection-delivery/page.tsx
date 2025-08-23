@@ -14,6 +14,7 @@ import { useQuote } from "@/contexts/QuoteContext";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useQuoteSession } from '@/hooks/useQuoteSession';
 import { API_BASE_URL } from '@/lib/api/config';
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function CollectionDeliveryPage() {
   const router = useRouter();
@@ -281,6 +282,11 @@ export default function CollectionDeliveryPage() {
       <main className="flex-1">
         <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
           <div className="container mx-auto px-4">
+            {/* Quote Reference Banner - Subtle display */}
+            <div className="mb-6 flex justify-center">
+              <QuoteReferenceBanner variant="subtle" />
+            </div>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <CollectionDeliveryAddresses form={form} />

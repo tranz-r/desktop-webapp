@@ -17,6 +17,7 @@ import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock, Check, Fil
 import type { PricingTierId } from '@/types/booking';
 import { useQuoteSession } from '@/hooks/useQuoteSession';
 import { API_BASE_URL } from '@/lib/api/config';
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -200,6 +201,12 @@ export default function PricingPage() {
       <main className="flex-1">
       <section className="pt-40 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-8">
+          
+          {/* Quote Reference Banner - Subtle display */}
+          <div className="flex justify-center">
+            <QuoteReferenceBanner variant="subtle" />
+          </div>
+          
           {/* Service Info */}
           <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center gap-2 mb-1">

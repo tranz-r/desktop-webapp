@@ -29,6 +29,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useQuoteSession } from '@/hooks/useQuoteSession';
 import { API_BASE_URL } from '@/lib/api/config';
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function VanSelectionPage() {
   const router = useRouter();
@@ -170,6 +171,12 @@ export default function VanSelectionPage() {
       <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
+          
+          {/* Quote Reference Banner - Subtle display */}
+          <div className="flex justify-center">
+            <QuoteReferenceBanner variant="subtle" />
+          </div>
+          
           {/* Vehicle & Crew */}
           <Card className="border-primary-200">
             <CardHeader>

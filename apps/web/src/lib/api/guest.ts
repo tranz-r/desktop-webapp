@@ -41,13 +41,27 @@ export async function loadQuote(baseUrl: string, etag?: string | null): Promise<
 
 export async function saveQuote(baseUrl: string, quote: string, etag: string | null): Promise<{ etag: string | null; status: number }> {
   try {
+    // Parse the quote to ensure it has required fields
+    let quoteData;
+    try {
+      quoteData = JSON.parse(quote);
+    } catch {
+      quoteData = quote;
+    }
+
+    // Structure the request body as expected by the API
+    const requestBody = {
+      quote: quoteData,
+      etag: etag
+    };
+
     const res = await fetch(`${baseUrl}/api/guest/quote`, {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ Quote: quote, ETag: etag }),
+      body: JSON.stringify(requestBody),
     });
     if (res.status === 412) return { etag: null, status: 412 };
     if (!res.ok) return { etag: null, status: res.status };
