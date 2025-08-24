@@ -8,6 +8,7 @@ import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
 import { useQuote } from "@/contexts/QuoteContext";
 import { Address } from "@/types/booking";
+import { BackendCustomer } from "@/lib/api/quote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
@@ -23,8 +24,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { AlertCircle, Building2, MapPin } from "lucide-react";
-import { useQuoteSession } from '@/hooks/useQuoteSession';
-import { API_BASE_URL } from '@/lib/api/config';
+// Note: Removed unused imports - now using QuoteContext only
 
 type FormValues = {
   originLine1: string;
@@ -75,8 +75,9 @@ export default function OriginDestinationPage() {
   const destination = activeQuote?.destination;
   const distanceMiles = activeQuote?.distanceMiles;
   const removalsQuote = quotes.removals;
-  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
-  const selectedVan = removalsQuote?.vanType;
+  // Note: Removed quoteSession - now using QuoteContext only
+  // Note: Van selection happens on /pickup-dropoff page, not here
+  // This page is for customer details and address confirmation
 
   // Helper functions for the new context API
   const setOrigin = (originData: any) => {
@@ -170,26 +171,10 @@ export default function OriginDestinationPage() {
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
 
-  // Continuously sync customer details & billing into canonical quote
-  React.useEffect(() => {
-    try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        customer: {
-          fullName: watchFullName || '',
-          email: watchEmail || '',
-          phone: watchPhone || '',
-          billingAddress: {
-            line1: watchBillingLine1 || '',
-            postcode: watchBillingPostcode || '',
-          },
-        },
-      }));
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchFullName, watchEmail, watchPhone, watchBillingLine1, watchBillingPostcode]);
+  // Note: Removed continuous sync useEffect to prevent infinite loops
+  // Customer details are now synced only when form is submitted
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     const origin: Address = {
       line1: values.originLine1,
       postcode: values.originPostcode,
@@ -210,27 +195,29 @@ export default function OriginDestinationPage() {
     setCustomerPhone(values.phone);
     setBillingAddress(values.billingLine1, values.billingPostcode);
 
+    // Save customer data to backend via quote update
     try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        originDestination: {
-          origin,
-          destination,
-          distanceMiles: distanceMiles ?? 0,
-          fullName: values.fullName,
-          email: values.email,
-          phone: values.phone,
-          billingAddress: { line1: values.billingLine1, postcode: values.billingPostcode },
-        },
-      }));
-      void quoteSession.flush();
-    } catch {}
-
-    // Ensure flow: must have selected a van before pricing per rules
-    if (!selectedVan) {
-      router.push("/van-selection");
-      return;
+      if (activeQuoteType) {
+        await updateQuote(activeQuoteType, {
+          customer: {
+            fullName: values.fullName,
+            email: values.email,
+            phone: values.phone,
+            billingAddress: {
+              line1: values.billingLine1,
+              postcode: values.billingPostcode,
+              hasElevator: true,
+              floor: 0
+            }
+          }
+        });
+        console.log('Customer data saved successfully via quote update');
+      }
+    } catch (error) {
+      console.error('Failed to save customer data:', error);
     }
+
+    // Navigate to summary page
     router.push("/summary");
   }
 
@@ -272,12 +259,7 @@ export default function OriginDestinationPage() {
       <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
-          {/* Flow guard: if booking hasn't hydrated yet, avoid premature redirects; if no van selected, direct user */}
-          {isHydrated && !selectedVan && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm">
-              Please select a van first to continue. You'll be redirected to van selection if you proceed.
-            </div>
-          )}
+          {/* Note: Van selection happens on /pickup-dropoff page, this page is for customer details */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Customer Details */}

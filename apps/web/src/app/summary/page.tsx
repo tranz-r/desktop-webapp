@@ -60,12 +60,8 @@ export default function SummaryPage() {
     });
   }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
-  // Persist the computed total into QuoteContext
-  React.useEffect(() => {
-    if (cost?.total != null && !Number.isNaN(cost.total)) {
-      setTotalCost(cost.total);
-    }
-  }, [cost, setTotalCost]);
+  // Note: Removed automatic cost persistence useEffect to prevent infinite loops
+  // Cost is now updated only when explicitly needed
 
   const formatDateShort = (iso?: string) => {
     if (!iso) return '—';
@@ -110,78 +106,13 @@ export default function SummaryPage() {
         updatePayment({ bookingId: quoteId });
       }
 
-      // Persist Job BEFORE payment init (if not already persisted)
-      if (!activeQuote?.payment?.jobDetails) {
-        const jobsBaseUrl = process.env.NEXT_PUBLIC_JOBS_BASE_URL;
-        if (!jobsBaseUrl) throw new Error('Missing NEXT_PUBLIC_JOBS_BASE_URL for job persistence');
+      // Note: Job persistence is now handled through QuoteContext
+      // No need to call external jobs endpoint
 
-        if (!selectedVan || !origin || !destination || !pricingTier) {
-          throw new Error('Missing required booking details for job creation');
-        }
-
-        const payloadJob: any = {
-          quoteId,
-          vanType: toBackendVanType(selectedVan),
-          origin: {
-            addressLine1: origin.line1 || '',
-            addressLine2: origin.line2 || undefined,
-            city: origin.city || '',
-            county: undefined,
-            postCode: origin.postcode || '',
-            country: origin.country || undefined,
-          },
-          destination: {
-            addressLine1: destination.line1 || '',
-            addressLine2: destination.line2 || undefined,
-            city: destination.city || '',
-            county: undefined,
-            postCode: destination.postcode || '',
-            country: destination.country || undefined,
-          },
-          paymentStatus: 'Pending',
-          pricingTier: toBackendPricingTier(pricingTier),
-          collectionDate: collectionDate || new Date().toISOString(),
-          driverCount: driverCount ?? 1,
-          distanceMiles: Math.max(0, Math.round(distanceMiles || 0)),
-          cost: cost ? {
-            baseVan: Math.round(cost.baseVan),
-            distance: cost.distance,
-            floor: Math.round(cost.floors),
-            elevatorAdjustment: Math.round(cost.elevatorAdjustment),
-            driver: Math.round(cost.drivers),
-            tierAdjustment: cost.tierAdjustment,
-            total: cost.total,
-          } : undefined,
-          inventoryItems: cartItems.map(ci => ({
-            name: ci.name,
-                    width: Math.round(ci.widthCm),
-        height: Math.round(ci.heightCm),
-        depth: Math.round(ci.lengthCm),
-            quantity: ci.quantity,
-          })),
-          user: customer ? {
-            fullName: customer.fullName || '',
-            email: customer.email || '',
-            phoneNumber: customer.phone || '',
-            billingAddress: customer.billingAddress ? {
-              addressLine1: customer.billingAddress.line1 || '',
-              postCode: customer.billingAddress.postcode || '',
-            } : undefined,
-          } : undefined,
-        };
-
-        console.log('[summary] Persisting job pre-payment', { url: jobsBaseUrl, payloadJob });
-        const jobRes = await fetch(jobsBaseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadJob),
-        });
-        if (!jobRes.ok) throw new Error(`Failed to persist job (status ${jobRes.status})`);
-        const jobData = await jobRes.json();
-        updatePayment({ bookingId: jobData.quoteId || quoteId, jobDetails: jobData });
-        quoteId = jobData.quoteId || quoteId;
-      }
-
+      // Debug: Log what's in the customer object
+      console.log('Customer data from QuoteContext:', customer);
+      console.log('Active quote data:', activeQuote);
+      
       let payload = {
         van: selectedVan,
         driverCount,
@@ -201,7 +132,7 @@ export default function SummaryPage() {
         cost: cost
       };
 
-        console.log('Payload for payment init:', payload);
+      console.log('Payload for payment init:', payload);
         
       const res = await fetch(targetUrl, {
         method: 'POST',

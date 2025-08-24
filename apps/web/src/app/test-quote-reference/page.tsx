@@ -6,7 +6,7 @@ import { useQuote } from '@/contexts/QuoteContext';
 import { QuoteOption } from '@/types/booking';
 
 export default function TestQuoteReferencePage() {
-  const { setActiveQuoteType, getQuoteReference, activeQuoteType, quotes, quoteReferences, isHydrated } = useQuote();
+  const { setActiveQuoteType, getQuoteReference, activeQuoteType, quotes, isHydrated } = useQuote();
   const [selectedType, setSelectedType] = useState<QuoteOption | null>(null);
 
   const handleSelectQuoteType = async (type: QuoteOption) => {
@@ -48,7 +48,7 @@ export default function TestQuoteReferencePage() {
           <ul className="ml-4 space-y-1">
             {Object.values(QuoteOption).map((type) => (
               <li key={type} className="text-sm">
-                {type}: {quoteReferences[type] || 'None'}
+                {type}: {quotes[type]?.quoteReference || 'None'}
               </li>
             ))}
           </ul>

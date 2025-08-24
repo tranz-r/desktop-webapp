@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { quoteApi, BackendQuote, toBackendVanType } from '@/lib/api/quote';
+import { quoteApi, BackendQuote, BackendCustomer, toBackendVanType } from '@/lib/api/quote';
 import { QuoteOption, QuoteData } from '@/types/booking';
 
 export function useQuoteBackend() {
@@ -8,7 +8,7 @@ export function useQuoteBackend() {
 
     return {
       sessionId: null, // Will be set by backend
-      quoteReference: null, // Will be set by backend
+      QuoteReference: null, // Will be set by backend
       type: QuoteOption.Send, // Will be set by caller
       
       // Core Quote Data
@@ -79,10 +79,29 @@ export function useQuoteBackend() {
       
       // Payment
       payment: {
-        status: quoteData.payment?.status || 'Pending',
-        paymentType: quoteData.payment?.paymentType || 'Full',
-        depositAmount: quoteData.payment?.depositAmount || undefined,
+        status: quoteData.paymentStatus || quoteData.payment?.status || 'Pending',
+        paymentType: quoteData.paymentType || quoteData.payment?.paymentType || 'Full',
+        depositAmount: quoteData.depositAmount || quoteData.payment?.depositAmount || undefined,
       },
+      
+      // Customer data (now included in quote data)
+      customer: quoteData.customer ? {
+        fullName: quoteData.customer.fullName,
+        email: quoteData.customer.email,
+        phoneNumber: quoteData.customer.phone,
+        billingAddress: quoteData.customer.billingAddress ? {
+          id: null,
+          userId: null,
+          line1: quoteData.customer.billingAddress.line1,
+          line2: quoteData.customer.billingAddress.line2 || '',
+          city: quoteData.customer.billingAddress.city || '',
+          county: '',
+          postCode: quoteData.customer.billingAddress.postcode || '',
+          country: quoteData.customer.billingAddress.country || '',
+          hasElevator: quoteData.customer.billingAddress.hasElevator || true,
+          floor: quoteData.customer.billingAddress.floor || 0,
+        } : undefined
+      } : undefined
     };
   }, []);
 
@@ -100,13 +119,26 @@ export function useQuoteBackend() {
     }
   }, []);
 
+  // Save customer data via session endpoint
+  const saveCustomerData = useCallback(async (customerData: any, etag?: string): Promise<{ etag?: string } | null> => {
+    try {
+      const response = await quoteApi.saveSession({ customer: customerData }, etag);
+      return {
+        etag: response.etag
+      };
+    } catch (error) {
+      console.error('Failed to save customer data:', error);
+      return null;
+    }
+  }, []);
+
   // Save quote to backend
-  const saveQuote = useCallback(async (quoteType: QuoteOption, quoteData: QuoteData, etag?: string): Promise<{ etag?: string } | null> => {
+  const saveQuote = useCallback(async (quoteType: QuoteOption, quoteData: QuoteData, customerData?: BackendCustomer, etag?: string): Promise<{ etag?: string } | null> => {
     try {
       const backendQuote = transformToBackend(quoteData, etag);
       backendQuote.type = quoteType; // Set the quote type
       
-      const response = await quoteApi.saveQuote(backendQuote, etag);
+      const response = await quoteApi.saveQuote(backendQuote, customerData, etag);
       return response;
     } catch (error) {
       if (error instanceof Error && error.message.includes('ETag mismatch')) {
@@ -159,11 +191,26 @@ export function useQuoteBackend() {
     }
   }, []);
 
+  // Load customer data for a quote
+  const loadCustomerData = useCallback(async (quoteId: string): Promise<BackendCustomer | null> => {
+    try {
+      console.log(`Attempting to load customer data for quote ID: ${quoteId}`);
+      const result = await quoteApi.getCustomerData(quoteId);
+      console.log(`Customer data result:`, result);
+      return result;
+    } catch (error) {
+      console.error('Failed to load customer data:', error);
+      return null;
+    }
+  }, [quoteApi]);
+
   return {
     loadQuotes,
     saveQuote,
     deleteQuote,
     ensureGuest,
     selectQuoteType,
+    saveCustomerData,
+    loadCustomerData,
   };
 }

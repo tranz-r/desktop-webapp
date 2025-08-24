@@ -27,8 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useQuoteSession } from '@/hooks/useQuoteSession';
-import { API_BASE_URL } from '@/lib/api/config';
+// Note: Removed unused imports - now using QuoteContext only
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function VanSelectionPage() {
@@ -81,7 +80,7 @@ export default function VanSelectionPage() {
   const [movingDate, setMovingDate] = React.useState<string>('');
   const [dateOpen, setDateOpen] = React.useState(false);
   const [dateError, setDateError] = React.useState<string | null>(null);
-  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+  // Note: Removed quoteSession - now using QuoteContext only
  
 
   React.useEffect(() => {
@@ -120,17 +119,8 @@ export default function VanSelectionPage() {
     setMounted(true);
   }, []);
 
-  // Also sync canonical quote context (vehicle selection + schedule bits)
-  React.useEffect(() => {
-    try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        vehicle: { selectedVan, driverCount },
-        schedule: { dateISO: activeQuote?.collectionDate, hours, flexibleTime, timeSlot },
-      }));
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVan, driverCount, activeQuote?.collectionDate, hours, flexibleTime, timeSlot]);
+  // Note: Removed quoteSession.setData useEffect to prevent unnecessary backend calls
+  // Data is now managed through QuoteContext only
 
   // Helper function to update schedule data
   const updateSchedule = (scheduleData: { dateISO?: string; hours?: number; flexibleTime?: boolean; timeSlot?: 'morning' | 'afternoon' | 'evening' }) => {

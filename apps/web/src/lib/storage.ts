@@ -1,39 +1,37 @@
 import { HybridStorage } from '@/lib/storage/HybridStorage';
 
-export function safeGet<T>(key: string, fallback: T): T {
-  // Synchronous API preserved by using deasync-like pattern: we can't truly block,
-  // so for now fall back to localStorage synchronously and let async layer write-through.
-  // Consumers that need async can switch to a new API later.
+// Simple localStorage wrapper for small, simple data (tokens, preferences, etc.)
+// For quote data and large objects, use HybridStorage (IndexedDB) directly
+export function simpleStorageGet<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
-  // Best-effort async read; synchronous fallback will still return immediately
-  // to preserve existing calling semantics.
-  let result = fallback;
   try {
     const raw = window.localStorage.getItem('tranzr:' + key);
-    if (raw) result = JSON.parse(raw) as T;
-  } catch {}
-  // Kick off async IndexedDB fetch to refresh local cache
-  void (async () => {
-    const v = await HybridStorage.get<T>(key, result);
-    try {
-      window.localStorage.setItem('tranzr:' + key, JSON.stringify(v));
-    } catch {}
-  })();
-  return result;
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
-export function safeSet<T>(key: string, value: T): void {
+export function simpleStorageSet<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem('tranzr:' + key, JSON.stringify(value));
-  } catch {}
-  void HybridStorage.set(key, value);
+  } catch {
+    // ignore
+  }
 }
 
-export function safeRemove(key: string): void {
+export function simpleStorageRemove(key: string): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem('tranzr:' + key);
-  } catch {}
-  void HybridStorage.remove(key);
+  } catch {
+    // ignore
+  }
 }
+
+// Legacy functions for backward compatibility - use HybridStorage for quote data
+export const safeGet = simpleStorageGet;
+export const safeSet = simpleStorageSet;
+export const safeRemove = simpleStorageRemove;

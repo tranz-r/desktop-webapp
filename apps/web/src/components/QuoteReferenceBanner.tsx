@@ -9,10 +9,20 @@ interface QuoteReferenceBannerProps {
 }
 
 export function QuoteReferenceBanner({ className = '', variant = 'subtle' }: QuoteReferenceBannerProps) {
-  const { activeQuoteType, getQuoteReference } = useQuote();
+  const { activeQuoteType, getQuoteReference, quotes } = useQuote();
+  
+  // Debug logging
+  console.log('[QuoteReferenceBanner] Debug:', {
+    activeQuoteType,
+    quotes: quotes,
+    quoteReference: activeQuoteType ? getQuoteReference(activeQuoteType) : null,
+    hasActiveQuote: activeQuoteType ? !!quotes[activeQuoteType] : false,
+    activeQuoteData: activeQuoteType ? quotes[activeQuoteType] : null
+  });
   
   // Only show if we have an active quote type and reference
   if (!activeQuoteType || !getQuoteReference(activeQuoteType)) {
+    console.log('[QuoteReferenceBanner] Not showing - missing data:', { activeQuoteType, quoteReference: activeQuoteType ? getQuoteReference(activeQuoteType) : null });
     return null;
   }
 

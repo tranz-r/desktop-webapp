@@ -173,6 +173,9 @@ export enum QuoteOption {
 
 // Individual quote data structure for the context
 export interface QuoteData {
+  // Quote Reference (from backend)
+  quoteReference?: string;
+  
   // Inventory & Cart
   items: QuoteItem[];
   
@@ -208,7 +211,7 @@ export interface QuoteData {
     fullName?: string;
     email?: string;
     phone?: string;
-    billingAddress?: Pick<Address, 'line1' | 'postcode'>;
+    billingAddress?: Address; // Use full Address interface
   };
   
   // Payment

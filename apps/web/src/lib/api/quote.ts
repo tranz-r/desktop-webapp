@@ -19,8 +19,9 @@ export function toBackendVanType(vanType: string | undefined): number | null {
 
 // Backend Quote entity types (matching C# backend DTOs)
 export interface BackendQuote {
+  id?: string | null;
   sessionId: string | null;
-  quoteReference: string | null;
+  QuoteReference: string | null;
   type: QuoteType;
   
   // Core Quote Data
@@ -45,6 +46,9 @@ export interface BackendQuote {
   
   // Payment
   payment?: BackendPayment;
+  
+  // Customer data (now included in quote data)
+  customer?: BackendCustomer;
 }
 
 export interface BackendSchedule {
@@ -91,6 +95,16 @@ export interface BackendInventoryItem {
   quantity?: number;
 }
 
+// Customer data structure matching backend UserDto
+export interface BackendCustomer {
+  supabaseId?: string | null;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  role?: string;
+  billingAddress?: BackendAddress;
+}
+
 // API Response types
 export interface QuoteResponse {
   quote?: BackendQuote;
@@ -100,6 +114,7 @@ export interface QuoteResponse {
 
 export interface SaveQuoteRequest {
   quote?: BackendQuote;
+  customer?: BackendCustomer; // Customer details if provided
   quoteJson?: string; // Legacy support
   etag?: string;
 }
@@ -175,9 +190,10 @@ export class QuoteApiClient {
   }
 
   // Save quote (entity-based)
-  async saveQuote(quote: BackendQuote, etag?: string): Promise<{ etag?: string }> {
+  async saveQuote(quote: BackendQuote, customerData?: BackendCustomer, etag?: string): Promise<{ etag?: string }> {
     const request: SaveQuoteRequest = {
       quote,
+      customer: customerData,
       etag,
     };
 
@@ -260,6 +276,37 @@ export class QuoteApiClient {
     return response.json();
   }
 
+  // Save session (including customer data)
+  async saveSession(sessionData: { customer?: any; quotes?: any; metadata?: any }, etag?: string): Promise<{ etag?: string }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (etag) {
+      headers['If-Match'] = etag;
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/guest/session`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(sessionData),
+    });
+
+    if (response.status === 412) {
+      throw new Error('ETag mismatch - session was modified by another request');
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to save session: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      etag: response.headers.get('ETag') || data.etag,
+    };
+  }
+
   // Select quote type and create/get quote
   async selectQuoteType(type: QuoteType): Promise<{ 
     quote: { 
@@ -288,6 +335,40 @@ export class QuoteApiClient {
       quote: data.quote,
       etag: response.headers.get('ETag') || data.etag,
     };
+  }
+
+  // Get customer data for a quote
+  async getCustomerData(quoteId: string): Promise<BackendCustomer | null> {
+    try {
+      console.log(`Making API call to: ${this.baseUrl}/api/guest/customer/${quoteId}`);
+      const response = await fetch(`${this.baseUrl}/api/guest/customer/${quoteId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response headers:`, response.headers);
+
+      if (response.status === 404) {
+        console.log('No customer data found (404)');
+        return null; // No customer data found
+      }
+
+      if (!response.ok) {
+        console.log(`Response not OK: ${response.status}`);
+        throw new Error(`Failed to fetch customer data: ${response.status}`);
+      }
+
+      const customerData = await response.json();
+      console.log('Customer data received:', customerData);
+      return customerData;
+    } catch (error) {
+      console.error('Error fetching customer data:', error);
+      return null;
+    }
   }
 }
 

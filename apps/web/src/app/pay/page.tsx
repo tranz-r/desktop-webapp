@@ -13,11 +13,13 @@ import Footer from '@/components/Footer';
 import { useQuote } from '@/contexts/QuoteContext';
 import { computeCost } from '@/lib/cost';
 import { API_BASE_URL } from '@/lib/api/config';
+import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
-function PayContent() {
+function PayPageContent() {
   const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  const router = useRouter();
   
   // Get data from active quote and shared data
   const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
@@ -310,7 +312,7 @@ function PayContent() {
         // If user navigates back and payment is completed, redirect to confirmation
         const confirmationUrl = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`;
         window.history.pushState(null, '', confirmationUrl);
-        window.location.href = confirmationUrl;
+        router.push(confirmationUrl);
       }
     };
 
@@ -323,7 +325,7 @@ function PayContent() {
         window.removeEventListener('popstate', handlePopState);
       };
     }
-  }, [isPaymentCompleted, payment?.bookingId]);
+  }, [isPaymentCompleted, payment?.bookingId, router]);
 
   const options = React.useMemo<StripeElementsOptions | undefined>(() => {
     if (!clientSecret) return undefined;
@@ -385,14 +387,14 @@ function PayContent() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button 
-                        onClick={() => window.location.href = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`}
+                        onClick={() => router.push(`/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`)}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         View Confirmation
                       </Button>
                       <Button 
                         variant="outline"
-                        onClick={() => window.location.href = '/'}
+                        onClick={() => router.push('/')}
                       >
                         Return Home
                       </Button>
@@ -521,6 +523,8 @@ function PayContent() {
                     <Elements key={elementsKey} stripe={stripePromise} options={options}>
                       <CheckoutForm
                         returnUrl={`${window.location.origin}/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`}
+                        clientSecret={clientSecret}
+                        paymentIntentId={paymentIntentId}
                       />
                     </Elements>
                   )}
@@ -537,9 +541,10 @@ function PayContent() {
 }
 
 export default function PayPage() {
+  const router = useRouter();
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
-      <PayContent />
+      <PayPageContent />
     </Suspense>
   );
 }

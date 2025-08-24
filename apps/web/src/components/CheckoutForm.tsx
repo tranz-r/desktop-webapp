@@ -7,58 +7,32 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import TermsContent from '@/components/legal/TermsContent';
-import { useBooking } from '@/contexts/BookingContext';
+
 import { API_BASE_URL } from '@/lib/api/config';
 
 type Props = {
   returnUrl: string;
+  clientSecret?: string;
+  paymentIntentId?: string;
 };
 
-export function CheckoutForm({ returnUrl }: Props) {
+export function CheckoutForm({ returnUrl, clientSecret, paymentIntentId }: Props) {
   const stripe = useStripe();
   const elements = useElements();
-  const booking = useBooking();
   const [email, setEmail] = React.useState<string>('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [processing, setProcessing] = React.useState(false);
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [termsOpen, setTermsOpen] = React.useState(false);
-  const [clientSecret, setClientSecret] = React.useState<string>('');
 
-  const { payment } = booking;
-  const paymentIntentId = payment?.paymentIntentId;
-
-  // Fetch client secret using stored PaymentIntentId
-  React.useEffect(() => {
-    const fetchClientSecret = async () => {
-      if (!paymentIntentId) return;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch payment intent: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-      } catch (error) {
-        console.error('Error fetching client secret:', error);
-        setMessage('Failed to load payment details. Please try again.');
-      }
-    };
-
-    if (paymentIntentId) {
-      fetchClientSecret();
-    }
-  }, [paymentIntentId]);
+  // Note: clientSecret is now passed as a prop from parent component
 
   // Remove the premature payment status check - this was causing the "payment was not successful" message
   // to appear when the Elements first load, before the user has even attempted payment
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !clientSecret) return;
     setProcessing(true);
     setMessage(null);
 
@@ -81,6 +55,7 @@ export function CheckoutForm({ returnUrl }: Props) {
           setMessage('An unexpected error occurred during setup.');
         }
       }
+      // Note: Setup success will redirect to return_url
     } else {
       // Handle Payment Intent (for "Pay in full" or "Pay deposit" options)
       const { error } = await stripe.confirmPayment({
@@ -98,6 +73,7 @@ export function CheckoutForm({ returnUrl }: Props) {
           setMessage('An unexpected error occurred.');
         }
       }
+      // Note: Payment success will redirect to return_url
     }
     
     setProcessing(false);
@@ -140,7 +116,7 @@ export function CheckoutForm({ returnUrl }: Props) {
       </Dialog>
       <div className="pt-2 flex justify-end">
         <Button type="submit" disabled={!stripe || processing || !acceptedTerms}>
-          {processing ? 'Processing…' : clientSecret.startsWith('seti_') ? 'Set up payment method' : 'Pay now'}
+          {processing ? 'Processing…' : clientSecret?.startsWith('seti_') ? 'Set up payment method' : 'Pay now'}
         </Button>
       </div>
     </form>

@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useQuote } from "@/contexts/QuoteContext";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useQuoteSession } from '@/hooks/useQuoteSession';
-import { API_BASE_URL } from '@/lib/api/config';
+// Note: Removed unused imports - now using QuoteContext only
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function CollectionDeliveryPage() {
@@ -30,7 +29,7 @@ export default function CollectionDeliveryPage() {
   const origin = activeQuote?.origin;
   const destination = activeQuote?.destination;
   const distanceMiles = activeQuote?.distanceMiles;
-  const quoteSession = useQuoteSession<any>({ baseUrl: API_BASE_URL });
+  // Note: Removed quoteSession - now using QuoteContext only
 
   // Helper functions to update quote data
   const setOrigin = (originData: any) => {
@@ -104,59 +103,11 @@ export default function CollectionDeliveryPage() {
     form.watch("destinationLine1").trim().length > 0 &&
     form.watch("destinationPostcode").trim().length > 0;
 
-  // Persist origin fields to context as user edits
-  React.useEffect(() => {
-    const origin = {
-      line1: form.watch("originLine1") || "",
-      postcode: form.watch("originPostcode") || "",
-      floor: floorValueToNumber(form.watch("originFloor")),
-      hasElevator: !!form.watch("originElevator"),
-    };
-    setOrigin(origin);
-    try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        originDestination: {
-          ...(prev?.originDestination ?? {}),
-          origin,
-          distanceMiles: distanceMiles ?? prev?.originDestination?.distanceMiles,
-        },
-      }));
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("originLine1"),
-    form.watch("originPostcode"),
-    form.watch("originFloor"),
-    form.watch("originElevator"),
-  ]);
+  // Note: Removed automatic origin sync useEffect to prevent infinite loops
+  // Origin is now updated only when form is submitted
 
-  // Persist destination fields to context as user edits
-  React.useEffect(() => {
-    const destination = {
-      line1: form.watch("destinationLine1") || "",
-      postcode: form.watch("destinationPostcode") || "",
-      floor: floorValueToNumber(form.watch("destinationFloor")),
-      hasElevator: !!form.watch("destinationElevator"),
-    };
-    setDestination(destination);
-    try {
-      quoteSession.setData((prev: any) => ({
-        ...(prev ?? {}),
-        originDestination: {
-          ...(prev?.originDestination ?? {}),
-          destination,
-          distanceMiles: distanceMiles ?? prev?.originDestination?.distanceMiles,
-        },
-      }));
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("destinationLine1"),
-    form.watch("destinationPostcode"),
-    form.watch("destinationFloor"),
-    form.watch("destinationElevator"),
-  ]);
+  // Note: Removed automatic destination sync useEffect to prevent infinite loops
+  // Destination is now updated only when form is submitted
 
   // Compute and persist distance when both addresses are set
   React.useEffect(() => {
@@ -195,15 +146,7 @@ export default function CollectionDeliveryPage() {
         const numeric = Number(miles);
         if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
           setDistanceMiles(numeric);
-          try {
-            quoteSession.setData((prev: any) => ({
-              ...(prev ?? {}),
-              originDestination: {
-                ...(prev?.originDestination ?? {}),
-                distanceMiles: numeric,
-              },
-            }));
-          } catch {}
+          // Note: Removed quoteSession.setData to prevent unnecessary backend calls
         }
       })
       .catch((error) => {
