@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { quoteApi, BackendQuote, BackendCustomer, toBackendVanType } from '@/lib/api/quote';
+import { quoteApi, BackendQuote, BackendCustomer, toBackendVanType, QuoteTypeResponse } from '@/lib/api/quote';
 import { QuoteOption, QuoteData } from '@/types/booking';
 
 export function useQuoteBackend() {
@@ -8,60 +8,60 @@ export function useQuoteBackend() {
 
     return {
       sessionId: null, // Will be set by backend
-      QuoteReference: null, // Will be set by backend
+      quoteReference: null, // Will be set by backend
       type: QuoteOption.Send, // Will be set by caller
       
       // Core Quote Data
       vanType: toBackendVanType(quoteData.vanType),
-      driverCount: quoteData.driverCount || 0,
+      driverCount: quoteData.driverCount ?? 0,
       
       // Addresses
       origin: quoteData.origin ? {
         id: null, // Will be set by backend
         userId: null, // Will be set by backend
-        line1: quoteData.origin.line1 || '',
-        line2: quoteData.origin.line2 || '',
-        city: quoteData.origin.city || '',
+        line1: quoteData.origin.line1 ?? '',
+        line2: quoteData.origin.line2 ?? '',
+        city: quoteData.origin.city ?? '',
         county: '',
-        postCode: quoteData.origin.postcode || '',
-        country: quoteData.origin.country || '',
-        hasElevator: quoteData.origin.hasElevator || true,
-        floor: quoteData.origin.floor || 0,
+        postCode: quoteData.origin.postcode ?? '',
+        country: quoteData.origin.country ?? '',
+        hasElevator: quoteData.origin.hasElevator ?? true,
+        floor: quoteData.origin.floor ?? 0,
       } : undefined,
       
       destination: quoteData.destination ? {
         id: null, // Will be set by backend
         userId: null, // Will be set by backend
-        line1: quoteData.destination.line1 || '',
-        line2: quoteData.destination.line2 || '',
-        city: quoteData.destination.city || '',
+        line1: quoteData.destination.line1 ?? '',
+        line2: quoteData.destination.line2 ?? '',
+        city: quoteData.destination.city ?? '',
         county: '',
-        postCode: quoteData.destination.postcode || '',
-        country: quoteData.destination.country || '',
-        hasElevator: quoteData.destination.hasElevator || true,
-        floor: quoteData.destination.floor || 0,
+        postCode: quoteData.destination.postcode ?? '',
+        country: quoteData.destination.country ?? '',
+        hasElevator: quoteData.destination.hasElevator ?? true,
+        floor: quoteData.destination.floor ?? 0,
       } : undefined,
       
       // Schedule
       schedule: {
-        dateISO: quoteData.collectionDate || undefined,
-        deliveryDateISO: quoteData.deliveryDate || undefined,
-        hours: quoteData.hours || undefined,
-        flexibleTime: quoteData.flexibleTime || undefined,
-        timeSlot: quoteData.timeSlot || undefined,
+        collectionDate: quoteData.collectionDate ?? undefined,
+        deliveryDate: quoteData.deliveryDate ?? undefined,
+        hours: quoteData.hours ?? undefined,
+        flexibleTime: quoteData.flexibleTime ?? undefined,
+        timeSlot: quoteData.timeSlot ?? undefined,
       },
       
       // Distance
-      distanceMiles: quoteData.distanceMiles || 0,
+      distanceMiles: quoteData.distanceMiles ?? 0,
       
       // Assembly/Dismantle tracking
-      numberOfItemsToDismantle: quoteData.numberOfItemsToDismantle || 0,
-      numberOfItemsToAssemble: quoteData.numberOfItemsToAssemble || 0,
+      numberOfItemsToDismantle: quoteData.numberOfItemsToDismantle ?? 0,
+      numberOfItemsToAssemble: quoteData.numberOfItemsToAssemble ?? 0,
       
       // Pricing
       pricing: {
-        pricingTier: quoteData.pricingTier || undefined,
-        totalCost: quoteData.totalCost || undefined,
+        pricingTier: quoteData.pricingTier ?? undefined,
+        totalCost: quoteData.totalCost ?? undefined,
         pickUpDropOffPrice: undefined,
       },
       
@@ -69,19 +69,19 @@ export function useQuoteBackend() {
       items: quoteData.items?.map(item => ({
         id: null, // Will be set by backend
         jobId: null, // Will be set by backend
-        name: item.name || '',
+        name: item.name ?? '',
         description: '',
-        width: item.widthCm || undefined,
-        height: item.heightCm || undefined,
-        depth: item.lengthCm || undefined,
-        quantity: item.quantity || undefined,
+        width: item.widthCm ?? undefined,
+        height: item.heightCm ?? undefined,
+        depth: item.lengthCm ?? undefined,
+        quantity: item.quantity ?? undefined,
       })) || [],
       
       // Payment
       payment: {
-        status: quoteData.paymentStatus || quoteData.payment?.status || 'Pending',
-        paymentType: quoteData.paymentType || quoteData.payment?.paymentType || 'Full',
-        depositAmount: quoteData.depositAmount || quoteData.payment?.depositAmount || undefined,
+        status: quoteData.paymentStatus ?? quoteData.payment?.status ?? 'Pending',
+        paymentType: quoteData.paymentType ?? quoteData.payment?.paymentType ?? 'Full',
+        depositAmount: quoteData.depositAmount ?? quoteData.payment?.depositAmount ?? undefined,
       },
       
       // Customer data (now included in quote data)
@@ -93,15 +93,18 @@ export function useQuoteBackend() {
           id: null,
           userId: null,
           line1: quoteData.customer.billingAddress.line1,
-          line2: quoteData.customer.billingAddress.line2 || '',
-          city: quoteData.customer.billingAddress.city || '',
+          line2: quoteData.customer.billingAddress.line2 ?? '',
+          city: quoteData.customer.billingAddress.city ?? '',
           county: '',
-          postCode: quoteData.customer.billingAddress.postcode || '',
-          country: quoteData.customer.billingAddress.country || '',
-          hasElevator: quoteData.customer.billingAddress.hasElevator || true,
-          floor: quoteData.customer.billingAddress.floor || 0,
+          postCode: quoteData.customer.billingAddress.postcode ?? '',
+          country: quoteData.customer.billingAddress.country ?? '',
+          hasElevator: quoteData.customer.billingAddress.hasElevator ?? true,
+          floor: quoteData.customer.billingAddress.floor ?? 0,
         } : undefined
-      } : undefined
+      } : undefined,
+      
+      // Concurrency control using PostgreSQL xmin system column
+      version: 0
     };
   }, []);
 
@@ -119,24 +122,14 @@ export function useQuoteBackend() {
     }
   }, []);
 
-  // Save customer data via session endpoint
-  const saveCustomerData = useCallback(async (customerData: any, etag?: string): Promise<{ etag?: string } | null> => {
-    try {
-      const response = await quoteApi.saveSession({ customer: customerData }, etag);
-      return {
-        etag: response.etag
-      };
-    } catch (error) {
-      console.error('Failed to save customer data:', error);
-      return null;
-    }
-  }, []);
+
 
   // Save quote to backend
   const saveQuote = useCallback(async (quoteType: QuoteOption, quoteData: QuoteData, customerData?: BackendCustomer, etag?: string): Promise<{ etag?: string } | null> => {
     try {
       const backendQuote = transformToBackend(quoteData, etag);
-      backendQuote.type = quoteType; // Set the quote type
+      // Map type to backend PascalCase enum labels
+      backendQuote.type = transformQuoteTypeToBackend(quoteType) as any;
       
       const response = await quoteApi.saveQuote(backendQuote, customerData, etag);
       return response;
@@ -151,14 +144,26 @@ export function useQuoteBackend() {
     }
   }, [transformToBackend]);
 
+  // Helper function to transform frontend quote type to backend PascalCase
+  const transformQuoteTypeToBackend = useCallback((quoteType: QuoteOption): string => {
+    return quoteType === 'send' ? 'Send' : quoteType === 'receive' ? 'Receive' : 'Removals';
+  }, []);
+
   // Delete quote from backend
   const deleteQuote = useCallback(async (quoteType: QuoteOption) => {
     try {
-      await quoteApi.deleteQuote(quoteType);
+      // Transform to PascalCase before sending to backend
+      const backendType = transformQuoteTypeToBackend(quoteType);
+      
+      console.log('[useQuoteBackend] deleteQuote - Frontend type:', quoteType, '→ Backend type:', backendType);
+      
+      await quoteApi.deleteQuote(backendType as any);
     } catch (error) {
       console.error('Failed to delete quote from backend:', error);
     }
-  }, []);
+  }, [transformQuoteTypeToBackend]);
+
+
 
   // Ensure guest session
   const ensureGuest = useCallback(async () => {
@@ -173,23 +178,20 @@ export function useQuoteBackend() {
   }, []);
 
   // Select quote type and create/get quote
-  const selectQuoteType = useCallback(async (quoteType: QuoteOption): Promise<{ 
-    quote: { 
-      id: string; 
-      type: string; 
-      quoteReference: string; 
-      sessionId: string; 
-    }; 
-    etag?: string; 
-  } | null> => {
+  const selectQuoteType = useCallback(async (quoteType: QuoteOption): Promise<QuoteTypeResponse | null> => {
     try {
-      const response = await quoteApi.selectQuoteType(quoteType);
+      // Transform to PascalCase before sending to backend
+      const backendType = transformQuoteTypeToBackend(quoteType);
+      
+      console.log('[useQuoteBackend] selectQuoteType - Frontend type:', quoteType, '→ Backend type:', backendType);
+      
+      const response = await quoteApi.selectQuoteType(backendType as any);
       return response;
     } catch (error) {
       console.error('Failed to select quote type:', error);
       return null;
     }
-  }, []);
+  }, [transformQuoteTypeToBackend]);
 
   // Load customer data for a quote
   const loadCustomerData = useCallback(async (quoteId: string): Promise<BackendCustomer | null> => {
@@ -210,7 +212,6 @@ export function useQuoteBackend() {
     deleteQuote,
     ensureGuest,
     selectQuoteType,
-    saveCustomerData,
     loadCustomerData,
   };
 }

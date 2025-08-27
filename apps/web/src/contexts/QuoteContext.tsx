@@ -33,6 +33,7 @@ export interface QuoteContextType extends QuoteState {
   resetAllQuotes: () => Promise<void>;
   updateSharedData: (data: Partial<SharedData>) => Promise<void>;
   getQuoteReference: (type: QuoteOption) => string | null;
+  getCurrentEtag: () => string | undefined;
   
   // State Management
   isHydrated: boolean;
@@ -185,10 +186,7 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
           }));
         }
         
-        // Ensure guest session exists first
-        await ensureGuest();
-        
-        // Load quotes from backend
+        // Load quotes from backend (guest session will be created when needed)
         const quotesResponse = await loadQuotes(etagRef.current);
         if (quotesResponse) {
           // Update ETag
@@ -223,7 +221,7 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
 
               // Transform backend quote to frontend format
               const frontendQuote: QuoteData = {
-                quoteReference: backendQuote.QuoteReference || undefined, // Extract from backend
+                quoteReference: backendQuote.quoteReference || undefined, // Extract from backend
                 items: backendQuote.items?.map(item => ({
                   id: item.id ? parseInt(item.id) : 0,
                   name: item.name || '',
@@ -255,8 +253,8 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
                 numberOfItemsToAssemble: backendQuote.numberOfItemsToAssemble || 0,
                 vanType: backendQuote.vanType as any,
                 driverCount: backendQuote.driverCount || 1,
-                collectionDate: backendQuote.schedule?.dateISO || undefined,
-                deliveryDate: backendQuote.schedule?.deliveryDateISO || undefined,
+                collectionDate: backendQuote.schedule?.collectionDate || undefined,
+                deliveryDate: backendQuote.schedule?.deliveryDate || undefined,
                 hours: backendQuote.schedule?.hours || undefined,
                 flexibleTime: backendQuote.schedule?.flexibleTime || undefined,
                 timeSlot: backendQuote.schedule?.timeSlot as any,
@@ -401,23 +399,37 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
     };
     
     initializeSession();
-  }, [loadQuotes, ensureGuest]);
+  }, [loadQuotes]);
 
   // Quote Type Management
   const setActiveQuoteType = useCallback(async (type: QuoteOption | null) => {
-    console.log('[QuoteContext] setActiveQuoteType called with:', type);
+    console.log('[QuoteContext] ===== setActiveQuoteType called =====');
+    console.log('[QuoteContext] Type requested:', type);
     console.log('[QuoteContext] Current quotes state:', state.quotes);
+    console.log('[QuoteContext] Quote exists for this type?', type ? !!state.quotes[type] : 'N/A');
     
     if (type === null || Object.values(QuoteOption).includes(type)) {
-      if (type && !state.quotes[type]) {
-        console.log('[QuoteContext] Creating new quote for type:', type);
+              if (type && !state.quotes[type]) {
+          console.log('[QuoteContext] 🚀 CREATING NEW QUOTE - calling backend selectQuoteType...');
+          console.log('[QuoteContext] This will call POST /api/guest/select-quote-type?quoteType=' + type);
         // If this quote type doesn't exist yet, create it via backend
         try {
+          // Ensure guest session exists before creating quote
+          console.log('[QuoteContext] Ensuring guest session before creating quote...');
+          await ensureGuest();
+          
           const quoteResponse = await selectQuoteType(type);
           console.log('[QuoteContext] selectQuoteType response:', quoteResponse);
           
           if (quoteResponse?.quote?.quoteReference) {
             console.log('[QuoteContext] Creating quote with reference:', quoteResponse.quote.quoteReference);
+            
+            // Store the ETag from the backend response for future concurrency control
+            if (quoteResponse.etag) {
+              etagRef.current = quoteResponse.etag;
+              console.log('[QuoteContext] Stored ETag from backend:', quoteResponse.etag);
+            }
+            
             // Initialize the quote with the reference from backend
             const newQuote: QuoteData = {
               quoteReference: quoteResponse.quote.quoteReference,
@@ -475,15 +487,19 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
             try {
               const updatedQuotes = { ...state.quotes, [type]: newQuote };
               await saveToIndexDB(updatedQuotes);
+              console.log('[QuoteContext] Successfully saved new quote to IndexedDB with reference:', quoteResponse.quote.quoteReference);
             } catch (error) {
               console.error('[QuoteContext] Failed to save to IndexedDB after quote creation:', error);
             }
+          } else {
+            console.error('[QuoteContext] No quote reference received from backend');
           }
         } catch (error) {
           console.error('Failed to create quote:', error);
         }
       } else {
         // Quote type already exists, just set as active
+        console.log('[QuoteContext] ✅ Quote already exists for type:', type, '- no backend call needed');
         setState(prev => {
           const newState = {
             ...prev,
@@ -509,6 +525,11 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
   }, [state.quotes, selectQuoteType]);
 
   // Quote Data Management
+  // 
+  // 🏗️ ARCHITECTURE: IndexedDB-First with Backend Save on Payment
+  // - Navigation pages: Local state + IndexedDB only (fast, offline-friendly)
+  // - Payment page: Local state + IndexedDB + Backend save (persistent, source of truth)
+  // - This prevents excessive backend calls during user navigation
   const updateQuote = useCallback(async (type: QuoteOption, data: Partial<QuoteData>) => {
     // Update local state first
     setState(prev => {
@@ -530,43 +551,65 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
       return newState;
     });
 
-    // Save to IndexedDB after state update
+    // Save to IndexedDB after state update (fast local persistence)
     try {
       const updatedQuotes = { ...state.quotes, [type]: { ...state.quotes[type], ...data } as QuoteData };
       await saveToIndexDB(updatedQuotes);
+      console.log(`[QuoteContext] ✅ Quote data updated locally and saved to IndexedDB for type: ${type}`);
     } catch (error) {
-      console.error('[QuoteContext] Failed to save to IndexedDB after update:', error);
+      console.error('[QuoteContext] ❌ Failed to save to IndexedDB after update:', error);
+    }
+    
+    // 🚫 NO BACKEND SAVE HERE - Only happens on /pay page
+    // This prevents excessive backend calls during navigation while maintaining data persistence
+    console.log(`[QuoteContext] 📝 Data saved locally - Backend save will happen on /pay page`);
+  }, [state.quotes, saveToIndexDB]);
+
+  // 🎯 BACKEND SAVE FUNCTION: Use this ONLY when you need to persist data to backend
+  // - Called from /pay page before payment processing
+  // - NOT called during normal navigation (use updateQuote instead)
+  const saveQuoteToBackend = useCallback(async (type: QuoteOption): Promise<boolean> => {
+    if (!type || !state.quotes[type]) {
+      console.warn(`Cannot save quote to backend: type ${type} not found`);
+      return false;
     }
 
-    // Save to backend if quote exists
-    if (state.quotes[type]) {
-      try {
-        const updatedQuote = { ...state.quotes[type], ...data } as QuoteData;
-        const response = await saveQuote(type, updatedQuote, undefined, etagRef.current);
-        
-        if (response?.etag) {
-          etagRef.current = response.etag;
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('ETag mismatch')) {
-          // Handle ETag conflict by reloading quotes
-          console.warn('ETag mismatch detected, reloading quotes...');
-          
-          const quotesResponse = await loadQuotes(etagRef.current);
-          if (quotesResponse) {
-            // Update ETag
-            if (quotesResponse.etag) {
-              etagRef.current = quotesResponse.etag;
-            }
-            // TODO: Merge the reloaded data with current state
-            console.warn('Quote data reloaded due to ETag conflict');
-          }
-        } else {
-          console.error('Failed to save quote:', error);
-        }
+    try {
+      console.log('Saving quote to backend before payment...');
+      const updatedQuote = { ...state.quotes[type] };
+      const response = await saveQuote(type, updatedQuote, undefined, etagRef.current);
+      
+      if (response?.etag) {
+        etagRef.current = response.etag;
+        console.log('Quote successfully saved to backend with ETag:', response.etag);
+        return true;
+      } else {
+        console.error('Backend save failed: no ETag returned');
+        return false;
       }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('ETag mismatch')) {
+        // Handle ETag conflict by reloading quotes
+        console.warn('ETag mismatch detected, reloading quotes...');
+        
+        const quotesResponse = await loadQuotes(etagRef.current);
+        if (quotesResponse) {
+          // Update ETag
+          if (quotesResponse.etag) {
+            etagRef.current = quotesResponse.etag;
+          }
+          // TODO: Merge the reloaded data with current state
+          console.warn('Quote data reloaded due to ETag conflict');
+          
+          // Retry the save
+          return await saveQuoteToBackend(type);
+        }
+      } else {
+        console.error('Failed to save quote to backend:', error);
+      }
+      return false;
     }
-  }, [state.quotes, saveQuote, loadQuotes, saveToIndexDB]);
+  }, [state.quotes, saveQuote, loadQuotes]);
 
   // Utility
   const resetQuote = useCallback(async () => {
@@ -700,6 +743,11 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
     return state.quotes[type]?.quoteReference || null;
   }, [state.quotes]);
 
+  // Get current ETag for concurrency control
+  const getCurrentEtag = useCallback((): string | undefined => {
+    return etagRef.current;
+  }, []);
+
   // Debug function to check IndexedDB status
   const debugIndexedDB = useCallback(async () => {
     try {
@@ -751,6 +799,7 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
     resetAllQuotes,
     updateSharedData,
     getQuoteReference,
+    getCurrentEtag,
     isHydrated,
     debugIndexedDB,
     cleanupIndexedDBData

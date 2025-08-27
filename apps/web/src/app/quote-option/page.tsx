@@ -15,8 +15,6 @@ import {
 import { QuoteOption } from '@/types/booking';
 import { useQuote } from '@/contexts/QuoteContext';
 import { useRouter } from 'next/navigation';
-import { ensureGuest } from '@/lib/api/guest';
-import { API_BASE_URL } from '@/lib/api/config';
 
 const OPTIONS: Array<{ id: QuoteOption; title: string; description: string; Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }> = [
   {
@@ -44,10 +42,7 @@ export default function QuoteOptionPage() {
   const selected = activeQuoteType;
   const router = useRouter();
 
-  // Early bootstrap cookie+server session when user starts a quote journey
-  React.useEffect(() => {
-    void ensureGuest(API_BASE_URL);
-  }, []);
+  // Guest session will be created when setActiveQuoteType is called
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -69,12 +64,16 @@ export default function QuoteOptionPage() {
                     role="button"
                     tabIndex={0}
                     onClick={() => {
+            console.log('[QuoteOption] User clicked on option:', id);
+            console.log('[QuoteOption] Calling setActiveQuoteType...');
             setActiveQuoteType(id);
+            console.log('[QuoteOption] Navigating to /collection-delivery...');
             router.push('/collection-delivery');
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
+              console.log('[QuoteOption] Keyboard navigation to option:', id);
               setActiveQuoteType(id);
               router.push('/collection-delivery');
             }

@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 function PayPageContent() {
-  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  const { activeQuoteType, quotes, updateQuote, isHydrated, getCurrentEtag } = useQuote();
   const router = useRouter();
   
   // Get data from active quote and shared data
@@ -210,7 +210,104 @@ function PayPageContent() {
     if (!isHydrated) return;
     if (!activeQuote?.vanType || !origin || !destination) return;
     setIsCreatingIntent(true);
+    
     try {
+      // OPTIMIZATION: Save quote to backend before payment to ensure data persistence
+      console.log('Saving quote to backend before payment...');
+      
+      // Get current ETag for concurrency control
+      const currentEtag = getCurrentEtag();
+      console.log('Using ETag for backend save:', currentEtag || 'none (new quote)');
+      
+      // Transform frontend data to backend contract format
+      const quotePayload = {
+        quote: {
+          sessionId: null, // Will be set by backend from cookie
+          quoteReference: activeQuote.quoteReference || null,
+          type: activeQuoteType === 'send' ? 'Send' : activeQuoteType === 'receive' ? 'Receive' : 'Removals',
+          vanType: toBackendVanType(activeQuote.vanType as string),
+          driverCount: driverCount ?? 1,
+          distanceMiles: Math.max(0, distanceMiles ?? 0),
+          numberOfItemsToDismantle: activeQuote.numberOfItemsToDismantle || 0,
+          numberOfItemsToAssemble: activeQuote.numberOfItemsToAssemble || 0,
+          origin: origin ? {
+            line1: origin.line1 || '',
+            line2: origin.line2 || '',
+            city: origin.city || '',
+            postCode: origin.postcode || '',
+            country: origin.country || 'United Kingdom',
+            hasElevator: Boolean(origin.hasElevator),
+            floor: origin.floor ?? 0
+          } : undefined,
+          destination: destination ? {
+            line1: destination.line1 || '',
+            line2: destination.line2 || '',
+            city: destination.city || '',
+            postCode: destination.postcode || '',
+            country: destination.country || 'United Kingdom',
+            hasElevator: Boolean(destination.hasElevator),
+            floor: destination.floor ?? 0
+          } : undefined,
+          schedule: {
+            dateISO: scheduleDateISO || undefined,
+            deliveryDateISO: activeQuote.deliveryDate || undefined,
+            hours: activeQuote.hours || undefined,
+            flexibleTime: activeQuote.flexibleTime || undefined,
+            timeSlot: activeQuote.timeSlot || undefined
+          },
+          pricing: {
+            pricingTier: toBackendPricingTier(pricingTier),
+            totalCost: totalCost || undefined,
+            pickUpDropOffPrice: activeQuote.pickUpDropOffPrice || undefined
+          },
+          items: (activeQuote.items || []).map(item => ({
+            name: item.name || '',
+            width: item.widthCm || undefined,
+            height: item.heightCm || undefined,
+            depth: item.lengthCm || undefined,
+            quantity: item.quantity || 1
+          })),
+          payment: {
+            status: 'pending',
+            paymentType: option === 'full' ? 'Full' : option === 'deposit' ? 'Deposit' : 'Later',
+            depositAmount: option === 'deposit' ? depositAmount : undefined
+          },
+          version: currentEtag ? parseInt(currentEtag) : 0 // Use stored ETag or default to 0
+        },
+        customer: customer ? {
+          fullName: customer.fullName || '',
+          email: customer.email || '',
+          phoneNumber: customer.phone || '',
+          role: null,
+          billingAddress: customer.billingAddress ? {
+            line1: customer.billingAddress.line1 || '',
+            line2: customer.billingAddress.line2 || '',
+            city: customer.billingAddress.city || '',
+            postCode: customer.billingAddress.postcode || '',
+            country: customer.billingAddress.country || 'United Kingdom',
+            hasElevator: customer.billingAddress.hasElevator || false,
+            floor: customer.billingAddress.floor || 0
+          } : undefined
+        } : undefined,
+        ETag: currentEtag || "0" // Use stored ETag or default to "0"
+      };
+
+      // Save quote to backend using the proper API endpoint
+      const saveResponse = await fetch(`${API_BASE_URL}/api/guest/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(quotePayload)
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error(`Failed to save quote to backend: ${saveResponse.status}`);
+      }
+
+      const saveData = await saveResponse.json();
+      console.log('Quote successfully saved to backend with ETag:', saveData.etag);
+
+      // Now create the payment intent
       const payload: any = {
         van: toBackendVanType(activeQuote.vanType as string),
         driverCount: driverCount ?? 1,
@@ -266,11 +363,23 @@ function PayPageContent() {
       });
       setClientSecret(data.paymentIntent);
     } catch (e) {
-      console.error(e);
+      console.error('Error in createPaymentForOption:', e);
+      // Show error to user
+      if (e instanceof Error) {
+        if (e.message.includes('Failed to save quote to backend')) {
+          setPaymentStatus('Failed to save quote data. Please try again.');
+        } else if (e.message.includes('Failed to create payment intent')) {
+          setPaymentStatus('Failed to create payment. Please try again.');
+        } else {
+          setPaymentStatus('An error occurred. Please try again.');
+        }
+      } else {
+        setPaymentStatus('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsCreatingIntent(false);
     }
-  }, [isHydrated, activeQuote?.vanType, origin, destination, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, depositAmount, updatePayment, mapPaymentTypeToEnum]);
+  }, [isHydrated, activeQuote?.vanType, origin, destination, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, depositAmount, updatePayment, mapPaymentTypeToEnum, activeQuote, activeQuoteType, depositAmount]);
 
   // Ensure we have a bookingId as early as possible (fallback if user bypassed /summary)
   const postedRef = React.useRef(false); // retained for backward compatibility (no longer used to post job)

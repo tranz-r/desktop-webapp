@@ -21,7 +21,7 @@ export function toBackendVanType(vanType: string | undefined): number | null {
 export interface BackendQuote {
   id?: string | null;
   sessionId: string | null;
-  QuoteReference: string | null;
+  quoteReference: string | null; // Updated to match backend
   type: QuoteType;
   
   // Core Quote Data
@@ -49,11 +49,14 @@ export interface BackendQuote {
   
   // Customer data (now included in quote data)
   customer?: BackendCustomer;
+  
+  // Concurrency control using PostgreSQL xmin system column
+  version: number;
 }
 
 export interface BackendSchedule {
-  dateISO?: string;
-  deliveryDateISO?: string;
+  collectionDate?: string; // Updated to match backend
+  deliveryDate?: string; // Updated to match backend
   hours?: number;
   flexibleTime?: boolean;
   timeSlot?: string;
@@ -63,12 +66,14 @@ export interface BackendPricing {
   pricingTier?: string;
   totalCost?: number;
   pickUpDropOffPrice?: number;
+  // Note: Backend uses individual properties instead of nested pricing object
 }
 
 export interface BackendPayment {
   status: string;
   paymentType: string;
   depositAmount?: number;
+  // Note: Backend uses individual properties instead of nested payment object
 }
 
 export interface BackendAddress {
@@ -82,6 +87,7 @@ export interface BackendAddress {
   country?: string;
   hasElevator: boolean;
   floor: number;
+  // Note: Backend uses individual properties instead of nested address objects
 }
 
 export interface BackendInventoryItem {
@@ -93,6 +99,7 @@ export interface BackendInventoryItem {
   height?: number;
   depth?: number;
   quantity?: number;
+  // Note: Backend uses individual properties instead of nested inventory items
 }
 
 // Customer data structure matching backend UserDto
@@ -109,14 +116,19 @@ export interface BackendCustomer {
 export interface QuoteResponse {
   quote?: BackendQuote;
   quotes?: BackendQuote[];
-  etag?: string;
+  etag?: string; // Now represents the Version field from backend
+}
+
+// New response type for select-quote-type endpoint
+export interface QuoteTypeResponse {
+  quote: BackendQuote;
+  etag: string; // Version field from backend
 }
 
 export interface SaveQuoteRequest {
-  quote?: BackendQuote;
+  quote: BackendQuote; // Required in new backend
   customer?: BackendCustomer; // Customer details if provided
-  quoteJson?: string; // Legacy support
-  etag?: string;
+  etag?: string; // Now represents the Version field from backend
 }
 
 // API Client
@@ -220,35 +232,7 @@ export class QuoteApiClient {
     };
   }
 
-  // Save quote (legacy JSON support)
-  async saveQuoteJson(quoteJson: string, etag?: string): Promise<{ etag?: string }> {
-    const request: SaveQuoteRequest = {
-      quoteJson,
-      etag,
-    };
 
-    const response = await fetch(`${this.baseUrl}/api/guest/quote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(request),
-    });
-
-    if (response.status === 412) {
-      throw new Error('ETag mismatch - quote was modified by another request');
-    }
-
-    if (!response.ok) {
-      throw new Error(`Failed to save quote: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      etag: response.headers.get('ETag') || data.etag,
-    };
-  }
 
   // Delete quote
   async deleteQuote(type: QuoteType): Promise<void> {
@@ -276,54 +260,16 @@ export class QuoteApiClient {
     return response.json();
   }
 
-  // Save session (including customer data)
-  async saveSession(sessionData: { customer?: any; quotes?: any; metadata?: any }, etag?: string): Promise<{ etag?: string }> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
 
-    if (etag) {
-      headers['If-Match'] = etag;
-    }
-
-    const response = await fetch(`${this.baseUrl}/api/guest/session`, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify(sessionData),
-    });
-
-    if (response.status === 412) {
-      throw new Error('ETag mismatch - session was modified by another request');
-    }
-
-    if (!response.ok) {
-      throw new Error(`Failed to save session: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      etag: response.headers.get('ETag') || data.etag,
-    };
-  }
 
   // Select quote type and create/get quote
-  async selectQuoteType(type: QuoteType): Promise<{ 
-    quote: { 
-      id: string; 
-      type: string; 
-      quoteReference: string; 
-      sessionId: string; 
-    }; 
-    etag?: string; 
-  }> {
-    const response = await fetch(`${this.baseUrl}/api/guest/select-quote-type`, {
+  async selectQuoteType(type: QuoteType): Promise<QuoteTypeResponse> {
+    const response = await fetch(`${this.baseUrl}/api/guest/select-quote-type?quoteType=${type}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ quoteType: type }),
     });
 
     if (!response.ok) {
@@ -369,6 +315,20 @@ export class QuoteApiClient {
       console.error('Error fetching customer data:', error);
       return null;
     }
+  }
+
+  // Cleanup expired sessions (maintenance endpoint)
+  async cleanupExpired(): Promise<{ expiredSessions: number }> {
+    const response = await fetch(`${this.baseUrl}/api/guest/cleanup-expired`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to cleanup expired sessions: ${response.status}`);
+    }
+
+    return response.json();
   }
 }
 
