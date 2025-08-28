@@ -420,8 +420,10 @@ function ConfirmationContent() {
             {effectiveQuote ? (
               <>
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reference</span>
-                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{payment?.bookingId || 'N/A'}</span>
+                  <span className="text-xs text-muted-foreground">Quote Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">
+                    {effectiveQuoteType ? getQuoteReference(effectiveQuoteType) || 'N/A' : 'N/A'}
+                  </span>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="text-blue-800 text-sm">
@@ -540,8 +542,10 @@ function ConfirmationContent() {
             {effectiveQuote ? (
               <>
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reference</span>
-                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{payment?.bookingId || 'N/A'}</span>
+                  <span className="text-xs text-muted-foreground">Quote Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">
+                    {effectiveQuoteType ? getQuoteReference(effectiveQuoteType) || 'N/A' : 'N/A'}
+                  </span>
                 </div>
                 <Table className="mb-4">
                   <TableHeader>
@@ -798,44 +802,6 @@ function ConfirmationContent() {
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Payment Confirmation</h1>
             
-            {/* Debug Button - Remove in production */}
-            <div className="mb-4 text-center space-x-2">
-              <button
-                onClick={() => {
-                  console.log('[confirmation] Debug button clicked');
-                  console.log('[confirmation] Current state:', { activeQuote, payment, isHydrated });
-                  // Call the debug function from QuoteContext
-                  if (typeof window !== 'undefined' && (window as any).debugIndexedDB) {
-                    (window as any).debugIndexedDB();
-                  }
-                }}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm"
-              >
-                🐛 Debug IndexedDB
-              </button>
-              
-              <button
-                onClick={async () => {
-                  console.log('[confirmation] Cleanup button clicked');
-                  try {
-                    // Call the cleanup function from QuoteContext
-                    if (typeof window !== 'undefined' && (window as any).cleanupIndexedDBData) {
-                      const result = await (window as any).cleanupIndexedDBData();
-                      console.log('[confirmation] Cleanup result:', result);
-                      alert('IndexedDB cleanup completed! Check console for details.');
-                    } else {
-                      alert('Cleanup function not available. Please refresh the page.');
-                    }
-                  } catch (error) {
-                    console.error('[confirmation] Cleanup failed:', error);
-                    alert('Cleanup failed. Check console for details.');
-                  }
-                }}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-              >
-                🧹 Cleanup IndexedDB
-              </button>
-            </div>
             
             {/* Quote Reference Banner - Subtle display */}
             <div className="mb-6 flex justify-center">
