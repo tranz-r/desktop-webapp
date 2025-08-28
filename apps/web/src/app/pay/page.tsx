@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import { useQuote } from '@/contexts/QuoteContext';
-import { computeCost } from '@/lib/cost';
+
 import { API_BASE_URL } from '@/lib/api/config';
 import { useRouter } from 'next/navigation';
 
@@ -155,20 +155,14 @@ function PayPageContent() {
     }
   }, [isHydrated, paymentIntentId, isPaymentCompleted]);
 
-  // Compute cost breakdown for payload CostDto
-  const costBreakdown = React.useMemo(() => {
-    if (!selectedVan) return undefined;
-    return computeCost({
-      van: selectedVan as any,
-      driverCount: driverCount ?? 1,
-      distanceMiles: Math.max(0, distanceMiles ?? 0),
-      originFloor: origin?.floor,
-      originElevator: origin?.hasElevator,
-      destinationFloor: destination?.floor,
-      destinationElevator: destination?.hasElevator,
-      pricingTier: pricingTier as any,
-    });
-  }, [selectedVan, driverCount, distanceMiles, origin, destination, pricingTier]);
+  // Check if payment is already completed
+  React.useEffect(() => {
+    if (payment?.status === 'paid') {
+      setIsPaymentCompleted(true);
+    }
+  }, [payment?.status]);
+
+
 
   const totalCost = React.useMemo(() => {
     if (activeQuote?.pricingTier) {
@@ -648,7 +642,6 @@ function PayPageContent() {
     </div>
   );
 }
-
 export default function PayPage() {
   const router = useRouter();
   return (
@@ -657,3 +650,4 @@ export default function PayPage() {
     </Suspense>
   );
 }
+

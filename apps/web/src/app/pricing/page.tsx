@@ -3,19 +3,14 @@
 export const dynamic = 'force-dynamic';
 
 import React from 'react';
-import { StreamlinedHeader } from '@/components/StreamlinedHeader';
-import Footer from '@/components/Footer';
-import DatePickers from '@/components/pricing/DatePickers';
-import { useQuote } from '@/contexts/QuoteContext';
-import { Button } from '@/components/ui/button';
-import { computeCost } from '@/lib/cost';
-import { canEnterPricing } from '@/lib/guards';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, ChevronDown, Info, Shield, Truck, Users, Clock, Check, FileDown, Star } from 'lucide-react';
-import type { PricingTierId } from '@/types/booking';
+import { StreamlinedHeader } from '@/components/StreamlinedHeader';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useQuote } from '@/contexts/QuoteContext';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
+import { Check, Clock, Star, Truck } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -23,170 +18,78 @@ export default function PricingPage() {
   
   // Get data from active quote
   const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
-  
-  // Get origin and destination from active quote
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
   const origin = activeQuote?.origin;
   const destination = activeQuote?.destination;
   const distanceMiles = activeQuote?.distanceMiles;
-  
-  const selectedVan = activeQuote?.vanType;
-  const driverCount = activeQuote?.driverCount || 2;
   const pricingTier = activeQuote?.pricingTier;
-  const pickUpDropOffPrice = activeQuote?.pickUpDropOffPrice;
   const collectionDate = activeQuote?.collectionDate;
   const deliveryDate = activeQuote?.deliveryDate;
   
-  // Helper functions to update quote data
-  const setPricingTier = (tier: PricingTierId) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { pricingTier: tier });
-    }
-  };
-  
-  const setCollectionDate = (iso: string) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { collectionDate: iso });
-    }
-  };
-  
-  const setDeliveryDate = (iso: string) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { deliveryDate: iso });
-    }
-  };
-  
-  const [expandedTier, setExpandedTier] = React.useState<PricingTierId | null>(null);
+  // State for selected service tier
   const [selectedServiceTier, setSelectedServiceTier] = React.useState<'standard' | 'premium'>('standard');
+  
+  // Get pricing data from the backend API
+  const [pickUpDropOffPrice, setPickUpDropOffPrice] = React.useState<any>(null);
+  const [isLoadingPricing, setIsLoadingPricing] = React.useState(false);
 
+  // Fetch pricing data when component mounts
   React.useEffect(() => {
-    if (!isHydrated) return;
-    // Create a mock object that matches the expected BookingState structure
-    const mockBookingState = {
-      vehicle: { selectedVan: activeQuote?.vanType, driverCount: activeQuote?.driverCount || 2 },
-      pricing: { pricingTier: activeQuote?.pricingTier, totalCost: activeQuote?.totalCost || 0 },
-      originDestination: { origin, destination, distanceMiles },
-      schedule: { dateISO: activeQuote?.collectionDate, deliveryDateISO: activeQuote?.deliveryDate }
+    const fetchPricing = async () => {
+      if (!activeQuote?.items || activeQuote.items.length === 0) {
+        // If no items, redirect to inventory page
+        router.push('/inventory');
+        return;
+      }
+      
+      setIsLoadingPricing(true);
+      try {
+        const response = await fetch(`http://localhost:5247/api/v1/prices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            distanceMiles: distanceMiles || 0,
+            items: activeQuote.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              lengthCm: item.lengthCm || 0,
+              widthCm: item.widthCm || 0,
+              heightCm: item.heightCm || 0,
+              quantity: item.quantity || 1
+            })),
+            stairsFloors: 0, // Default value
+            longCarry: false, // Default value
+            numberOfItemsToAssemble: activeQuote.numberOfItemsToAssemble || 0,
+            numberOfItemsToDismantle: activeQuote.numberOfItemsToDismantle || 0,
+            parkingFee: 0, // Default value
+            ulezFee: 0, // Default value
+            vatRegistered: true // Default value
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPickUpDropOffPrice(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch pricing:', error);
+      } finally {
+        setIsLoadingPricing(false);
+      }
     };
-    if (!canEnterPricing(mockBookingState)) {
-      router.replace('/origin-destination');
+
+    if (activeQuote?.items && activeQuote.items.length > 0) {
+      fetchPricing();
+    } else if (isHydrated && activeQuoteType) {
+      // If hydrated but no items, redirect to inventory
+      router.push('/inventory');
     }
-  }, [router, isHydrated, activeQuote, origin, destination, distanceMiles]);
+  }, [router, isHydrated, activeQuote, origin, destination, distanceMiles, activeQuoteType]);
 
-  // Check if this is a send/receive quote with pricing data
-  const isSendReceiveQuote = (activeQuoteType === 'send' || activeQuoteType === 'receive') && pickUpDropOffPrice;
-
-  const cost = React.useMemo(() => {
-    if (!selectedVan) return null;
-    return computeCost({
-      van: selectedVan,
-      driverCount,
-      distanceMiles: distanceMiles || 0,
-      originFloor: origin?.floor,
-      originElevator: origin?.hasElevator,
-      destinationFloor: destination?.floor,
-      destinationElevator: destination?.hasElevator,
-      pricingTier: pricingTier,
-    });
-  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
-
-  // Four-tier model: Eco, Eco Plus, Standard, Premium (inspired by reference design)
-  const tiers: { id: PricingTierId; name: string; popular?: boolean; timescale: string; features: { name: string; included: boolean; value?: string; info?: string }[] }[] = [
-    {
-      id: 'eco',
-      name: 'Tranzr Eco',
-      timescale: '7-10 working days',
-      features: [
-        { name: 'State of the art service', included: true },
-        { name: 'Two men team', included: true },
-        { name: 'Careful protection', included: true },
-        { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'door to door' },
-        { name: 'Damage cover', included: true, value: '£0' },
-        { name: 'Time slot', included: true, value: 'whole day' },
-        { name: 'Tracking (basic)', included: false },
-        { name: 'Time slot the day before', included: false },
-        { name: 'Real time tracking', included: false },
-        { name: 'SMS updates', included: false },
-        { name: '1-2 stops away notifications', included: false },
-      ],
-    },
-    {
-      id: 'ecoPlus',
-      name: 'Tranzr Eco Plus',
-      timescale: '5-7 working days',
-      features: [
-        { name: 'State of the art service', included: true },
-        { name: 'Two men team', included: true },
-        { name: 'Careful protection', included: true },
-        { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'ground floor' },
-        { name: 'Damage cover', included: true, value: 'up to £100' },
-        { name: 'Time slot', included: true, value: '4 hours' },
-        { name: 'Tracking (basic)', included: true },
-        { name: 'Time slot the day before', included: false },
-        { name: 'Real time tracking', included: false },
-        { name: 'SMS updates', included: false },
-        { name: '1-2 stops away notifications', included: false },
-      ],
-      popular: true,
-    },
-    {
-      id: 'standard',
-      name: 'Tranzr Standard',
-      timescale: '2-4 working days',
-      features: [
-        { name: 'State of the art service', included: true },
-        { name: 'Two men team', included: true },
-        { name: 'Careful protection', included: true },
-        { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'room of choice' },
-        { name: 'Damage cover', included: true, value: 'up to £300' },
-        { name: 'Time slot', included: true, value: '2 hours' },
-        { name: 'Tracking (basic)', included: true },
-        { name: 'Time slot the day before', included: true },
-        { name: 'Real time tracking', included: false },
-        { name: 'SMS updates', included: true },
-        { name: '1-2 stops away notifications', included: false },
-      ],
-    },
-    {
-      id: 'premium',
-      name: 'Tranzr Premium',
-      timescale: '1-2 business days',
-      features: [
-        { name: 'State of the art service', included: true },
-        { name: 'Two men team', included: true },
-        { name: 'Careful protection', included: true },
-        { name: 'In time delivery', included: true },
-        { name: 'Level of service', included: true, value: 'room of choice' },
-        { name: 'Damage cover', included: true, value: 'up to purchase, market, or repair cost' },
-        { name: 'Time slot', included: true, value: '2 hours' },
-        { name: 'Tracking (premium)', included: true },
-        { name: 'Time slot the day before', included: true },
-        { name: 'Real time tracking', included: true },
-        { name: 'SMS updates', included: true },
-        { name: '1-2 stops away notifications', included: true },
-      ],
-    },
-  ];
-
-  const tierCost = (tierId: PricingTierId) => {
-    if (!selectedVan) return null;
-    const c = computeCost({
-      van: selectedVan,
-      driverCount,
-      distanceMiles: distanceMiles || 0,
-      originFloor: origin?.floor,
-      originElevator: origin?.hasElevator,
-      destinationFloor: destination?.floor,
-      destinationElevator: destination?.hasElevator,
-      pricingTier: tierId,
-    });
-    return c.total;
-  };
-
-  // Note: Removed automatic pricing persistence useEffect to prevent infinite API calls
-  // Pricing selection is now handled manually when user clicks continue
+  // Check if this is a send/receive quote
+  const isSendReceiveQuote = (activeQuoteType === 'send' || activeQuoteType === 'receive');
+  const hasPricingData = isSendReceiveQuote && pickUpDropOffPrice;
 
   // Handle continue for send/receive quotes
   const handleSendReceiveContinue = () => {
@@ -199,6 +102,54 @@ export default function PricingPage() {
     }
     router.push('/origin-destination');
   };
+
+  // If this is not a send/receive quote, redirect to appropriate page
+  React.useEffect(() => {
+    if (isHydrated && !isSendReceiveQuote) {
+      if (activeQuoteType === 'removals') {
+        router.replace('/removal-pricing');
+      } else {
+        router.replace('/origin-destination');
+      }
+    }
+  }, [isHydrated, isSendReceiveQuote, activeQuoteType, router]);
+
+  // Show loading while checking quote type
+  if (!isHydrated || !isSendReceiveQuote) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <StreamlinedHeader />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading pricing options...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show loading while fetching pricing data for send/receive quotes
+  if (isSendReceiveQuote && !hasPricingData) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <StreamlinedHeader />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">
+              {activeQuote?.items && activeQuote.items.length > 0 
+                ? "Calculating pricing..." 
+                : "Redirecting to inventory..."
+              }
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -215,21 +166,17 @@ export default function PricingPage() {
           {/* Service Info */}
           <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Shield className="h-4 w-4 text-blue-600" />
               <div className="text-blue-900 font-semibold text-sm">
-                {isSendReceiveQuote ? 'Pickup & Dropoff Service' : 'Professional Moving Service'}
+                Pickup & Dropoff Service
               </div>
             </div>
             <div className="text-blue-800 text-sm">
-              {isSendReceiveQuote 
-                ? 'Choose between our Standard and Premium service tiers. All include professional movers, insurance coverage, and careful handling.'
-                : 'All tiers include professional movers, insurance coverage, and careful handling of your belongings. Choose based on your timeline and service preferences.'
-              }
+              Choose between our Standard and Premium service tiers. All include professional movers, insurance coverage, and careful handling.
             </div>
           </div>
 
           {/* Send/Receive Quote Pricing Display (Modern two-card design) */}
-          {isSendReceiveQuote && pickUpDropOffPrice && (
+          {pickUpDropOffPrice && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Standard Service */}
               <Card
@@ -332,90 +279,9 @@ export default function PricingPage() {
             </div>
           )}
 
-          {/* Standard Pricing Tiers (for removals) */}
-          {!isSendReceiveQuote && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {tiers.map((t) => {
-                const selected = pricingTier === t.id;
-                const price = tierCost(t.id);
-                const expanded = expandedTier === t.id;
-                return (
-                  <Card
-                    key={t.id}
-                    className={`overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 ${selected ? 'border-primary-500 shadow-primary-100' : ''}`}
-                  >
-                    {t.popular && (
-                      <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-2 text-center">
-                        <span className="text-white text-xs font-bold tracking-wide">MOST POPULAR</span>
-                      </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="flex items-start justify-between gap-2 text-base">
-                        <span>{t.name}</span>
-                        {t.popular && <Badge>Popular</Badge>}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-600">Estimated</div>
-                        <div className="text-2xl font-bold text-red-600">{price !== null ? `£${price?.toFixed(2)}` : '—'}</div>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600">Collection</span>
-                          <span className="text-xs font-medium text-gray-600">Delivery</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                          <span className="flex-1 mx-3 h-px bg-gray-300" />
-                          <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">{new Date(collectionDate || '').toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) || '—'}</span>
-                        </div>
-                      </div>
-
-                      <div className="text-sm text-gray-600">{t.timescale}</div>
-                      <Button variant={selected ? 'default' : 'secondary'} className="w-full" onClick={() => setPricingTier(t.id)}>
-                        {selected ? 'Selected' : 'Select'}
-                      </Button>
-
-                      <Button variant="ghost" className="w-full justify-center gap-2" type="button" onClick={() => setExpandedTier(expanded ? null : t.id)}>
-                        <span className="text-sm font-medium">{expanded ? 'Hide details' : 'View details'}</span>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-                      </Button>
-
-                      {expanded && (
-                        <div className="border-t pt-4 space-y-2">
-                          {t.features.map((f) => (
-                            <div key={f.name} className="flex items-center justify-between py-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-700">{f.name}</span>
-                                {f.info && <Info className="h-3.5 w-3.5 text-gray-400" />}
-                              </div>
-                              <div className="text-sm font-medium text-gray-800">
-                                {f.included ? (
-                                  f.value ? (
-                                    <span>{f.value}</span>
-                                  ) : (
-                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                  )
-                                ) : (
-                                  <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-gray-300" />
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-
           <div className="flex justify-end">
-            <Button onClick={isSendReceiveQuote ? handleSendReceiveContinue : () => router.push('/origin-destination')}>
-              {isSendReceiveQuote ? 'Continue to Customer Details' : 'Continue to Customer Details'}
+            <Button onClick={handleSendReceiveContinue}>
+              Continue to Customer Details
             </Button>
           </div>
         </div>

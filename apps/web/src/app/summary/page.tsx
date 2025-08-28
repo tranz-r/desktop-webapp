@@ -11,7 +11,6 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useQuote } from '@/contexts/QuoteContext';
-import { computeCost } from '@/lib/cost';
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -29,6 +28,7 @@ export default function SummaryPage() {
   const destination = activeQuote?.destination;
   const distanceMiles = activeQuote?.distanceMiles;
   const pricingTier = activeQuote?.pricingTier;
+  const totalCost = activeQuote?.totalCost;
   const collectionDate = activeQuote?.collectionDate;
   const deliveryDate = activeQuote?.deliveryDate;
   
@@ -45,20 +45,6 @@ export default function SummaryPage() {
     }
   };
   const [loading, setLoading] = React.useState(false);
-
-  const cost = React.useMemo(() => {
-    if (!selectedVan) return null;
-    return computeCost({
-      van: selectedVan,
-      driverCount,
-      distanceMiles: distanceMiles || 0,
-      originFloor: origin?.floor,
-      originElevator: origin?.hasElevator,
-      destinationFloor: destination?.floor,
-      destinationElevator: destination?.hasElevator,
-      pricingTier,
-    });
-  }, [selectedVan, driverCount, origin, destination, pricingTier, distanceMiles]);
 
   // Note: Removed automatic cost persistence useEffect to prevent infinite loops
   // Cost is now updated only when explicitly needed
@@ -98,45 +84,47 @@ export default function SummaryPage() {
       const targetUrl = process.env.NEXT_PUBLIC_PAYMENT_INIT_URL;
       console.log('Initializing payment with URL:', targetUrl);
       if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_PAYMENT_INIT_URL for payment initialization');
-
-      // Ensure bookingId early
-      let quoteId = activeQuote?.payment?.bookingId;
-      if (!quoteId) {
-        quoteId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `q-${Date.now()}`;
-        updatePayment({ bookingId: quoteId });
-      }
-
-      // Note: Job persistence is now handled through QuoteContext
-      // No need to call external jobs endpoint
-
-      // Debug: Log what's in the customer object
-      console.log('Customer data from QuoteContext:', customer);
-      console.log('Active quote data:', activeQuote);
       
+      // Prepare the payload for the backend
       let payload = {
-        van: selectedVan,
+        van: toBackendVanType(selectedVan),
         driverCount,
         distanceMiles: distanceMiles || 0,
-        origin,
-        destination,
-        pricingTier,
-        collectionDate,
-        deliveryDate,
-        quoteId: activeQuote?.payment?.bookingId, // allow backend to embed metadata if supported
-        customer: {
-          fullName: customer?.fullName,
-          email: customer?.email,
-          phone: customer?.phone,
-          billingAddress: customer?.billingAddress,
+        origin: {
+          line1: origin?.line1 || '',
+          postcode: origin?.postcode || '',
+          floor: origin?.floor || 0,
+          hasElevator: origin?.hasElevator || false,
         },
-        cost: cost
+        destination: {
+          line1: destination?.line1 || '',
+          postcode: destination?.postcode || '',
+          floor: destination?.floor || 0,
+          hasElevator: destination?.hasElevator || false,
+        },
+        pricingTier: toBackendPricingTier(pricingTier),
+        collectionDate: collectionDate || '',
+        customer: {
+          fullName: customer?.fullName || '',
+          email: customer?.email || '',
+          phone: customer?.phone || '',
+          billingAddress: {
+            line1: customer?.billingAddress?.line1 || '',
+            postcode: customer?.billingAddress?.postcode || '',
+          },
+        },
+        cost: {
+          total: totalCost || 0,
+        },
       };
 
-      console.log('Payload for payment init:', payload);
-        
+      console.log('Sending payload to backend:', payload);
+
       const res = await fetch(targetUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
       });
 
@@ -219,11 +207,11 @@ export default function SummaryPage() {
 
               <div className="border-t mt-6 pt-4 flex items-center justify-between">
                 <div className="text-lg font-bold">Total</div>
-                <div className="text-2xl font-bold text-primary-700">{cost ? `£${cost.total.toFixed(2)}` : '—'}</div>
+                <div className="text-2xl font-bold text-primary-700">{totalCost ? `£${totalCost.toFixed(2)}` : '—'}</div>
               </div>
 
               <div className="mt-6 flex justify-end">
-                <Button size="lg" className="px-8" onClick={handleCheckout} disabled={loading || !cost}>
+                <Button size="lg" className="px-8" onClick={handleCheckout} disabled={loading || !totalCost}>
                   {loading ? 'Processing…' : 'Checkout'}
                 </Button>
               </div>
