@@ -1,281 +1,127 @@
-# Missing Pages Implementation Rules: /removals + /removal-pricing
+# Removal Pricing Implementation Rules
 
-## OVERVIEW
-This rule defines the implementation approach for **TWO MISSING PAGES** in the quote flow:
-1. **`/removals`** - Clone of `/pickup-dropoff` but WITHOUT crew size selection
-2. **`/removal-pricing`** - NEW page for crew size selection and removal-specific pricing
+## Overview
+Implement frontend integration with the backend `/api/v1/prices/removal-prices` endpoint to replace the current complex pricing calculation with static pricing data.
 
-## FLOW ANALYSIS FROM ATTACHED IMAGE
+## Backend Endpoint Details
+- **URL**: `GET /api/v1/prices/removal-prices`
+- **Response Type**: `RemovalPricingDto`
+- **Caching**: ETag-based with 5-minute cache control
+- **Purpose**: Provides static removal pricing data based on crew size and service level
 
-### Current Missing Flow
-```
-/quote-option → "Removals" → /inventory → /removals → /removal-pricing → /origin-destination
-     ↑              ↑            ↑           ↑            ↑                ↑
-   Start      User selects   Add items   Van/Date    Crew Size      Continue flow
-              Removals      (existing)   (MISSING)   (MISSING)
-```
+## Pricing Structure Rules
 
-### Existing Flow (Send/Receive)
-```
-/quote-option → "Send|Receive" → /inventory → /pickup-dropoff → /pricing → /origin-destination
-     ↑              ↑              ↑            ↑               ↑           ↑
-   Start      User selects      Add items   Van/Date      Pricing      Continue flow
-              Send/Receive     (existing)   (existing)    (existing)
-```
+### Crew Size & Service Level Pricing
+| Crew Size | Service Level | Base Block | Base Price | Hourly Rate After |
+|-----------|---------------|-------------|------------|-------------------|
+| **1 Mover** | Standard | 3 hours | £250 | £65/hour |
+| **1 Mover** | Premium | 4 hours | £350 | £75/hour |
+| **2 Movers** | Standard | 3 hours | £300 | £75/hour |
+| **2 Movers** | Premium | 4 hours | £450 | £85/hour |
+| **3 Movers** | Standard | 3 hours | £350 | £85/hour |
+| **3 Movers** | Premium | 4 hours | £500 | £95/hour |
 
-## PAGE 1: /removals (MISSING - NEEDS CREATION)
+## Data Structure Requirements
 
-### Purpose
-- **Clone of `/pickup-dropoff`** but WITHOUT the "Choose Crew Size" section
-- Handles van selection, date/time, and basic configuration
-- **Crew size is NOT selected here** - that happens on `/removal-pricing`
-
-### Key Differences from /pickup-dropoff
+### Backend Response Structure
 ```typescript
-// REMOVE these sections from /pickup-dropoff:
-- DriverSelector component (crew size selection)
-- RecommendationBanner for crew size
-- Any crew size related logic
-- Crew size state variables
-- Crew size UI components
-
-// KEEP these sections:
-- VanCard component (van selection)
-- Date/time selection
-- Basic quote configuration
-- Navigation to next step
-- All other existing functionality
-```
-
-### Implementation Rules
-```typescript
-// File: /app/removals/page.tsx
-// Base: Clone from /pickup-dropoff/page.tsx
-
-// Required modifications:
-1. Remove DriverSelector import and usage
-2. Remove crew size related state variables (driverCount, etc.)
-3. Remove crew size related UI components
-4. Remove RecommendationBanner for crew size
-5. Update navigation to go to /removal-pricing (not /inventory)
-6. Update page title and descriptions to reflect "Removals" service
-7. Keep ALL other functionality identical to /pickup-dropoff
-```
-
-### What Gets Cloned vs. What Gets Modified
-```typescript
-// CLONE (keep exactly the same):
-- VanCard component and van selection logic
-- Date/time selection components
-- Basic quote configuration
-- Form validation
-- Error handling
-- UI styling and layout
-- All imports and dependencies (except crew size related)
-
-// MODIFY (remove or change):
-- Remove: DriverSelector component
-- Remove: crew size selection logic
-- Remove: crew size state variables
-- Remove: crew size related UI elements
-- Change: Navigation destination (to /removal-pricing)
-- Change: Page titles and descriptions
-- Change: Service type references (from "Pickup & Dropoff" to "Removals")
-```
-
-### Data Flow
-```typescript
-// Entry validation (same as /pickup-dropoff)
-if (activeQuoteType !== 'removals') {
-  router.replace('/quote-option');
-  return;
+interface RemovalPricingDto {
+  version: string;           // SHA256 hash for cache validation
+  currency: string;          // "GBP"
+  generatedAt: DateTimeOffset;
+  rates: RatesDto;
 }
 
-// Exit navigation (DIFFERENT from /pickup-dropoff)
-const handleContinue = () => {
-  // Save van selection and date/time (same as /pickup-dropoff)
-  updateQuote(activeQuoteType, {
-    vanType: selectedVan,
-    collectionDate: movingDate,
-    timeSlot: timeSlot
-    // Note: driverCount is NOT set here - that's for /removal-pricing
-  });
+interface RatesDto {
+  one: MoversDto;           // 1 mover pricing (Driver Only)
+  two: MoversDto;           // 2 movers pricing (Driver + Mate)
+  three: MoversDto;         // 3 movers pricing (Driver + 2 Mates)
+  standardServiceTexts: ServiceTextDto[];  // Standard tier features
+  premiumServiceTexts: ServiceTextDto[];   // Premium tier features
+}
+
+interface MoversDto {
+  standard: RateLeafDto;     // Standard service level
+  premium: RateLeafDto;      // Premium service level
+}
+
+interface RateLeafDto {
+  baseBlockHours: number;    // 3 or 4 hours depending on service level
+  baseBlockPrice: number;    // Base price for the block
+  hourlyAfter: number;       // Hourly rate after block hours
+}
+```
+
+## Implementation Requirements
+
+### 1. API Client Creation
+- Create `lib/api/removal-pricing.ts`
+- Implement `fetchRemovalPricing()` function
+- Handle ETag caching for efficiency
+
+### 2. Frontend Data Flow Updates
+- Replace current `POST /api/v1/prices` call with `GET /api/v1/prices/removal-prices`
+- Transform backend data structure to match frontend expectations
+- Implement real-time pricing calculation based on crew size changes
+
+### 3. Pricing Calculation Logic
+```typescript
+function calculateBasePrice(
+  crewSize: number, 
+  serviceLevel: 'standard' | 'premium',
+  hours: number,
+  pricingData: RemovalPricingDto
+): number {
+  // Get rates for selected crew size
+  const crewRates = getCrewRates(crewSize, pricingData);
+  const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
   
-  // Navigate to removal-pricing (crew size selection) - DIFFERENT!
-  router.push('/removal-pricing');
-};
+  // Calculate base price + additional hours
+  const basePrice = rateLeaf.baseBlockPrice;
+  if (hours <= rateLeaf.baseBlockHours) return basePrice;
+  
+  const additionalHours = hours - rateLeaf.baseBlockHours;
+  const additionalCost = additionalHours * rateLeaf.hourlyAfter;
+  
+  return basePrice + additionalCost;
+}
 ```
 
-## PAGE 2: /removal-pricing (MISSING - NEEDS CREATION)
+### 4. Dynamic Service Features
+- Use `standardServiceTexts` and `premiumServiceTexts` arrays from backend
+- Replace hardcoded service features with dynamic data
+- Display service features based on selected service level
 
-### Purpose
-- **NEW page** specifically for crew size selection
-- Crew size selection directly impacts pricing for removal services
-- Handles dismantle/assembly service configuration
-- **Primary focus**: Crew size (1, 2, or 3 movers) + pricing display
+### 5. Crew Size Impact Display
+- Show pricing for all crew sizes (1, 2, 3 movers)
+- Update pricing in real-time when crew size changes
+- Display crew size recommendations based on inventory volume
 
-### Core Functionality
-```typescript
-// Primary Features:
-1. Crew Size Selection (1, 2, or 3 movers)
-2. Service Configuration (dismantle/assembly quantities)
-3. Real-time Pricing Display
-4. Navigation to /origin-destination
+## File Modifications Required
 
-// Secondary Features:
-- Service tier selection (if applicable)
-- Additional removal-specific options
-```
+### New Files
+- `lib/api/removal-pricing.ts` - API client for removal pricing
 
-### UI Components
-```typescript
-// Required Components:
-1. CrewSizeSelector - Radio buttons or cards for 1/2/3 movers
-2. ServiceConfiguration - Inputs for dismantle/assembly quantities
-3. PricingDisplay - Real-time pricing based on selections
-4. NavigationControls - Back to /removals, Continue to /origin-destination
-```
+### Modified Files
+- `app/removal-pricing/page.tsx` - Update API calls and data handling
+- `lib/api/quote.ts` - Add removal pricing types (if needed)
 
-## IMPLEMENTATION ORDER (UPDATED)
+## Benefits
+✅ **Performance**: Static pricing data loads once, no complex calculations  
+✅ **Consistency**: Backend and frontend use same pricing logic  
+✅ **Maintainability**: Service features managed in database, not hardcoded  
+✅ **Scalability**: Easy to add new crew sizes or service levels  
+✅ **User Experience**: Real-time pricing updates as selections change  
+✅ **Accuracy**: Pricing matches exact business rules  
 
-### Phase 1: Foundation - Create Both Missing Pages
-1. **Create `/removals` page** (clone from `/pickup-dropoff`)
-   - Remove crew size selection
-   - Update navigation to `/removal-pricing`
-   - Test basic functionality
+## Testing Requirements
+- Verify API endpoint integration
+- Test pricing calculations for all crew sizes and service levels
+- Validate real-time pricing updates
+- Check ETag caching functionality
+- Ensure service features display correctly
 
-2. **Create `/removal-pricing` page** (new page)
-   - Basic structure and routing
-   - Crew size selection component
-   - Basic navigation controls
-
-3. **Test navigation flow** between pages
-   - `/removals` → `/removal-pricing` → `/origin-destination`
-   - Verify data persistence
-
-### Phase 2: Integration & Functionality
-4. **Connect both pages to QuoteContext** - **COMPLETED**
-   - Data loading and saving
-   - State management
-   - Validation logic
-
-5. **Implement crew size pricing logic** - **COMPLETED**
-   - Real-time pricing calculation
-   - Service fee integration
-   - Pricing display updates
-
-6. **Add service configuration** - **COMPLETED**
-   - Dismantle/assembly inputs
-   - Quantity validation
-   - Integration with pricing
-
-### Phase 3: Polish & Testing
-7. **UI/UX improvements** - **COMPLETED**
-   - Consistent styling with existing pages
-   - Responsive design
-   - Accessibility features
-
-8. **Integration testing** - **COMPLETED**
-   - Complete flow testing
-   - Data persistence verification
-   - Error handling scenarios
-
-9. **Final validation** - **COMPLETED**
-   - No breaking changes to existing flow
-   - Performance optimization
-   - Code quality review
-
-## KEY IMPLEMENTATION INSIGHTS
-
-### Why Two Separate Pages?
-1. **Separation of Concerns**: Van/date selection vs. crew size selection
-2. **User Experience**: Clear progression through configuration steps
-3. **Pricing Focus**: Crew size directly impacts removal pricing
-4. **Maintainability**: Each page has a single, clear purpose
-
-### Data Flow Between Pages
-```typescript
-// /removals saves:
-- vanType
-- collectionDate
-- timeSlot
-- basic configuration
-
-// /removal-pricing saves:
-- driverCount (crew size)
-- numberOfItemsToDismantle
-- numberOfItemsToAssemble
-- pricing calculations
-```
-
-### Integration Points
-```typescript
-// Both pages use:
-- useQuote() hook for data management
-- existing UI components where possible
-- consistent navigation patterns
-- same error handling approaches
-```
-
-## SUCCESS CRITERIA (UPDATED)
-
-### Functional Requirements
-- [x] `/removals` page loads correctly for removals quotes
-- [x] `/removals` page saves van/date configuration
-- [x] `/removal-pricing` page loads with crew size selection
-- [x] Crew size selection updates pricing in real-time
-- [x] Service configuration saves to quote context
-- [x] Navigation flow works: `/removals` → `/removal-pricing` → `/origin-destination`
-- [x] Data persists through all navigation steps
-
-### Quality Requirements
-- [x] Both pages follow existing design patterns
-- [x] No console errors or warnings
-- [x] Responsive design works on all screen sizes
-- [x] Accessibility requirements met
-- [x] Performance is acceptable (< 100ms for interactions)
-- [x] Code follows project patterns and conventions
-
-### Integration Requirements
-- [x] Works with existing quote flow
-- [x] No breaking changes to other pages
-- [x] Proper error handling and user feedback
-- [x] Consistent with existing UI patterns
-- [x] Maintains existing Send/Receive flow functionality
-
-## ROLLBACK STRATEGY
-
-### Git Management
-- **Branch**: Create feature branch `feature/removals-flow`
-- **Commits**: Small, focused commits for each page and feature
-- **Testing**: Test each commit before proceeding
-- **Rollback**: Can revert to any working commit
-
-### Database Considerations
-- **No Schema Changes**: Uses existing quote structure
-- **Data Migration**: Not required
-- **Backward Compatibility**: Maintains existing quote data
-
-## NOTES
-
-### Critical Implementation Points
-- **Two pages, not one**: Don't try to combine functionality
-- **Clear separation**: Van/date vs. crew size selection
-- **Navigation flow**: Must work with existing stepper navigation
-- **Data persistence**: Quote context must work across both pages
-
-### Testing Strategy
-- **Page by page**: Test each page independently first
-- **Flow testing**: Then test complete navigation flow
-- **Integration testing**: Finally test with existing system
-- **Edge cases**: Test error scenarios and validation
-
-### Future Considerations
-- **Pricing logic**: May need removal-specific pricing API
-- **Service options**: Could expand to include additional removal services
-- **Validation rules**: May need more sophisticated validation
-- **Analytics**: Track crew size and service selection patterns
-description:
-globs:
-alwaysApply: true
----
+## Dependencies
+- Backend `/api/v1/prices/removal-prices` endpoint must be functional
+- ETag caching must work properly
+- Service features must be populated in backend database

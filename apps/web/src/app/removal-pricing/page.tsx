@@ -14,8 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useQuote } from '@/contexts/QuoteContext';
 import { hasInventory } from '@/lib/guards';
-import { Users, Package, Wrench, Calculator, Info } from 'lucide-react';
+import { Users, Package, Wrench, Calculator, Info, Clock, PoundSterling } from 'lucide-react';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
+import { 
+  fetchRemovalPricing, 
+  calculateTotalPrice, 
+  getServiceFeatures,
+  type RemovalPricingDto 
+} from '@/lib/api/removal-pricing';
 
 export default function RemovalPricingPage() {
   const router = useRouter();
@@ -34,8 +40,11 @@ export default function RemovalPricingPage() {
   
   // Pricing state
   const [isCalculating, setIsCalculating] = React.useState(false);
-  const [pricingData, setPricingData] = React.useState<any>(null);
+  const [pricingData, setPricingData] = React.useState<RemovalPricingDto | null>(null);
   const [pricingError, setPricingError] = React.useState<string | null>(null);
+  const [etag, setEtag] = React.useState<string>('');
+  const [selectedServiceLevel, setSelectedServiceLevel] = React.useState<'standard' | 'premium'>('standard');
+  const [estimatedHours, setEstimatedHours] = React.useState<number>(3);
 
   // Calculate total volume and recommend crew size
   const totalVolume = React.useMemo(() => {
@@ -79,67 +88,79 @@ export default function RemovalPricingPage() {
     }
   }, [isHydrated, activeQuote, recommendedCrewSize]);
 
-  // Calculate pricing based on selections
-  const calculatePricing = React.useCallback(async () => {
+  // Fetch removal pricing data
+  const fetchPricingData = React.useCallback(async () => {
     if (!activeQuote || !items.length) return;
     
     setIsCalculating(true);
     setPricingError(null);
     
     try {
-      const requestData = {
-        distanceMiles: activeQuote.distanceMiles || 0,
-        items: items.map(item => ({
-          id: item.id || Math.random(),
-          name: item.name,
-          lengthCm: item.lengthCm || 0,
-          widthCm: item.widthCm || 0,
-          heightCm: item.heightCm || 0,
-          quantity: item.quantity || 1
-        })),
-        stairsFloors: 0,
-        longCarry: false,
-        numberOfItemsToAssemble: assemblyCount,
-        numberOfItemsToDismantle: dismantleCount,
-        parkingFee: 0,
-        ulezFee: 0,
-        vatRegistered: true,
-        requestedMovers: selectedCrewSize
-      };
-
-      console.log('📡 Calculating pricing with:', requestData);
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5247'}/api/v1/prices`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      if (response.ok) {
-        const pricing = await response.json();
-        setPricingData(pricing);
-        console.log('✅ Pricing calculated successfully:', pricing);
-      } else {
-        const errorText = await response.text();
-        console.error('❌ Pricing API error:', response.status, errorText);
-        setPricingError(`Failed to calculate pricing: ${response.status}`);
-      }
+      console.log('📡 Fetching removal pricing data...');
+      
+      const { data, etag: responseEtag } = await fetchRemovalPricing(etag);
+      setPricingData(data);
+      setEtag(responseEtag);
+      
+      console.log('✅ Removal pricing data fetched successfully:', data);
     } catch (error) {
-      console.error('❌ Error calculating pricing:', error);
-      setPricingError('Network error while calculating pricing');
+      if (error instanceof Error && error.message === 'NotModified') {
+        console.log('✅ Pricing data unchanged, using cached version');
+        return;
+      }
+      
+      console.error('❌ Error fetching removal pricing:', error);
+      setPricingError('Failed to fetch pricing data. Please try again.');
     } finally {
       setIsCalculating(false);
     }
-  }, [activeQuote, items, selectedCrewSize, dismantleCount, assemblyCount]);
+  }, [activeQuote, items, etag]);
 
-  // Recalculate pricing when selections change
+  // Calculate pricing based on current selections
+  const calculateCurrentPricing = React.useCallback(() => {
+    if (!pricingData || !selectedCrewSize) return null;
+    
+    try {
+      const standardPricing = calculateTotalPrice(
+        selectedCrewSize,
+        'standard',
+        estimatedHours,
+        dismantleCount,
+        assemblyCount,
+        pricingData
+      );
+      
+      const premiumPricing = calculateTotalPrice(
+        selectedCrewSize,
+        'premium',
+        estimatedHours,
+        dismantleCount,
+        assemblyCount,
+        pricingData
+      );
+      
+      return {
+        standard: standardPricing,
+        premium: premiumPricing
+      };
+    } catch (error) {
+      console.error('❌ Error calculating current pricing:', error);
+      return null;
+    }
+  }, [pricingData, selectedCrewSize, estimatedHours, dismantleCount, assemblyCount]);
+
+  // Fetch pricing data when component mounts or when needed
   React.useEffect(() => {
     if (isHydrated && activeQuote && items.length) {
-      calculatePricing();
+      fetchPricingData();
     }
-  }, [isHydrated, activeQuote, items.length, selectedCrewSize, dismantleCount, assemblyCount, calculatePricing]);
+  }, [isHydrated, activeQuote, items.length, fetchPricingData]);
+
+  // Recalculate pricing when selections change (no API call needed)
+  React.useEffect(() => {
+    // This will trigger a re-render with updated pricing
+    // The calculateCurrentPricing function will be called automatically
+  }, [selectedCrewSize, selectedServiceLevel, estimatedHours, dismantleCount, assemblyCount]);
 
   // Handle crew size selection
   const handleCrewSizeChange = (size: number) => {
@@ -174,6 +195,19 @@ export default function RemovalPricingPage() {
   // Handle continue to next step
   const handleContinue = () => {
     if (!selectedCrewSize) return;
+    
+    // Save the current selections to the quote context
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, {
+        driverCount: selectedCrewSize,
+        numberOfItemsToDismantle: dismantleCount,
+        numberOfItemsToAssemble: assemblyCount,
+        // Add service level and estimated hours if you want to track them
+        // pricingTier: selectedServiceLevel,
+        // estimatedHours: estimatedHours
+      });
+    }
+    
     router.push('/origin-destination');
   };
 
@@ -474,28 +508,110 @@ export default function RemovalPricingPage() {
                   Pricing Options
                 </h2>
                 
-                {/* Pricing Summary */}
+                {/* Service Level Selection */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
                   <div className="text-center mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">Pricing Summary</h3>
-                    <p className="text-sm text-gray-600">Based on {selectedCrewSize} {selectedCrewSize === 1 ? 'mover' : 'movers'} and your selections</p>
+                    <h3 className="text-lg font-semibold text-gray-900">Service Level</h3>
+                    <p className="text-sm text-gray-600">Choose your service level and estimated hours</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">£{pricingData.standard?.customerTotal || 0}</div>
-                      <div className="text-sm text-gray-600">Standard</div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="service-level" className="text-sm font-medium">Service Level</Label>
+                      <RadioGroup
+                        value={selectedServiceLevel}
+                        onValueChange={(value: 'standard' | 'premium') => setSelectedServiceLevel(value)}
+                        className="flex space-x-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="standard" id="standard" />
+                          <Label htmlFor="standard">Standard</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="premium" id="premium" />
+                          <Label htmlFor="premium">Premium</Label>
+                        </div>
+                      </RadioGroup>
                     </div>
-                    <div className="text-3xl font-bold text-purple-600">£{pricingData.premium?.customerTotal || 0}</div>
-                      <div className="text-sm text-gray-600">Premium</div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="estimated-hours" className="text-sm font-medium">Estimated Hours</Label>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          id="estimated-hours"
+                          type="number"
+                          value={estimatedHours}
+                          onChange={(e) => setEstimatedHours(Math.max(1, parseInt(e.target.value) || 3))}
+                          min="1"
+                          max="12"
+                          className="w-20"
+                        />
+                        <span className="text-sm text-gray-600">hours</span>
+                      </div>
+                    </div>
                   </div>
-                  {pricingData.standard?.customerTotal && pricingData.premium?.customerTotal && (
-                    <div className="text-center mt-2">
-                      <span className="text-sm text-gray-600">
-                        Premium adds £{(pricingData.premium.customerTotal - pricingData.standard.customerTotal).toFixed(2)} for enhanced service
-                      </span>
-                    </div>
-                  )}
+                  
+                  {/* Pricing Summary */}
+                  {(() => {
+                    const currentPricing = calculateCurrentPricing();
+                    if (!currentPricing) return null;
+                    
+                    return (
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Pricing Summary</h3>
+                        <p className="text-sm text-gray-600 mb-3">Based on {selectedCrewSize} {selectedCrewSize === 1 ? 'mover' : 'movers'} and {estimatedHours} hours</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold text-blue-600">£{currentPricing.standard.totalPrice.toFixed(2)}</div>
+                            <div className="text-sm text-gray-600">Standard</div>
+                          </div>
+                          <div>
+                            <div className="text-3xl font-bold text-purple-600">£{currentPricing.premium.totalPrice.toFixed(2)}</div>
+                            <div className="text-sm text-gray-600">Premium</div>
+                          </div>
+                        </div>
+                        <div className="text-center mt-2">
+                          <span className="text-sm text-gray-600">
+                            Premium adds £{(currentPricing.premium.totalPrice - currentPricing.standard.totalPrice).toFixed(2)} for enhanced service
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
+                
+                {/* Current Pricing Rates Display */}
+                {pricingData && (
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
+                    <div className="text-center mb-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Current Pricing Rates</h3>
+                      <p className="text-sm text-gray-600">Based on backend data as of {new Date(pricingData.generatedAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                      <div className="p-3 bg-white rounded-md border border-green-200">
+                        <h4 className="font-semibold text-green-900 mb-2">1 Mover</h4>
+                        <div className="text-sm space-y-1">
+                          <div>Standard: £{pricingData.rates.one.standard.baseBlockPrice} for {pricingData.rates.one.standard.baseBlockHours}h</div>
+                          <div>Premium: £{pricingData.rates.one.premium.baseBlockPrice} for {pricingData.rates.one.premium.baseBlockHours}h</div>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white rounded-md border border-green-200">
+                        <h4 className="font-semibold text-green-900 mb-2">2 Movers</h4>
+                        <div className="text-sm space-y-1">
+                          <div>Standard: £{pricingData.rates.two.standard.baseBlockPrice} for {pricingData.rates.two.standard.baseBlockHours}h</div>
+                          <div>Premium: £{pricingData.rates.two.premium.baseBlockPrice} for {pricingData.rates.two.premium.baseBlockHours}h</div>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white rounded-md border border-green-200">
+                        <h4 className="font-semibold text-green-900 mb-2">3 Movers</h4>
+                        <div className="text-sm space-y-1">
+                          <div>Standard: £{pricingData.rates.three.standard.baseBlockPrice} for {pricingData.rates.three.standard.baseBlockHours}h</div>
+                          <div>Premium: £{pricingData.rates.three.premium.baseBlockPrice} for {pricingData.rates.three.premium.baseBlockHours}h</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Standard Tier */}
@@ -531,49 +647,40 @@ export default function RemovalPricingPage() {
                       </ul>
                       
                       {/* Pricing Breakdown */}
-                      <div className="space-y-2 mb-4 p-3 bg-gray-50 rounded-md">
-                        <div className="flex justify-between text-sm">
-                          <span>Base Price:</span>
-                          <span>£{pricingData.standard?.base || 0}</span>
-                        </div>
-                        {pricingData.standard?.volumeSurcharge > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Volume Surcharge:</span>
-                            <span>£{pricingData.standard?.volumeSurcharge || 0}</span>
-                          </div>
-                        )}
-                        {pricingData.standard?.crewFee > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Crew Fee ({selectedCrewSize} movers):</span>
-                            <span>£{pricingData.standard?.crewFee || 0}</span>
-                          </div>
-                        )}
-                        {dismantleCount > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Dismantle ({dismantleCount} items):</span>
-                            <span>£{pricingData.standard?.dismantleFee || 0}</span>
-                          </div>
-                        )}
-                        {assemblyCount > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Assembly ({assemblyCount} items):</span>
-                            <span>£{pricingData.standard?.assemblyFee || 0}</span>
-                          </div>
-                        )}
-                        {additionalServiceCosts > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Additional Services:</span>
-                            <span>£{additionalServiceCosts.toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center pt-4 border-t">
-                        <div className="text-2xl font-bold text-primary">
-                          £{pricingData.standard?.customerTotal || 'Calculating...'}
-                        </div>
-                        <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
-                      </div>
+                      {(() => {
+                        const currentPricing = calculateCurrentPricing();
+                        if (!currentPricing) return null;
+                        
+                        return (
+                          <>
+                            <div className="space-y-2 mb-4 p-3 bg-gray-50 rounded-md">
+                              <div className="flex justify-between text-sm">
+                                <span>Base Price:</span>
+                                <span>£{currentPricing.standard.basePrice.toFixed(2)}</span>
+                              </div>
+                              {dismantleCount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span>Dismantle ({dismantleCount} items):</span>
+                                  <span>£{currentPricing.standard.dismantleCost.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {assemblyCount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span>Assembly ({assemblyCount} items):</span>
+                                  <span>£{currentPricing.standard.assemblyCost.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="text-center pt-4 border-t">
+                              <div className="text-2xl font-bold text-primary">
+                                £{currentPricing.standard.totalPrice.toFixed(2)}
+                              </div>
+                              <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
 
@@ -618,58 +725,90 @@ export default function RemovalPricingPage() {
                       </ul>
                       
                       {/* Pricing Breakdown */}
-                      <div className="space-y-2 mb-4 p-3 bg-purple-50 rounded-md">
-                        <div className="flex justify-between text-sm">
-                          <span>Base Price:</span>
-                          <span>£{pricingData.premium?.base || 0}</span>
-                        </div>
-                        {pricingData.premium?.volumeSurcharge > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Volume Surcharge:</span>
-                            <span>£{pricingData.premium?.volumeSurcharge || 0}</span>
-                          </div>
-                        )}
-                        {pricingData.premium?.tierUplift > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Premium Enhancement:</span>
-                            <span>£{pricingData.premium?.tierUplift || 0}</span>
-                          </div>
-                        )}
-                        {pricingData.premium?.crewFee > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Crew Fee ({selectedCrewSize} movers):</span>
-                            <span>£{pricingData.premium?.crewFee || 0}</span>
-                          </div>
-                        )}
-                        {dismantleCount > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Dismantle ({dismantleCount} items):</span>
-                            <span>£{pricingData.premium?.dismantleFee || 0}</span>
-                          </div>
-                        )}
-                        {assemblyCount > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Assembly ({assemblyCount} items):</span>
-                            <span>£{pricingData.premium?.assemblyFee || 0}</span>
-                          </div>
-                        )}
-                        {additionalServiceCosts > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Additional Services:</span>
-                            <span>£{additionalServiceCosts.toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center pt-4 border-t">
-                        <div className="text-2xl font-bold text-purple-600">
-                          £{pricingData.premium?.customerTotal || 'Calculating...'}
-                        </div>
-                        <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
-                      </div>
+                      {(() => {
+                        const currentPricing = calculateCurrentPricing();
+                        if (!currentPricing) return null;
+                        
+                        return (
+                          <>
+                            <div className="space-y-2 mb-4 p-3 bg-purple-50 rounded-md">
+                              <div className="flex justify-between text-sm">
+                                <span>Base Price:</span>
+                                <span>£{currentPricing.premium.basePrice.toFixed(2)}</span>
+                              </div>
+                              {dismantleCount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span>Dismantle ({dismantleCount} items):</span>
+                                  <span>£{currentPricing.premium.dismantleCost.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {assemblyCount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span>Assembly ({assemblyCount} items):</span>
+                                  <span>£{currentPricing.premium.assemblyCost.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="text-center pt-4 border-t">
+                              <div className="text-2xl font-bold text-purple-600">
+                                £{currentPricing.premium.totalPrice.toFixed(2)}
+                              </div>
+                              <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Dynamic Service Features */}
+                {pricingData && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2 text-blue-900">
+                        <Info className="h-5 w-5" />
+                        Service Features
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Standard Service Features */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                            <Badge variant="secondary">Standard</Badge>
+                            Service Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {getServiceFeatures('standard', pricingData).map((feature, index) => (
+                              <li key={index} className="flex items-center gap-2 text-sm text-blue-800">
+                                <span className="text-green-500">✓</span>
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {/* Premium Service Features */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-purple-900 flex items-center gap-2">
+                            <Badge variant="default" className="bg-purple-600">Premium</Badge>
+                            Service Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {getServiceFeatures('premium', pricingData).map((feature, index) => (
+                              <li key={index} className="flex items-center gap-2 text-sm text-purple-800">
+                                <span className="text-green-500">✓</span>
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Crew Size Impact */}
                 <Card className="border-blue-200 bg-blue-50">
@@ -688,13 +827,13 @@ export default function RemovalPricingPage() {
                       </div>
                       <div className="p-3 bg-white rounded-md border border-blue-200">
                         <div className="text-lg font-semibold text-blue-900">2 Movers</div>
-                        <div className="text-sm text-blue-700">+£25 crew fee</div>
-                        <div className="text-xs text-blue-600 mt-1">Recommended for most moves</div>
+                        <div className="text-sm text-blue-700">Recommended for most moves</div>
+                        <div className="text-xs text-blue-600 mt-1">Optimal balance of cost & efficiency</div>
                       </div>
                       <div className="p-3 bg-white rounded-md border border-blue-200">
                         <div className="text-lg font-semibold text-blue-900">3 Movers</div>
-                        <div className="text-sm text-blue-700">+£45 crew fee</div>
-                        <div className="text-xs text-blue-600 mt-1">For large/complex moves</div>
+                        <div className="text-sm text-blue-700">For large/complex moves</div>
+                        <div className="text-xs text-blue-600 mt-1">Maximum efficiency & speed</div>
                       </div>
                     </div>
                   </CardContent>
@@ -716,10 +855,10 @@ export default function RemovalPricingPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={calculatePricing}
+                  onClick={fetchPricingData}
                   className="mt-2"
                 >
-                  Retry Calculation
+                  Retry Fetch
                 </Button>
               </div>
             )}
@@ -728,7 +867,7 @@ export default function RemovalPricingPage() {
             {isCalculating && (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-muted-foreground">Calculating pricing...</p>
+                <p className="text-muted-foreground">Fetching pricing data...</p>
               </div>
             )}
 
