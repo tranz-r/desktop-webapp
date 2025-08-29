@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 
 function StepperGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const show = ['/inventory','/collection-delivery','/van-selection','/pickup-dropoff','/origin-destination','/pricing','/summary','/confirmation','/pay'].some(p => pathname.startsWith(p));
+  const show = ['/inventory','/collection-delivery','/van-selection','/pickup-dropoff','/removals','/removal-pricing','/origin-destination','/pricing','/summary','/confirmation','/pay'].some(p => pathname.startsWith(p));
   return (
     <>
       {show && <ProgressStepper />}
