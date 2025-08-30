@@ -476,6 +476,24 @@ export default function RemovalPricingPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
+                      {/* Total Price - Moved to top */}
+                      {(() => {
+                        const currentPricing = calculateCurrentPricing();
+                        if (!currentPricing) return null;
+
+                        return (
+                          <div className="text-center mb-6">
+                            <div className="text-3xl font-bold text-primary">
+                              £{currentPricing.standard.totalPrice.toFixed(2)}
+                            </div>
+                            <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Separator Line */}
+                      <div className="border-t border-gray-200 mb-6"></div>
+
                       <ul className="space-y-2 mb-4">
                         <li className="flex items-center gap-2">
                           <span className="text-green-500">✓</span>
@@ -505,33 +523,24 @@ export default function RemovalPricingPage() {
                         if (!currentPricing) return null;
 
                         return (
-                          <>
-                            <div className="space-y-2 mb-4 p-3 bg-gray-50 rounded-md">
+                          <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+                            <div className="flex justify-between text-sm">
+                              <span>Base Price:</span>
+                              <span>£{currentPricing.standard.basePrice.toFixed(2)}</span>
+                            </div>
+                            {dismantleCount > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span>Base Price:</span>
-                                <span>£{currentPricing.standard.basePrice.toFixed(2)}</span>
+                                <span>Dismantle ({dismantleCount} items):</span>
+                                <span>£{currentPricing.standard.dismantleCost.toFixed(2)}</span>
                               </div>
-                              {dismantleCount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                  <span>Dismantle ({dismantleCount} items):</span>
-                                  <span>£{currentPricing.standard.dismantleCost.toFixed(2)}</span>
-                                </div>
-                              )}
-                              {assemblyCount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                  <span>Assembly ({assemblyCount} items):</span>
-                                  <span>£{currentPricing.standard.assemblyCost.toFixed(2)}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="text-center pt-4 border-t">
-                              <div className="text-2xl font-bold text-primary">
-                                £{currentPricing.standard.totalPrice.toFixed(2)}
+                            )}
+                            {assemblyCount > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span>Assembly ({assemblyCount} items):</span>
+                                <span>£{currentPricing.standard.assemblyCost.toFixed(2)}</span>
                               </div>
-                              <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
-                            </div>
-                          </>
+                            )}
+                          </div>
                         );
                       })()}
                     </CardContent>
@@ -546,6 +555,24 @@ export default function RemovalPricingPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
+                      {/* Total Price - Moved to top */}
+                      {(() => {
+                        const currentPricing = calculateCurrentPricing();
+                        if (!currentPricing) return null;
+
+                        return (
+                          <div className="text-center mb-6">
+                            <div className="text-3xl font-bold text-purple-600">
+                              £{currentPricing.premium.totalPrice.toFixed(2)}
+                            </div>
+                            <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Separator Line */}
+                      <div className="border-t border-gray-200 mb-6"></div>
+
                       <ul className="space-y-2 mb-4">
                         <li className="flex items-center gap-2">
                           <span className="text-green-500">✓</span>
@@ -583,33 +610,24 @@ export default function RemovalPricingPage() {
                         if (!currentPricing) return null;
 
                         return (
-                          <>
-                            <div className="space-y-2 mb-4 p-3 bg-purple-50 rounded-md">
+                          <div className="space-y-2 p-3 bg-purple-50 rounded-md">
+                            <div className="flex justify-between text-sm">
+                              <span>Base Price:</span>
+                              <span>£{currentPricing.premium.basePrice.toFixed(2)}</span>
+                            </div>
+                            {dismantleCount > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span>Base Price:</span>
-                                <span>£{currentPricing.premium.basePrice.toFixed(2)}</span>
+                                <span>Dismantle ({dismantleCount} items):</span>
+                                <span>£{currentPricing.premium.dismantleCost.toFixed(2)}</span>
                               </div>
-                              {dismantleCount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                  <span>Dismantle ({dismantleCount} items):</span>
-                                  <span>£{currentPricing.premium.dismantleCost.toFixed(2)}</span>
-                                </div>
-                              )}
-                              {assemblyCount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                  <span>Assembly ({assemblyCount} items):</span>
-                                  <span>£{currentPricing.premium.assemblyCost.toFixed(2)}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="text-center pt-4 border-t">
-                              <div className="text-2xl font-bold text-purple-600">
-                                £{currentPricing.premium.totalPrice.toFixed(2)}
+                            )}
+                            {assemblyCount > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span>Assembly ({assemblyCount} items):</span>
+                                <span>£{currentPricing.premium.assemblyCost.toFixed(2)}</span>
                               </div>
-                              <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
-                            </div>
-                          </>
+                            )}
+                          </div>
                         );
                       })()}
                     </CardContent>
