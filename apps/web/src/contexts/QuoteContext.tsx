@@ -170,6 +170,31 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
       return null;
     }
   }, [saveToIndexDB]);
+  
+  // Save metadata to IndexedDB
+  const saveMetadataToIndexDB = useCallback(async (metadata: QuoteState['metadata']) => {
+    try {
+      console.log('[QuoteContext] Saving metadata to IndexedDB:', metadata);
+      await HybridStorage.set('quoteMetadata', metadata);
+      console.log('[QuoteContext] Successfully saved metadata to IndexedDB');
+    } catch (error) {
+      console.error('[QuoteContext] Failed to save metadata to IndexedDB:', error);
+    }
+  }, []);
+  
+  // Load metadata from IndexedDB
+  const loadMetadataFromIndexDB = useCallback(async () => {
+    try {
+      const savedMetadata = await HybridStorage.get('quoteMetadata', null);
+      if (savedMetadata) {
+        console.log('[QuoteContext] Loading metadata from IndexedDB:', savedMetadata);
+        return savedMetadata;
+      }
+    } catch (error) {
+      console.error('[QuoteContext] Failed to load metadata from IndexedDB:', error);
+    }
+    return null;
+  }, []);
 
   // Load initial state from backend
   useEffect(() => {
@@ -178,11 +203,14 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
         // CRITICAL FIX: Load IndexedDB data FIRST as base state
         console.log('[QuoteContext] Loading IndexedDB data as base state...');
         const baseIndexDBData = await loadFromIndexDB();
-        if (baseIndexDBData) {
-          console.log('[QuoteContext] Setting base state from IndexedDB:', baseIndexDBData);
+        const baseMetadata = await loadMetadataFromIndexDB();
+        
+        if (baseIndexDBData || baseMetadata) {
+          console.log('[QuoteContext] Setting base state from IndexedDB:', { quotes: baseIndexDBData, metadata: baseMetadata });
           setState(prev => ({
             ...prev,
-            quotes: baseIndexDBData
+            quotes: baseIndexDBData || prev.quotes,
+            metadata: baseMetadata || prev.metadata
           }));
         }
         
@@ -291,6 +319,15 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
                 }
               };
 
+              // Save metadata to IndexedDB
+              (async () => {
+                try {
+                  await saveMetadataToIndexDB(newState.metadata);
+                } catch (error) {
+                  console.error('[QuoteContext] Failed to save metadata to IndexedDB:', error);
+                }
+              })();
+
               return newState;
             });
 
@@ -310,6 +347,7 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
               setState(prev => ({
                 ...prev,
                 quotes: existingIndexDBData,
+                activeQuoteType: prev.metadata.lastActiveQuoteType || null, // Restore active quote type
                 metadata: {
                   ...prev.metadata,
                   lastActivity: new Date().toISOString()
@@ -387,6 +425,24 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.error('Failed to load from IndexDB:', error);
+        }
+        
+        // CRITICAL FIX: Restore activeQuoteType from lastActiveQuoteType if not set
+        if (!state.activeQuoteType && state.metadata.lastActiveQuoteType) {
+          console.log('[QuoteContext] Restoring activeQuoteType from lastActiveQuoteType:', state.metadata.lastActiveQuoteType);
+          setState(prev => ({
+            ...prev,
+            activeQuoteType: prev.metadata.lastActiveQuoteType || null
+          }));
+        }
+        
+        // Also restore activeQuoteType from the base state if available
+        if (!state.activeQuoteType && baseMetadata && baseMetadata.lastActiveQuoteType) {
+          console.log('[QuoteContext] Restoring activeQuoteType from base metadata:', baseMetadata.lastActiveQuoteType);
+          setState(prev => ({
+            ...prev,
+            activeQuoteType: baseMetadata.lastActiveQuoteType || null
+          }));
         }
         
         // Set hydrated state
@@ -480,6 +536,15 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
                 }
               };
 
+              // Save metadata to IndexedDB
+              (async () => {
+                try {
+                  await saveMetadataToIndexDB(newState.metadata);
+                } catch (error) {
+                  console.error('[QuoteContext] Failed to save metadata to IndexedDB:', error);
+                }
+              })();
+
               return newState;
             });
 
@@ -531,6 +596,11 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
   // - Payment page: Local state + IndexedDB + Backend save (persistent, source of truth)
   // - This prevents excessive backend calls during user navigation
   const updateQuote = useCallback(async (type: QuoteOption, data: Partial<QuoteData>) => {
+    console.log(`[QuoteContext] 🔍 === UPDATE QUOTE DEBUG ===`);
+    console.log(`[QuoteContext] Type: ${type}`);
+    console.log(`[QuoteContext] Data being updated:`, data);
+    console.log(`[QuoteContext] Current quotes[${type}]:`, state.quotes[type]);
+    
     // Update local state first
     setState(prev => {
       const newState = {
@@ -548,17 +618,35 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
         }
       };
 
+      console.log(`[QuoteContext] New state for quotes[${type}]:`, newState.quotes[type]);
+      
+      // ✅ FIXED: Save to IndexedDB using the NEW state, not the old state
+      // This ensures we save the actual updated data, not stale data
+      (async () => {
+        try {
+          console.log(`[QuoteContext] 📝 Saving NEW state to IndexedDB:`, newState.quotes[type]);
+          console.log(`[QuoteContext] 📝 Full quotes object being saved:`, newState.quotes);
+          
+          await saveToIndexDB(newState.quotes);
+          console.log(`[QuoteContext] ✅ Quote data updated locally and saved to IndexedDB for type: ${type}`);
+          
+          // Verify the save worked by reading it back
+          const verifyQuotes = await loadFromIndexDB();
+          console.log(`[QuoteContext] 🔍 Verification - Read back from IndexedDB:`, verifyQuotes);
+          if (verifyQuotes && verifyQuotes[type]) {
+            console.log(`[QuoteContext] 🔍 Verification - removalPricing exists:`, verifyQuotes[type]?.removalPricing ? 'YES' : 'NO');
+          }
+          
+          // Also save metadata to IndexedDB
+          await saveMetadataToIndexDB(newState.metadata);
+          console.log(`[QuoteContext] ✅ Metadata also saved to IndexedDB`);
+        } catch (error) {
+          console.error('[QuoteContext] ❌ Failed to save to IndexedDB after update:', error);
+        }
+      })();
+      
       return newState;
     });
-
-    // Save to IndexedDB after state update (fast local persistence)
-    try {
-      const updatedQuotes = { ...state.quotes, [type]: { ...state.quotes[type], ...data } as QuoteData };
-      await saveToIndexDB(updatedQuotes);
-      console.log(`[QuoteContext] ✅ Quote data updated locally and saved to IndexedDB for type: ${type}`);
-    } catch (error) {
-      console.error('[QuoteContext] ❌ Failed to save to IndexedDB after update:', error);
-    }
     
     // 🚫 NO BACKEND SAVE HERE - Only happens on /pay page
     // This prevents excessive backend calls during navigation while maintaining data persistence

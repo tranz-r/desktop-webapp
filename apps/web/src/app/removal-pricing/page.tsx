@@ -13,14 +13,25 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useQuote } from '@/contexts/QuoteContext';
-import { hasInventory } from '@/lib/guards';
+
 import { Users, Wrench, Calculator, Info, Clock, PoundSterling } from 'lucide-react';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 import {
   fetchRemovalPricing,
-  calculateTotalPrice,
-  type RemovalPricingDto
+  calculateTotalPrice
 } from '@/lib/api/removal-pricing';
+import type { RemovalPricingDto, CachedRemovalPricing } from '@/types/booking';
+
+// Utility function to check if cached removal pricing is still valid
+function isCachedRemovalPricingValid(cached: CachedRemovalPricing | undefined): boolean {
+  if (!cached) return false;
+  
+  const now = new Date();
+  const lastFetched = new Date(cached.lastFetched);
+  const maxAgeMs = cached.maxAge * 1000;
+  
+  return (now.getTime() - lastFetched.getTime()) < maxAgeMs;
+}
 
 export default function RemovalPricingPage() {
   const router = useRouter();
@@ -29,6 +40,17 @@ export default function RemovalPricingPage() {
   // Get data from active quote
   const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
   const items = activeQuote?.items || [];
+  
+  // Debug logging
+  console.log('🔍 RemovalPricingPage render:', {
+    isHydrated,
+    activeQuoteType,
+    hasActiveQuote: !!activeQuote,
+    itemsLength: items.length,
+    quotes: Object.keys(quotes),
+    activeQuoteKeys: activeQuote ? Object.keys(activeQuote) : [],
+    hasRemovalPricing: activeQuote?.removalPricing ? 'YES' : 'NO'
+  });
 
   // Crew size and service state
   const [selectedCrewSize, setSelectedCrewSize] = React.useState<number>(2);
@@ -64,18 +86,13 @@ export default function RemovalPricingPage() {
     return total;
   }, []);
 
-  // Validate quote type and inventory
+  // Validate quote type only (removal pricing doesn't require inventory)
   React.useEffect(() => {
     if (isHydrated && activeQuoteType !== 'removals') {
       router.replace('/quote-option');
       return;
     }
-
-    if (!hasInventory(items.length)) {
-      router.replace('/inventory');
-      return;
-    }
-  }, [isHydrated, activeQuoteType, items.length, router]);
+  }, [isHydrated, activeQuoteType, router]);
 
   // Load existing data from quote context
   React.useEffect(() => {
@@ -88,19 +105,59 @@ export default function RemovalPricingPage() {
 
   // Fetch removal pricing data
   const fetchPricingData = React.useCallback(async () => {
-    if (!activeQuote || !items.length) return;
+    console.log('🚀 === fetchPricingData START ===');
+    console.log('🔍 fetchPricingData called with:', {
+      hasActiveQuote: !!activeQuote,
+      itemsLength: items.length,
+      activeQuoteType
+    });
+    
+    if (!activeQuote) {
+      console.log('⏸️ fetchPricingData early return: no activeQuote');
+      return;
+    }
 
     setIsCalculating(true);
     setPricingError(null);
 
     try {
       console.log('📡 Fetching removal pricing data...');
+      console.log('📡 Using ETag for conditional request:', etag || 'none');
 
       const { data, etag: responseEtag } = await fetchRemovalPricing(etag);
+      
+      // Create cached data and save to quote context (storage version - no functions)
+      if (activeQuoteType) {
+        const cachedPricing = {
+          data,
+          etag: responseEtag,
+          lastFetched: new Date().toISOString(),
+          maxAge: 21600 // 6 hours in seconds
+        };
+        
+        console.log('📝 Saving removalPricing to quote context:', cachedPricing);
+        console.log('📝 Calling updateQuote with:', { activeQuoteType, removalPricing: cachedPricing });
+        
+        try {
+          await updateQuote(activeQuoteType, { removalPricing: cachedPricing });
+          console.log('✅ removalPricing saved to quote context');
+          
+          // Verify the save worked by checking the current state
+          setTimeout(() => {
+            console.log('🔍 Verifying save - Current quotes state:', quotes);
+            console.log('🔍 Verifying save - Current activeQuote:', activeQuoteType ? quotes[activeQuoteType] : 'NO ACTIVE QUOTE');
+          }, 100);
+        } catch (error) {
+          console.error('❌ Error calling updateQuote:', error);
+        }
+      }
+      
       setPricingData(data);
       setEtag(responseEtag);
 
-      console.log('✅ Removal pricing data fetched successfully:', data);
+      console.log('✅ Removal pricing data fetched and cached successfully:', data);
+      console.log('✅ New ETag received:', responseEtag);
+      console.log('🚀 === fetchPricingData END ===');
     } catch (error) {
       if (error instanceof Error && error.message === 'NotModified') {
         console.log('✅ Pricing data unchanged, using cached version');
@@ -112,7 +169,7 @@ export default function RemovalPricingPage() {
     } finally {
       setIsCalculating(false);
     }
-  }, [activeQuote, items, etag]);
+  }, [activeQuote, etag, activeQuoteType]); // Removed items dependency since pricing is independent
 
   // Calculate pricing based on current selections
   const calculateCurrentPricing = React.useCallback(() => {
@@ -148,12 +205,51 @@ export default function RemovalPricingPage() {
     }
   }, [pricingData, selectedCrewSize, dismantleCount, assemblyCount]);
 
-  // Fetch pricing data when component mounts or when needed
+  // Track if we've already fetched pricing data to prevent duplicate calls
+  const hasFetchedPricing = React.useRef(false);
+
+  // Load cached data and fetch pricing data if needed
   React.useEffect(() => {
-    if (isHydrated && activeQuote && items.length) {
-      fetchPricingData();
+    console.log('🔍 useEffect triggered:', {
+      isHydrated,
+      hasActiveQuote: !!activeQuote,
+      hasFetchedPricing: hasFetchedPricing.current
+    });
+    
+    if (isHydrated && activeQuote && !hasFetchedPricing.current) {
+      // Check if we have valid cached data first
+      const cachedPricing = activeQuote.removalPricing;
+      
+      if (cachedPricing && isCachedRemovalPricingValid(cachedPricing)) {
+        console.log('✅ Using cached removal pricing data');
+        console.log('✅ Cache details:', {
+          lastFetched: cachedPricing.lastFetched,
+          maxAge: cachedPricing.maxAge,
+          etag: cachedPricing.etag
+        });
+        setPricingData(cachedPricing.data);
+        setEtag(cachedPricing.etag);
+        hasFetchedPricing.current = true;
+      } else {
+        if (cachedPricing) {
+          console.log('⏰ Cache expired or invalid:', {
+            lastFetched: cachedPricing.lastFetched,
+            maxAge: cachedPricing.maxAge,
+            isValid: isCachedRemovalPricingValid(cachedPricing)
+          });
+        } else {
+          console.log('📭 No cached data found');
+        }
+        console.log('🚀 Calling fetchPricingData...');
+        hasFetchedPricing.current = true;
+        fetchPricingData();
+      }
+    } else {
+      console.log('⏸️ Skipping fetchPricingData:', {
+        reason: !isHydrated ? 'not hydrated' : !activeQuote ? 'no active quote' : 'already fetched'
+      });
     }
-  }, [isHydrated, activeQuote, items.length, fetchPricingData]);
+  }, [isHydrated, activeQuote, fetchPricingData]);
 
   // Recalculate pricing when selections change (no API call needed)
   React.useEffect(() => {
@@ -210,8 +306,8 @@ export default function RemovalPricingPage() {
     router.push('/origin-destination');
   };
 
-  // Show loading while checking quote type and inventory
-  if (!isHydrated || activeQuoteType !== 'removals' || !hasInventory(items.length)) {
+  // Show loading while checking quote type only
+  if (!isHydrated || activeQuoteType !== 'removals') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <StreamlinedHeader />

@@ -1,39 +1,8 @@
 import { API_BASE_URL } from './config';
-
-// Types matching the backend RemovalPricingDto structure
-export interface ServiceTextDto {
-  id: number;
-  text: string;
-}
-
-export interface RateLeafDto {
-  baseBlockHours: number;
-  baseBlockPrice: number;
-  hourlyAfter: number;
-}
-
-export interface MoversDto {
-  standard: RateLeafDto;
-  premium: RateLeafDto;
-}
-
-export interface RatesDto {
-  one: MoversDto;
-  two: MoversDto;
-  three: MoversDto;
-  standardServiceTexts: ServiceTextDto[];
-  premiumServiceTexts: ServiceTextDto[];
-}
-
-export interface RemovalPricingDto {
-  version: string;
-  currency: string;
-  generatedAt: string;
-  rates: RatesDto;
-}
+import type { RemovalPricingDto, CachedRemovalPricing } from '@/types/booking';
 
 // Helper function to get crew rates based on crew size
-export function getCrewRates(crewSize: number, pricingData: RemovalPricingDto): MoversDto {
+export function getCrewRates(crewSize: number, pricingData: RemovalPricingDto) {
   switch (crewSize) {
     case 1:
       return pricingData.rates.one;
@@ -100,6 +69,31 @@ export async function fetchRemovalPricing(etag?: string): Promise<{
   const responseEtag = response.headers.get('ETag') || '';
 
   return { data, etag: responseEtag };
+}
+
+// Create a cached removal pricing object
+export function createCachedRemovalPricing(
+  data: RemovalPricingDto, 
+  etag: string, 
+  maxAgeSeconds: number = 21600
+): CachedRemovalPricing {
+  return {
+    data,
+    etag,
+    lastFetched: new Date().toISOString(),
+    maxAge: maxAgeSeconds,
+    isValid: function() {
+      const now = new Date();
+      const lastFetched = new Date(this.lastFetched);
+      const maxAgeMs = this.maxAge * 1000;
+      return (now.getTime() - lastFetched.getTime()) < maxAgeMs;
+    }
+  };
+}
+
+// Check if cached removal pricing is valid
+export function isCachedRemovalPricingValid(cached: CachedRemovalPricing | undefined): boolean {
+  return cached?.isValid() ?? false;
 }
 
 // Get service features for a specific service level

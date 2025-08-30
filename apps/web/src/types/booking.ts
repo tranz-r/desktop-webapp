@@ -37,6 +37,51 @@ export interface ItemBreakdown {
   bulkinessReasons: string[];
 }
 
+// Removal Pricing Types
+export interface ServiceTextDto {
+  id: number;
+  text: string;
+}
+
+export interface RateLeafDto {
+  baseBlockHours: number;
+  baseBlockPrice: number;
+  hourlyAfter: number;
+}
+
+export interface MoversDto {
+  standard: RateLeafDto;
+  premium: RateLeafDto;
+}
+
+export interface RatesDto {
+  one: MoversDto;
+  two: MoversDto;
+  three: MoversDto;
+  standardServiceTexts: ServiceTextDto[];
+  premiumServiceTexts: ServiceTextDto[];
+}
+
+export interface RemovalPricingDto {
+  version: string;
+  currency: string;
+  generatedAt: string;
+  rates: RatesDto;
+}
+
+// Cached removal pricing data structure for storage (no functions)
+export interface CachedRemovalPricing {
+  data: RemovalPricingDto;
+  etag: string;
+  lastFetched: string; // ISO timestamp
+  maxAge: number; // Cache duration in seconds (from backend Cache-Control)
+}
+
+// Runtime version with validation function
+export interface CachedRemovalPricingWithValidation extends CachedRemovalPricing {
+  isValid: () => boolean; // Function to check if cache is still valid
+}
+
 export interface QuoteBreakdown {
   // pricing
   base: number;
@@ -205,6 +250,7 @@ export interface QuoteData {
   pricingTier?: PricingTierId;
   totalCost?: number;
   pickUpDropOffPrice?: PickUpDropOffPrice;
+  removalPricing?: CachedRemovalPricing;
   
   // Customer
   customer?: {
