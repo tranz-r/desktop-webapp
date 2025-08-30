@@ -256,20 +256,18 @@ export default function RemovalPricingPage() {
             <div className="space-y-4">
 
               <RadioGroup value={selectedCrewSize.toString()} onValueChange={(value) => handleCrewSizeChange(parseInt(value))}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div>
                     <RadioGroupItem value="1" id="crew-1" className="sr-only" />
                     <Label
                       htmlFor="crew-1"
-                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 1 ? 'border-primary bg-primary/5' : 'border-muted'
+                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 1 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-xl font-bold mb-2">1 Mover</div>
-                      {/* <span className="text-sm font-medium text-center">Mover</span> */}
-                      <span className="text-xs text-muted-foreground text-center mt-1">
+                      <div className="text-lg sm:text-xl font-bold mb-2">1 Mover</div>
+                      <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver only. Customer expected to lift, load, and unload.
                       </span>
-
                     </Label>
                   </div>
 
@@ -277,31 +275,27 @@ export default function RemovalPricingPage() {
                     <RadioGroupItem value="2" id="crew-2" className="sr-only" />
                     <Label
                       htmlFor="crew-2"
-                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 2 ? 'border-primary bg-primary/5' : 'border-muted'
+                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 2 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-xl font-bold mb-2">2 Movers</div>
-                      {/* <span className="text-sm font-medium text-center">Movers</span> */}
-                      <span className="text-xs text-muted-foreground text-center mt-1">
+                      <div className="text-lg sm:text-xl font-bold mb-2">2 Movers</div>
+                      <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver & mate. Recommended for most moves.
                       </span>
-
                     </Label>
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2 lg:col-span-1">
                     <RadioGroupItem value="3" id="crew-3" className="sr-only" />
                     <Label
                       htmlFor="crew-3"
-                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 3 ? 'border-primary bg-primary/5' : 'border-muted'
+                      className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 3 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-xl font-bold mb-2">3 Movers</div>
-                      {/* <span className="text-sm font-medium text-center">Movers</span> */}
-                      <span className="text-xs text-muted-foreground text-center mt-1">
+                      <div className="text-lg sm:text-xl font-bold mb-2">3 Movers</div>
+                      <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver & 2 mates. For large or complex moves.
                       </span>
-
                     </Label>
                   </div>
                 </div>
@@ -334,7 +328,7 @@ export default function RemovalPricingPage() {
             )} */}
 
             {/* Combined Layout: Services on Left, Pricing on Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
               {/* Left Side: Dismantle & Assembly Services */}
               <div className="space-y-6">
                 {/* Combined Dismantle & Assembly Services Card */}
@@ -351,7 +345,7 @@ export default function RemovalPricingPage() {
                   <CardContent className="space-y-6">
                     {/* Dismantle Service Section */}
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                           <div>
@@ -359,7 +353,7 @@ export default function RemovalPricingPage() {
                             <p className="text-sm text-gray-600">£18 per item</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 justify-center sm:justify-end">
                           <Button
                             variant="outline"
                             size="sm"
@@ -387,12 +381,12 @@ export default function RemovalPricingPage() {
                         </div>
                       </div>
                       {dismantleCount > 0 && (
-                        <div className="ml-6 p-3 bg-orange-50 rounded-md border border-orange-200">
+                        <div className="ml-0 sm:ml-6 p-3 bg-orange-50 rounded-md border border-orange-200">
                           <div className="text-lg font-bold text-orange-700">£{(dismantleCount * 18).toFixed(2)}</div>
                           <div className="text-sm text-orange-600">Total Dismantle Cost</div>
                         </div>
                       )}
-                      <p className="text-sm text-gray-600 ml-6">
+                      <p className="text-sm text-gray-600 ml-0 sm:ml-6 px-4 sm:px-0">
                         Professional dismantling of furniture and equipment
                       </p>
                     </div>
@@ -400,9 +394,9 @@ export default function RemovalPricingPage() {
                     {/* Divider */}
                     <div className="border-t border-gray-200"></div>
 
-                    {/* Assembly Service Section */}
+                                        {/* Assembly Service Section */}
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                           <div>
@@ -410,7 +404,7 @@ export default function RemovalPricingPage() {
                             <p className="text-sm text-gray-600">£25 per item</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 justify-center sm:justify-end">
                           <Button
                             variant="outline"
                             size="sm"
@@ -438,12 +432,12 @@ export default function RemovalPricingPage() {
                         </div>
                       </div>
                       {assemblyCount > 0 && (
-                        <div className="ml-6 p-3 bg-blue-50 rounded-md border border-blue-200">
+                        <div className="ml-0 sm:ml-6 p-3 bg-blue-50 rounded-md border border-blue-200">
                           <div className="text-lg font-bold text-blue-700">£{(assemblyCount * 25).toFixed(2)}</div>
                           <div className="text-sm text-blue-600">Total Assembly Cost</div>
                         </div>
                       )}
-                      <p className="text-sm text-gray-600 ml-6">
+                      <p className="text-sm text-gray-600 ml-0 sm:ml-6 px-4 sm:px-0">
                         Professional assembly at your new location
                       </p>
                     </div>
@@ -451,9 +445,9 @@ export default function RemovalPricingPage() {
                     {/* Total Additional Services Cost */}
                     {(dismantleCount > 0 || assemblyCount > 0) && (
                       <div className="pt-4 border-t border-gray-200">
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                          <span className="font-semibold text-gray-900">Total Additional Services:</span>
-                          <span className="text-xl font-bold text-primary">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 p-3 bg-gray-50 rounded-md">
+                          <span className="font-semibold text-gray-900 text-center sm:text-left">Total Additional Services:</span>
+                          <span className="text-xl font-bold text-primary text-center sm:text-right">
                             £{((dismantleCount * 18) + (assemblyCount * 25)).toFixed(2)}
                           </span>
                         </div>
@@ -466,7 +460,7 @@ export default function RemovalPricingPage() {
               {/* Right Side: Pricing Options */}
               {pricingData && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {/* Standard Tier */}
                   <Card className="border-2 hover:border-primary transition-colors">
                     <CardHeader className="bg-gray-50">
@@ -483,7 +477,7 @@ export default function RemovalPricingPage() {
 
                         return (
                           <div className="text-center mb-6">
-                            <div className="text-3xl font-bold text-primary">
+                            <div className="text-2xl sm:text-3xl font-bold text-primary">
                               £{currentPricing.standard.totalPrice.toFixed(2)}
                             </div>
                             <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
@@ -562,7 +556,7 @@ export default function RemovalPricingPage() {
 
                         return (
                           <div className="text-center mb-6">
-                            <div className="text-3xl font-bold text-purple-600">
+                            <div className="text-2xl sm:text-3xl font-bold text-purple-600">
                               £{currentPricing.premium.totalPrice.toFixed(2)}
                             </div>
                             <div className="text-sm text-gray-500">Total Price (inc. VAT)</div>
@@ -670,11 +664,11 @@ export default function RemovalPricingPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex justify-between items-center pt-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8">
               <Button
                 variant="outline"
                 onClick={() => router.push('/removals')}
-                className="px-6 py-2 text-base"
+                className="w-full sm:w-auto px-6 py-2 text-base"
               >
                 ← Back to Van & Date
               </Button>
@@ -682,7 +676,7 @@ export default function RemovalPricingPage() {
               <Button
                 onClick={handleContinue}
                 disabled={!selectedCrewSize || isCalculating}
-                className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm"
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm"
               >
                 Continue to Origin & Destination →
               </Button>
