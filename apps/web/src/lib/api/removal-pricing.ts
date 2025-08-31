@@ -81,19 +81,19 @@ export function createCachedRemovalPricing(
     data,
     etag,
     lastFetched: new Date().toISOString(),
-    maxAge: maxAgeSeconds,
-    isValid: function() {
-      const now = new Date();
-      const lastFetched = new Date(this.lastFetched);
-      const maxAgeMs = this.maxAge * 1000;
-      return (now.getTime() - lastFetched.getTime()) < maxAgeMs;
-    }
+    maxAge: maxAgeSeconds
   };
 }
 
 // Check if cached removal pricing is valid
 export function isCachedRemovalPricingValid(cached: CachedRemovalPricing | undefined): boolean {
-  return cached?.isValid() ?? false;
+  if (!cached) return false;
+  
+  const now = new Date();
+  const lastFetched = new Date(cached.lastFetched);
+  const maxAgeMs = cached.maxAge * 1000;
+  
+  return (now.getTime() - lastFetched.getTime()) < maxAgeMs;
 }
 
 // Get service features for a specific service level
@@ -124,11 +124,12 @@ export function calculateTotalPrice(
 } {
   const basePrice = calculateBasePrice(crewSize, serviceLevel, hours, pricingData);
   
-  // Additional service costs (using standard rates from the existing implementation)
-  const dismantleCost = dismantleCount * 18; // £18 per item dismantle
-  const assemblyCost = assemblyCount * 25;   // £25 per item assembly
-  
-  const totalPrice = basePrice + dismantleCost + assemblyCost;
+  // Additional service costs (using dynamic rates from backend)
+  const dismantleCost = dismantleCount * (pricingData.extraPrice.dismantle?.price || 0);
+  const assemblyCost = assemblyCount * (pricingData.extraPrice.assembly?.price || 0);
+
+  const totalPriceWithoutVat = basePrice + dismantleCost + assemblyCost; 
+  const totalPrice = totalPriceWithoutVat * 1.2;
   
   return {
     basePrice,

@@ -66,7 +66,25 @@ export interface RemovalPricingDto {
   version: string;
   currency: string;
   generatedAt: string;
+  extraPrice: ExtraPricesDto;  // Add this missing field
   rates: RatesDto;
+}
+
+export interface ExtraPricesDto {
+  dismantle?: AdditionalPriceDto;
+  assembly?: AdditionalPriceDto;
+}
+
+export interface AdditionalPriceDto {
+  id: string;
+  type: string;
+  description?: string;
+  price: number;
+  currencyCode: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  isActive: boolean;
+  version: number;
 }
 
 // Cached removal pricing data structure for storage (no functions)

@@ -56,6 +56,7 @@ export default function RemovalPricingPage() {
   const [selectedCrewSize, setSelectedCrewSize] = React.useState<number>(2);
   const [dismantleCount, setDismantleCount] = React.useState<number>(0);
   const [assemblyCount, setAssemblyCount] = React.useState<number>(0);
+  const [selectedTier, setSelectedTier] = React.useState<'standard' | 'premium' | null>(null);
 
 
 
@@ -65,6 +66,62 @@ export default function RemovalPricingPage() {
   const [pricingError, setPricingError] = React.useState<string | null>(null);
   const [etag, setEtag] = React.useState<string>('');
 
+  // Get dynamic prices from backend data
+  const dismantlePrice = React.useMemo(() => {
+    return pricingData?.extraPrice?.dismantle?.price;
+  }, [pricingData]);
+
+  const assemblyPrice = React.useMemo(() => {
+    return pricingData?.extraPrice?.assembly?.price;
+  }, [pricingData]);
+
+  // Get dynamic service features
+  const standardFeatures = React.useMemo(() => {
+    if (!pricingData) return [];
+    return pricingData.rates.standardServiceTexts?.map(feature => feature.text) || [];
+  }, [pricingData]);
+
+  const premiumFeatures = React.useMemo(() => {
+    if (!pricingData) return [];
+    return pricingData.rates.premiumServiceTexts?.map(feature => feature.text) || [];
+  }, [pricingData]);
+
+  // Get dynamic service descriptions
+  const dismantleDescription = React.useMemo(() => {
+    return pricingData?.extraPrice?.dismantle?.description || 'Dismantling service';
+  }, [pricingData]);
+
+  const assemblyDescription = React.useMemo(() => {
+    return pricingData?.extraPrice?.assembly?.description || 'Assembly service';
+  }, [pricingData]);
+
+  // Helper function to get hourly rate based on crew size and service level
+  const getHourlyRate = React.useCallback((crewSize: number, serviceLevel: 'standard' | 'premium') => {
+    if (!pricingData) return 0;
+    
+    let crewRates;
+    switch (crewSize) {
+      case 1:
+        crewRates = pricingData.rates.one;
+        break;
+      case 2:
+        crewRates = pricingData.rates.two;
+        break;
+      case 3:
+        crewRates = pricingData.rates.three;
+        break;
+      default:
+        return 0;
+    }
+    
+    const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
+    return rateLeaf?.hourlyAfter || 0;
+  }, [pricingData]);
+
+  // Handle tier selection
+  const handleTierSelect = React.useCallback((tier: 'standard' | 'premium') => {
+    setSelectedTier(tier);
+  }, []);
 
   // Calculate total volume and recommend crew size
   const totalVolume = React.useMemo(() => {
@@ -176,11 +233,34 @@ export default function RemovalPricingPage() {
     if (!pricingData || !selectedCrewSize) return null;
 
     try {
-      // Default to 3 hours for standard service
+      // Get dynamic hours from backend data
+      const getHoursForCrewAndService = (crewSize: number, serviceLevel: 'standard' | 'premium') => {
+        let crewRates;
+        switch (crewSize) {
+          case 1:
+            crewRates = pricingData.rates.one;
+            break;
+          case 2:
+            crewRates = pricingData.rates.two;
+            break;
+          case 3:
+            crewRates = pricingData.rates.three;
+            break;
+          default:
+            return 3; // fallback
+        }
+        
+        const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
+        return rateLeaf?.baseBlockHours || 4; // fallback to 3 if not available
+      };
+
+      const standardHours = getHoursForCrewAndService(selectedCrewSize, 'standard');
+      const premiumHours = getHoursForCrewAndService(selectedCrewSize, 'premium');
+
       const standardPricing = calculateTotalPrice(
         selectedCrewSize,
         'standard',
-        3, // Default hours
+        standardHours,
         dismantleCount,
         assemblyCount,
         pricingData
@@ -189,7 +269,7 @@ export default function RemovalPricingPage() {
       const premiumPricing = calculateTotalPrice(
         selectedCrewSize,
         'premium',
-        3, // Default hours
+        premiumHours,
         dismantleCount,
         assemblyCount,
         pricingData
@@ -435,7 +515,7 @@ export default function RemovalPricingPage() {
                       Additional Services
                     </CardTitle>
                     <p className="text-gray-600 text-sm">
-                      Configure professional dismantling and assembly services for your move
+                      Configure additional services for your move
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -444,10 +524,12 @@ export default function RemovalPricingPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">Dismantle Service</h4>
-                            <p className="text-sm text-gray-600">£18 per item</p>
-                          </div>
+                                                      <div>
+                              <h4 className="font-semibold text-gray-900">Dismantle Service</h4>
+                              <p className="text-md text-gray-600">
+                              {dismantlePrice ? `£${dismantlePrice.toFixed(2)} per item` : 'Price not available'}
+                            </p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-3 justify-center sm:justify-end">
                           <Button
@@ -478,12 +560,14 @@ export default function RemovalPricingPage() {
                       </div>
                       {dismantleCount > 0 && (
                         <div className="ml-0 sm:ml-6 p-3 bg-orange-50 rounded-md border border-orange-200">
-                          <div className="text-lg font-bold text-orange-700">£{(dismantleCount * 18).toFixed(2)}</div>
+                                                      <div className="text-lg font-bold text-orange-700">
+                              {dismantlePrice ? `£${(dismantleCount * dismantlePrice).toFixed(2)}` : 'Price not available'}
+                            </div>
                           <div className="text-sm text-orange-600">Total Dismantle Cost</div>
                         </div>
                       )}
                       <p className="text-sm text-gray-600 ml-0 sm:ml-6 px-4 sm:px-0">
-                        Professional dismantling of furniture and equipment
+                        {dismantleDescription}
                       </p>
                     </div>
 
@@ -495,10 +579,12 @@ export default function RemovalPricingPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">Assembly Service</h4>
-                            <p className="text-sm text-gray-600">£25 per item</p>
-                          </div>
+                                                      <div>
+                              <h4 className="font-semibold text-gray-900">Assembly Service</h4>
+                              <p className="text-md text-gray-600">
+                              {assemblyPrice ? `£${assemblyPrice.toFixed(2)} per item` : 'Price not available'}
+                            </p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-3 justify-center sm:justify-end">
                           <Button
@@ -529,12 +615,14 @@ export default function RemovalPricingPage() {
                       </div>
                       {assemblyCount > 0 && (
                         <div className="ml-0 sm:ml-6 p-3 bg-blue-50 rounded-md border border-blue-200">
-                          <div className="text-lg font-bold text-blue-700">£{(assemblyCount * 25).toFixed(2)}</div>
+                                                      <div className="text-lg font-bold text-blue-700">
+                              {assemblyPrice ? `£${(assemblyCount * assemblyPrice).toFixed(2)}` : 'Price not available'}
+                            </div>
                           <div className="text-sm text-blue-600">Total Assembly Cost</div>
                         </div>
                       )}
                       <p className="text-sm text-gray-600 ml-0 sm:ml-6 px-4 sm:px-0">
-                        Professional assembly at your new location
+                        {assemblyDescription}
                       </p>
                     </div>
 
@@ -543,8 +631,11 @@ export default function RemovalPricingPage() {
                       <div className="pt-4 border-t border-gray-200">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 p-3 bg-gray-50 rounded-md">
                           <span className="font-semibold text-gray-900 text-center sm:text-left">Total Additional Services:</span>
-                          <span className="text-xl font-bold text-primary text-center sm:text-right">
-                            £{((dismantleCount * 18) + (assemblyCount * 25)).toFixed(2)}
+                                                    <span className="text-xl font-bold text-primary text-center sm:text-right">
+                            {dismantlePrice && assemblyPrice ? 
+                              `£${((dismantleCount * dismantlePrice) + (assemblyCount * assemblyPrice)).toFixed(2)}` : 
+                              'Prices not available'
+                            }
                           </span>
                         </div>
                       </div>
@@ -556,13 +647,30 @@ export default function RemovalPricingPage() {
               {/* Right Side: Pricing Options */}
               {pricingData && (
                 <div className="space-y-6">
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {/* Standard Tier */}
-                  <Card className="border-2 hover:border-primary transition-colors">
-                    <CardHeader className="bg-gray-50">
+                  <Card 
+                    className={`border-2 transition-all duration-200 cursor-pointer transform ${
+                      selectedTier === 'standard' 
+                        ? 'border-primary bg-blue-50 shadow-lg scale-[1.02]' 
+                        : 'border-gray-200 hover:border-primary hover:shadow-md hover:scale-[1.01]'
+                    }`}
+                    onClick={() => handleTierSelect('standard')}
+                  >
+                                          <CardHeader className={`transition-colors duration-200 ${
+                        selectedTier === 'standard' ? 'bg-blue-100' : 'bg-gray-50'
+                      }`}>
                       <CardTitle className="text-lg flex items-center justify-between">
                         <span>Standard</span>
-                        <Badge variant="secondary">Most Popular</Badge>
+                        <div className="flex items-center gap-2">
+                          {selectedTier === 'standard' && (
+                            <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          )}
+                          <Badge variant="secondary">Most Popular</Badge>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -585,26 +693,18 @@ export default function RemovalPricingPage() {
                       <div className="border-t border-gray-200 mb-6"></div>
 
                       <ul className="space-y-2 mb-4">
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Moving team to load and move</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Professional moving equipment</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Insurance coverage included</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Careful handling of items</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">On-time service guarantee</span>
-                        </li>
+                        {standardFeatures.length > 0 ? (
+                          standardFeatures.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <span className="text-green-500">✓</span>
+                              <span className="text-sm">{feature}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="flex items-center gap-2">
+                            <span className="text-gray-400">No service features available</span>
+                          </li>
+                        )}
                       </ul>
 
                       {/* Pricing Breakdown */}
@@ -612,11 +712,38 @@ export default function RemovalPricingPage() {
                         const currentPricing = calculateCurrentPricing();
                         if (!currentPricing) return null;
 
+                        // Get dynamic hours for display
+                        const getHoursForCrewAndService = (crewSize: number, serviceLevel: 'standard' | 'premium') => {
+                          if (!pricingData) return 3;
+                          let crewRates;
+                          switch (crewSize) {
+                            case 1:
+                              crewRates = pricingData.rates.one;
+                              break;
+                            case 2:
+                              crewRates = pricingData.rates.two;
+                              break;
+                            case 3:
+                              crewRates = pricingData.rates.three;
+                              break;
+                            default:
+                              return 3;
+                          }
+                          const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
+                          return rateLeaf?.baseBlockHours || 3;
+                        };
+
+                        const standardHours = getHoursForCrewAndService(selectedCrewSize, 'standard');
+
                         return (
                           <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                             <div className="flex justify-between text-sm">
-                              <span>Base Price:</span>
+                              <span>Base Price ({standardHours} hours):</span>
                               <span>£{currentPricing.standard.basePrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Every Additional Hour:</span>
+                              <span>£{getHourlyRate(selectedCrewSize, 'standard').toFixed(2)}</span>
                             </div>
                             {dismantleCount > 0 && (
                               <div className="flex justify-between text-sm">
@@ -637,11 +764,27 @@ export default function RemovalPricingPage() {
                   </Card>
 
                   {/* Premium Tier */}
-                  <Card className="border-2 hover:border-primary transition-colors">
-                    <CardHeader className="bg-purple-50">
+                  <Card 
+                    className={`border-2 transition-all duration-200 cursor-pointer transform ${
+                      selectedTier === 'premium' 
+                        ? 'border-primary bg-purple-50 shadow-lg scale-[1.02]' 
+                        : 'border-gray-200 hover:border-primary hover:shadow-md hover:scale-[1.01]'
+                    }`}
+                    onClick={() => handleTierSelect('premium')}
+                  >
+                                          <CardHeader className={`transition-colors duration-200 ${
+                        selectedTier === 'premium' ? 'bg-purple-100' : 'bg-purple-50'
+                      }`}>
                       <CardTitle className="text-lg text-purple-900 flex items-center justify-between">
                         <span>Premium</span>
-                        <Badge variant="default" className="bg-purple-600">Best Value</Badge>
+                        <div className="flex items-center gap-2">
+                          {selectedTier === 'premium' && (
+                            <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          )}
+                          <Badge variant="default" className="bg-purple-600">Best Value</Badge>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -664,34 +807,18 @@ export default function RemovalPricingPage() {
                       <div className="border-t border-gray-200 mb-6"></div>
 
                       <ul className="space-y-2 mb-4">
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Everything in Standard</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Priority scheduling</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Extended service hours</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Premium packaging materials</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Dedicated move coordinator</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Post-move support</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="text-green-500">✓</span>
-                          <span className="text-sm">Satisfaction guarantee</span>
-                        </li>
+                        {premiumFeatures.length > 0 ? (
+                          premiumFeatures.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <span className="text-green-500">✓</span>
+                              <span className="text-sm">{feature}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="flex items-center gap-2">
+                            <span className="text-gray-400">No service features available</span>
+                          </li>
+                        )}
                       </ul>
 
                       {/* Pricing Breakdown */}
@@ -699,11 +826,38 @@ export default function RemovalPricingPage() {
                         const currentPricing = calculateCurrentPricing();
                         if (!currentPricing) return null;
 
+                        // Get dynamic hours for display
+                        const getHoursForCrewAndService = (crewSize: number, serviceLevel: 'standard' | 'premium') => {
+                          if (!pricingData) return 3;
+                          let crewRates;
+                          switch (crewSize) {
+                            case 1:
+                              crewRates = pricingData.rates.one;
+                              break;
+                            case 2:
+                              crewRates = pricingData.rates.two;
+                              break;
+                            case 3:
+                              crewRates = pricingData.rates.three;
+                              break;
+                            default:
+                              return 3;
+                          }
+                          const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
+                          return rateLeaf?.baseBlockHours || 3;
+                        };
+
+                        const premiumHours = getHoursForCrewAndService(selectedCrewSize, 'premium');
+
                         return (
                           <div className="space-y-2 p-3 bg-purple-50 rounded-md">
                             <div className="flex justify-between text-sm">
-                              <span>Base Price:</span>
+                              <span>Base Price ({premiumHours} hours):</span>
                               <span>£{currentPricing.premium.basePrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Every Additional Hour:</span>
+                              <span>£{getHourlyRate(selectedCrewSize, 'premium').toFixed(2)}</span>
                             </div>
                             {dismantleCount > 0 && (
                               <div className="flex justify-between text-sm">
@@ -771,8 +925,8 @@ export default function RemovalPricingPage() {
 
               <Button
                 onClick={handleContinue}
-                disabled={!selectedCrewSize || isCalculating}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm"
+                disabled={!selectedCrewSize || !selectedTier || isCalculating}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue to Origin & Destination →
               </Button>
