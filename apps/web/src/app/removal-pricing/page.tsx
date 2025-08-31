@@ -294,6 +294,8 @@ export default function RemovalPricingPage() {
 
   // Track if we're setting a tier to prevent reset interference
   const isSettingTier = React.useRef(false);
+  // Track if we're about to navigate to prevent reset interference
+  const isNavigating = React.useRef(false);
   
   // Handle tier selection
   const handleTierSelect = React.useCallback((tier: 'standard' | 'premium') => {
@@ -383,13 +385,14 @@ export default function RemovalPricingPage() {
 
   // Reset tier selection when services or crew size changes
   React.useEffect(() => {
-    if (activeQuoteType && activeQuote?.pricingTier && !isSettingTier.current) {
+    if (activeQuoteType && activeQuote?.pricingTier && !isSettingTier.current && !isNavigating.current) {
       console.log('🔄 Resetting pricing tier due to changes:', {
         numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle,
         numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble,
         selectedCrewSize,
         currentPricingTier: activeQuote?.pricingTier,
-        isSettingTier: isSettingTier.current
+        isSettingTier: isSettingTier.current,
+        isNavigating: isNavigating.current
       });
       
       // Reset pricing tier when services/crew change
@@ -397,7 +400,7 @@ export default function RemovalPricingPage() {
         pricingTier: undefined
       });
     }
-  }, [activeQuote?.numberOfItemsToDismantle, activeQuote?.numberOfItemsToAssemble, selectedCrewSize, activeQuoteType, updateQuote]);
+  }, [activeQuote?.numberOfItemsToDismantle, activeQuote?.numberOfItemsToAssemble, activeQuoteType, updateQuote]);
 
   // Recalculate pricing when selections change (no API call needed)
   React.useEffect(() => {
@@ -439,7 +442,10 @@ export default function RemovalPricingPage() {
 
   // Handle continue to next step
   const handleContinue = () => {
-    if (!selectedCrewSize) return;
+    if (!selectedCrewSize || !selectedTier) return;
+
+    // Set navigation flag to prevent tier reset
+    isNavigating.current = true;
 
     // Save the current selections to the quote context
     if (activeQuoteType) {
@@ -447,9 +453,8 @@ export default function RemovalPricingPage() {
         driverCount: selectedCrewSize,
         numberOfItemsToDismantle: dismantleCount,
         numberOfItemsToAssemble: assemblyCount,
-        // Add service level and estimated hours if you want to track them
-        // pricingTier: selectedServiceLevel,
-        // estimatedHours: estimatedHours
+        pricingTier: selectedTier,
+        totalCost: activeQuote?.totalCost
       });
     }
 
