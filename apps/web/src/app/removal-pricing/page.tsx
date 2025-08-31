@@ -54,9 +54,21 @@ export default function RemovalPricingPage() {
 
   // Crew size and service state
   const [selectedCrewSize, setSelectedCrewSize] = React.useState<number>(2);
-  const [dismantleCount, setDismantleCount] = React.useState<number>(0);
-  const [assemblyCount, setAssemblyCount] = React.useState<number>(0);
-  const [selectedTier, setSelectedTier] = React.useState<'standard' | 'premium' | null>(null);
+  
+  // Use quote data from backend instead of local state
+  const selectedTier = activeQuote?.pricingTier;
+  const dismantleCount = activeQuote?.numberOfItemsToDismantle || 0;
+  const assemblyCount = activeQuote?.numberOfItemsToAssemble || 0;
+  
+  // Debug logging for selectedTier
+  React.useEffect(() => {
+    console.log('🔍 selectedTier changed:', {
+      selectedTier,
+      activeQuotePricingTier: activeQuote?.pricingTier,
+      hasActiveQuote: !!activeQuote,
+      activeQuoteKeys: activeQuote ? Object.keys(activeQuote) : []
+    });
+  }, [selectedTier, activeQuote?.pricingTier]);
 
 
 
@@ -118,10 +130,7 @@ export default function RemovalPricingPage() {
     return rateLeaf?.hourlyAfter || 0;
   }, [pricingData]);
 
-  // Handle tier selection
-  const handleTierSelect = React.useCallback((tier: 'standard' | 'premium') => {
-    setSelectedTier(tier);
-  }, []);
+
 
   // Calculate total volume and recommend crew size
   const totalVolume = React.useMemo(() => {
@@ -155,8 +164,6 @@ export default function RemovalPricingPage() {
   React.useEffect(() => {
     if (isHydrated && activeQuote) {
       setSelectedCrewSize(activeQuote.driverCount || recommendedCrewSize);
-      setDismantleCount(activeQuote.numberOfItemsToDismantle || 0);
-      setAssemblyCount(activeQuote.numberOfItemsToAssemble || 0);
     }
   }, [isHydrated, activeQuote, recommendedCrewSize]);
 
@@ -285,6 +292,49 @@ export default function RemovalPricingPage() {
     }
   }, [pricingData, selectedCrewSize, dismantleCount, assemblyCount]);
 
+  // Track if we're setting a tier to prevent reset interference
+  const isSettingTier = React.useRef(false);
+  
+  // Handle tier selection
+  const handleTierSelect = React.useCallback((tier: 'standard' | 'premium') => {
+    if (!activeQuoteType) return;
+    
+    console.log('🎯 handleTierSelect called with tier:', tier);
+    
+    // Set flag to prevent reset interference
+    isSettingTier.current = true;
+    
+    // Calculate total cost for selected tier
+    const currentPricing = calculateCurrentPricing();
+    if (!currentPricing) {
+      console.log('❌ No current pricing available');
+      isSettingTier.current = false;
+      return;
+    }
+    
+    const selectedPricing = tier === 'premium' ? currentPricing.premium : currentPricing.standard;
+    const totalCost = selectedPricing.totalPrice;
+    
+    console.log('💰 Selected pricing:', {
+      tier,
+      totalCost,
+      selectedPricing
+    });
+    
+    // Update quote with new tier and total cost
+    updateQuote(activeQuoteType, {
+      pricingTier: tier,
+      totalCost: totalCost
+    });
+    
+    console.log('✅ Quote updated with tier:', tier, 'and totalCost:', totalCost);
+    
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isSettingTier.current = false;
+    }, 100);
+  }, [activeQuoteType, calculateCurrentPricing, updateQuote]);
+
   // Track if we've already fetched pricing data to prevent duplicate calls
   const hasFetchedPricing = React.useRef(false);
 
@@ -331,6 +381,24 @@ export default function RemovalPricingPage() {
     }
   }, [isHydrated, activeQuote, fetchPricingData]);
 
+  // Reset tier selection when services or crew size changes
+  React.useEffect(() => {
+    if (activeQuoteType && activeQuote?.pricingTier && !isSettingTier.current) {
+      console.log('🔄 Resetting pricing tier due to changes:', {
+        numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle,
+        numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble,
+        selectedCrewSize,
+        currentPricingTier: activeQuote?.pricingTier,
+        isSettingTier: isSettingTier.current
+      });
+      
+      // Reset pricing tier when services/crew change
+      updateQuote(activeQuoteType, {
+        pricingTier: undefined
+      });
+    }
+  }, [activeQuote?.numberOfItemsToDismantle, activeQuote?.numberOfItemsToAssemble, selectedCrewSize, activeQuoteType, updateQuote]);
+
   // Recalculate pricing when selections change (no API call needed)
   React.useEffect(() => {
     // This will trigger a re-render with updated pricing
@@ -347,19 +415,21 @@ export default function RemovalPricingPage() {
 
   // Handle service quantity changes
   const handleDismantleChange = (count: number) => {
+    if (!activeQuoteType) return;
+    
     const newCount = Math.max(0, count);
-    setDismantleCount(newCount);
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { numberOfItemsToDismantle: newCount });
-    }
+    updateQuote(activeQuoteType, {
+      numberOfItemsToDismantle: newCount
+    });
   };
 
   const handleAssemblyChange = (count: number) => {
+    if (!activeQuoteType) return;
+    
     const newCount = Math.max(0, count);
-    setAssemblyCount(newCount);
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { numberOfItemsToAssemble: newCount });
-    }
+    updateQuote(activeQuoteType, {
+      numberOfItemsToAssemble: newCount
+    });
   };
 
   // Handle additional service changes

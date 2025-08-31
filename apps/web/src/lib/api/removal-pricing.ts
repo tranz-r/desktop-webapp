@@ -124,9 +124,16 @@ export function calculateTotalPrice(
 } {
   const basePrice = calculateBasePrice(crewSize, serviceLevel, hours, pricingData);
   
-  // Additional service costs (using dynamic rates from backend)
-  const dismantleCost = dismantleCount * (pricingData.extraPrice.dismantle?.price || 0);
-  const assemblyCost = assemblyCount * (pricingData.extraPrice.assembly?.price || 0);
+  // Additional service costs - only for Standard tier
+  let dismantleCost = 0;
+  let assemblyCost = 0;
+  
+  if (serviceLevel === 'standard') {
+    // Standard tier: add dismantle and assembly costs
+    dismantleCost = dismantleCount * (pricingData.extraPrice.dismantle?.price || 0);
+    assemblyCost = assemblyCount * (pricingData.extraPrice.assembly?.price || 0);
+  }
+  // Premium tier: dismantle and assembly costs are already included in base price
 
   const totalPriceWithoutVat = basePrice + dismantleCost + assemblyCost; 
   const totalPrice = totalPriceWithoutVat * 1.2;
