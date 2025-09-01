@@ -115,10 +115,12 @@ export default function CollectionDeliveryPage() {
     const oPc = form.watch("originPostcode");
     const dLine = form.watch("destinationLine1");
     const dPc = form.watch("destinationPostcode");
-    const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
 
-    if (!baseUrl) {
-      console.error("❌ NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL is not configured!");
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+    const distanceApiUrl = `${apiBaseUrl}/api/v1/address/distance`;
+
+    if (!apiBaseUrl) {
+      console.error("❌ NEXT_PUBLIC_API_BASE_URL is not configured!");
       return;
     }
 
@@ -130,7 +132,7 @@ export default function CollectionDeliveryPage() {
     }
 
     const controller = new AbortController();
-    const url = new URL(baseUrl);
+    const url = new URL(distanceApiUrl);
     url.searchParams.set("originAddress", `${oLine}`);
     url.searchParams.set("destinationAddress", `${dLine}`);
 
@@ -227,7 +229,8 @@ export default function CollectionDeliveryPage() {
           <div className="container mx-auto px-4">
             {/* Quote Reference Banner - Subtle display */}
             <div className="mb-6 flex justify-center">
-              <QuoteReferenceBanner variant="subtle" />
+              {/* <QuoteReferenceBanner variant="subtle" /> */}
+              <QuoteReferenceBanner variant="minimal" />
             </div>
             
             <Form {...form}>

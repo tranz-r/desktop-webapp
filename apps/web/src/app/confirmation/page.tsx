@@ -380,6 +380,22 @@ function ConfirmationContent() {
     }
   }, [hasPaymentSucceeded, effectiveQuote, payment?.bookingId, refFromUrl, updatePayment]);
 
+  // Update payment status in QuoteContext when payment succeeds to mark Journey Stepper as complete
+  React.useEffect(() => {
+    if (hasPaymentSucceeded && effectiveQuoteType) {
+      console.log('[confirmation] Payment succeeded, updating payment status to paid');
+      
+      // Update the quote with payment success status
+      updateQuote(effectiveQuoteType, { 
+        paymentStatus: 'paid',
+        payment: {
+          ...effectiveQuote?.payment,
+          status: 'paid'
+        }
+      });
+    }
+  }, [hasPaymentSucceeded, effectiveQuoteType, effectiveQuote?.payment, updateQuote]);
+
   // UI for each payment state
   let mainContent;
   

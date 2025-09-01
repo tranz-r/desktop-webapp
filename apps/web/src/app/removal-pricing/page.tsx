@@ -486,7 +486,7 @@ export default function RemovalPricingPage() {
 
             {/* Quote Reference Banner */}
             <div className="flex justify-center">
-              <QuoteReferenceBanner variant="subtle" />
+              <QuoteReferenceBanner variant="minimal" />
             </div>
 
             {/* Service Info */}

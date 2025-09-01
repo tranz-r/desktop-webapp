@@ -81,9 +81,10 @@ export default function SummaryPage() {
     try {
       setLoading(true);
       // Branch A only: Payment Element via PaymentIntent clientSecret from backend (.NET)
-      const targetUrl = process.env.NEXT_PUBLIC_PAYMENT_INIT_URL;
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const targetUrl = `${apiBaseUrl}/api/v1/checkout/payment-sheet`;
       console.log('Initializing payment with URL:', targetUrl);
-      if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_PAYMENT_INIT_URL for payment initialization');
+      if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL for payment initialization');
       
       // Prepare the payload for the backend
       let payload = {

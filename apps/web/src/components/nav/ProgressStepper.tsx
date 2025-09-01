@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Check, Package, Truck, MapPin, CreditCard, FileCheck, ArrowRight } from 'lucide-react';
+import { useQuote } from '@/contexts/QuoteContext';
 
 const STEPS = [
   { path: '/inventory', label: 'Inventory', icon: Package },
@@ -35,9 +36,15 @@ function normalizePath(p: string) {
 export default function ProgressStepper() {
   const pathname = usePathname();
   const router = useRouter();
+  const { activeQuoteType, quotes } = useQuote();
   const normalized = normalizePath(pathname);
   const currentIndex = Math.max(0, STEPS.findIndex(s => normalized.startsWith(s.path)));
   const percent = ((currentIndex + 1) / STEPS.length) * 100;
+  
+  // Check if payment is completed using QuoteContext
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const isPaymentCompleted = activeQuote?.paymentStatus === 'paid' || 
+                            activeQuote?.payment?.status === 'paid';
 
   return (
     <div className="w-full bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm fixed top-16 lg:top-20 left-0 right-0 z-40">
@@ -48,7 +55,8 @@ export default function ProgressStepper() {
           {STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isActive = idx === currentIndex;
-            const isCompleted = idx < currentIndex;
+            const isCompleted = idx < currentIndex || 
+                              (idx === currentIndex && step.path === '/confirmation' && isPaymentCompleted);
             const isUpcoming = idx > currentIndex;
 
             return (
@@ -81,7 +89,7 @@ export default function ProgressStepper() {
                         : 'bg-gray-100 text-gray-400 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                     }
                   `}>
-                    {isActive && (
+                    {isActive && !isCompleted && (
                       <span
                         aria-hidden="true"
                         className="absolute inset-0 rounded-full ring-2 lg:ring-4 ring-primary-400 animate-ping pointer-events-none"
