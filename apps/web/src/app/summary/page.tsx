@@ -33,17 +33,6 @@ export default function SummaryPage() {
   const deliveryDate = activeQuote?.deliveryDate;
   
   // Helper functions to update quote data
-  const setTotalCost = (totalCost: number) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { totalCost });
-    }
-  };
-  
-  const updatePayment = (paymentData: any) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, { payment: { ...activeQuote?.payment, ...paymentData } });
-    }
-  };
   const [loading, setLoading] = React.useState(false);
 
   // Note: Removed automatic cost persistence useEffect to prevent infinite loops
@@ -55,96 +44,14 @@ export default function SummaryPage() {
     return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  function toBackendVanType(v?: string) {
-    if (!v) return undefined as unknown as string;
-    const map: Record<string, string> = {
-      smallVan: 'SmallVan',
-      mediumVan: 'MediumVan',
-      largeVan: 'LargeVan',
-      xlLuton: 'XlLuton',
-    };
-    return map[v] ?? v;
-  }
-
-  function toBackendPricingTier(t?: string) {
-    if (!t) return undefined as unknown as string;
-    const map: Record<string, string> = {
-      eco: 'Eco',
-      ecoPlus: 'EcoPlus',
-      standard: 'Standard',
-      premium: 'Premium',
-    };
-    return map[t] ?? t;
-  }
-
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      // Branch A only: Payment Element via PaymentIntent clientSecret from backend (.NET)
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const targetUrl = `${apiBaseUrl}/api/v1/checkout/payment-sheet`;
-      console.log('Initializing payment with URL:', targetUrl);
-      if (!targetUrl) throw new Error('Missing NEXT_PUBLIC_API_BASE_URL for payment initialization');
-      
-      // Prepare the payload for the backend
-      let payload = {
-        van: toBackendVanType(selectedVan),
-        driverCount,
-        distanceMiles: distanceMiles || 0,
-        origin: {
-          line1: origin?.line1 || '',
-          postcode: origin?.postcode || '',
-          floor: origin?.floor || 0,
-          hasElevator: origin?.hasElevator || false,
-        },
-        destination: {
-          line1: destination?.line1 || '',
-          postcode: destination?.postcode || '',
-          floor: destination?.floor || 0,
-          hasElevator: destination?.hasElevator || false,
-        },
-        pricingTier: toBackendPricingTier(pricingTier),
-        collectionDate: collectionDate || '',
-        customer: {
-          fullName: customer?.fullName || '',
-          email: customer?.email || '',
-          phone: customer?.phone || '',
-          billingAddress: {
-            line1: customer?.billingAddress?.line1 || '',
-            postcode: customer?.billingAddress?.postcode || '',
-          },
-        },
-        cost: {
-          total: totalCost || 0,
-        },
-      };
-
-      console.log('Sending payload to backend:', payload);
-
-      const res = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('Failed to create checkout session');
-      const data = await res.json();
-      // Expect paymentIntent only (Payment Element flow)
-      if (data?.paymentIntent) {
-        // Store the PaymentIntentId in context for secure client secret retrieval
-        updatePayment({ paymentIntentId: data.paymentIntentId });
-        
-        // Navigate to /pay with only the booking reference
-        const ref = activeQuote?.payment?.bookingId ? `?ref=${encodeURIComponent(activeQuote.payment.bookingId)}` : '';
-        router.push(`/pay${ref}`);
-        return;
-      }
-      throw new Error('Payment init did not return paymentIntent (Payment Element flow only)');
+      // Navigate to /pay where users will choose payment option and intents will be created on-demand
+      const ref = activeQuote?.payment?.bookingId ? `?ref=${encodeURIComponent(activeQuote.payment.bookingId)}` : '';
+      router.push(`/pay${ref}`);
     } catch (e) {
       console.error(e);
-      // TODO: Show toast using shadcn toast
     } finally {
       setLoading(false);
     }

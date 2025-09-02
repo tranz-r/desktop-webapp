@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import { useQuote } from '@/contexts/QuoteContext';
+import Spinner from '@/components/ui/spinner';
 
 import { API_BASE_URL } from '@/lib/api/config';
 import { useRouter } from 'next/navigation';
@@ -46,6 +47,14 @@ function PayPageContent() {
   const [paymentStatus, setPaymentStatus] = React.useState<string>('');
   const [isPaymentCompleted, setIsPaymentCompleted] = React.useState(false);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = React.useState(false);
+  const [initDelayDone, setInitDelayDone] = React.useState(false);
+  const [hasAttemptedPaymentInit, setHasAttemptedPaymentInit] = React.useState(false);
+
+  // Grace delay to avoid flashing errors while initializing client/Stripe
+  React.useEffect(() => {
+    const t = setTimeout(() => setInitDelayDone(true), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   // Pull stable references we actually need (avoid depending on whole state object)
   const scheduleDateISO = activeQuote?.collectionDate;
@@ -118,6 +127,7 @@ function PayPageContent() {
     };
 
     if (isHydrated && paymentIntentId) {
+      setHasAttemptedPaymentInit(true);
       checkPaymentStatus();
     } else if (isHydrated) {
       setIsLoadingClientSecret(false);
@@ -149,6 +159,7 @@ function PayPageContent() {
     };
 
     if (isHydrated && paymentIntentId && !isPaymentCompleted) {
+      setHasAttemptedPaymentInit(true);
       fetchClientSecret();
     } else if (isHydrated) {
       setIsLoadingClientSecret(false);
@@ -206,6 +217,7 @@ function PayPageContent() {
     setIsCreatingIntent(true);
     
     try {
+      setHasAttemptedPaymentInit(true);
       // OPTIMIZATION: Save quote to backend before payment to ensure data persistence
       console.log('Saving quote to backend before payment...');
       
@@ -393,6 +405,116 @@ function PayPageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated]);
 
+  // Save quote to backend when page loads and required data is available
+  React.useEffect(() => {
+    if (!isHydrated) return;
+    if (!activeQuote?.vanType || !origin || !destination) {
+      console.log('[pay] Waiting for required data before saving quote...');
+      return;
+    }
+    
+    console.log('[pay] Page loaded with required data, saving quote to backend...');
+    
+    // Save quote data directly without creating payment intents
+    const saveQuoteData = async () => {
+      try {
+        const currentEtag = getCurrentEtag();
+        console.log('[pay] Using ETag for backend save:', currentEtag || 'none (new quote)');
+        
+        const quotePayload = {
+          quote: {
+            sessionId: null,
+            quoteReference: activeQuote.quoteReference || null,
+            type: activeQuoteType === 'send' ? 'Send' : activeQuoteType === 'receive' ? 'Receive' : 'Removals',
+            vanType: toBackendVanType(activeQuote.vanType as string),
+            driverCount: driverCount ?? 1,
+            distanceMiles: Math.max(0, distanceMiles ?? 0),
+            numberOfItemsToDismantle: activeQuote.numberOfItemsToDismantle || 0,
+            numberOfItemsToAssemble: activeQuote.numberOfItemsToAssemble || 0,
+            origin: origin ? {
+              line1: origin.line1 || '',
+              line2: origin.line2 || '',
+              city: origin.city || '',
+              postCode: origin.postcode || '',
+              country: origin.country || 'United Kingdom',
+              hasElevator: Boolean(origin.hasElevator),
+              floor: origin.floor ?? 0
+            } : undefined,
+            destination: destination ? {
+              line1: destination.line1 || '',
+              line2: destination.line2 || '',
+              city: destination.city || '',
+              postCode: destination.postcode || '',
+              country: destination.country || 'United Kingdom',
+              hasElevator: Boolean(destination.hasElevator),
+              floor: destination.floor ?? 0
+            } : undefined,
+            schedule: {
+              dateISO: scheduleDateISO || undefined,
+              deliveryDateISO: activeQuote.deliveryDate || undefined,
+              hours: activeQuote.hours || undefined,
+              flexibleTime: activeQuote.flexibleTime || undefined,
+              timeSlot: activeQuote.timeSlot || undefined
+            },
+            pricing: {
+              pricingTier: toBackendPricingTier(pricingTier),
+              totalCost: totalCost || undefined,
+              pickUpDropOffPrice: activeQuote.pickUpDropOffPrice || undefined
+            },
+            items: (activeQuote.items || []).map(item => ({
+              name: item.name || '',
+              width: item.widthCm || undefined,
+              height: item.heightCm || undefined,
+              depth: item.lengthCm || undefined,
+              quantity: item.quantity || 1
+            })),
+            payment: {
+              status: 'pending',
+              paymentType: 'Full',
+              depositAmount: undefined
+            },
+            version: currentEtag ? parseInt(currentEtag) : 0
+          },
+          customer: customer ? {
+            fullName: customer.fullName || '',
+            email: customer.email || '',
+            phoneNumber: customer.phone || '',
+            role: null,
+            billingAddress: customer.billingAddress ? {
+              line1: customer.billingAddress.line1 || '',
+              line2: customer.billingAddress.line2 || '',
+              city: customer.billingAddress.city || '',
+              postCode: customer.billingAddress.postcode || '',
+              country: customer.billingAddress.country || 'United Kingdom',
+              hasElevator: customer.billingAddress.hasElevator || false,
+              floor: customer.billingAddress.floor || 0
+            } : undefined
+          } : undefined,
+          ETag: currentEtag || "0"
+        };
+
+        const saveResponse = await fetch(`${API_BASE_URL}/api/guest/quote`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(quotePayload)
+        });
+
+        if (!saveResponse.ok) {
+          console.error('[pay] Failed to save quote to backend:', saveResponse.status, saveResponse.statusText);
+          return;
+        }
+
+        const saveResult = await saveResponse.json();
+        console.log('[pay] Quote saved successfully to backend:', saveResult);
+      } catch (error) {
+        console.error('[pay] Error saving quote to backend:', error);
+      }
+    };
+
+    saveQuoteData();
+  }, [isHydrated, activeQuote?.vanType, origin, destination, activeQuoteType, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, getCurrentEtag]);
+
   // Auto-select "Pay in full" by default and create payment intent
   React.useEffect(() => {
     if (isHydrated && !clientSecret && !isCreatingIntent && selectedOption === 'full') {
@@ -410,14 +532,14 @@ function PayPageContent() {
       }
     };
 
-    const handlePopState = (event: PopStateEvent) => {
-      if (isPaymentCompleted) {
-        // If user navigates back and payment is completed, redirect to confirmation
-        const confirmationUrl = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`;
-        window.history.pushState(null, '', confirmationUrl);
-        router.push(confirmationUrl);
-      }
-    };
+          const handlePopState = (event: PopStateEvent) => {
+        if (isPaymentCompleted) {
+          // If user navigates back and payment is completed, redirect to confirmation with replace
+          const confirmationUrl = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`;
+          window.history.pushState(null, '', confirmationUrl);
+          router.replace(confirmationUrl); // Changed from push to replace
+        }
+      };
 
     if (isPaymentCompleted) {
       window.addEventListener('beforeunload', handleBeforeUnload);
@@ -467,11 +589,7 @@ function PayPageContent() {
               <CardTitle>Secure Payment</CardTitle>
             </CardHeader>
             <CardContent>
-              {isCheckingPaymentStatus && (
-                <div className="text-sm text-blue-600">
-                  Checking payment status...
-                </div>
-              )}
+              {/* Removed busy text during payment status check for cleaner UX */}
               
               {isPaymentCompleted && (
                 <div className="mb-6">
@@ -490,14 +608,14 @@ function PayPageContent() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button 
-                        onClick={() => router.push(`/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`)}
+                        onClick={() => router.replace(`/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`)}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         View Confirmation
                       </Button>
                       <Button 
                         variant="outline"
-                        onClick={() => router.push('/')}
+                        onClick={() => router.replace('/')}
                       >
                         Return Home
                       </Button>
@@ -508,11 +626,7 @@ function PayPageContent() {
               
               {!isPaymentCompleted && (
                 <>
-                  {isLoadingClientSecret && (
-                    <div className="text-sm text-blue-600">
-                      Loading payment details...
-                    </div>
-                  )}
+                  {/* Removed initial spinner/text to avoid visible flicker */}
                   <div className="space-y-4 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <button
@@ -612,12 +726,7 @@ function PayPageContent() {
                       <div className="text-sm text-blue-600">Preparing your payment…</div>
                     )}
                   </div>
-                  {!isLoadingClientSecret && !clientSecret && !paymentIntentId && (
-                    <div className="text-sm text-red-600">
-                      Missing payment intent. Please restart checkout.
-                    </div>
-                  )}
-                  {!isLoadingClientSecret && !clientSecret && paymentIntentId && (
+                  {!isLoadingClientSecret && initDelayDone && isHydrated && hasAttemptedPaymentInit && !clientSecret && paymentIntentId && (
                     <div className="text-sm text-red-600">
                       Failed to load payment details. Please try again.
                     </div>

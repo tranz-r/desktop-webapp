@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense } from 'react';
 import { useQuote } from '@/contexts/QuoteContext';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
@@ -154,9 +154,11 @@ function ConfirmationContent() {
     quotes, 
     updateQuote,
     isHydrated,
-    getQuoteReference
+    getQuoteReference,
+    resetAllQuotes
   } = useQuote();
   const params = useSearchParams();
+  const router = useRouter();
   const refFromUrl = params.get('ref');
   
   // Check for Stripe redirect parameters (payment_intent_client_secret)
@@ -166,6 +168,64 @@ function ConfirmationContent() {
   const [isFetchingClientSecret, setIsFetchingClientSecret] = React.useState(false);
   const [isPaymentAlreadyCompleted, setIsPaymentAlreadyCompleted] = React.useState(false);
   const [stripeRedirectStatus, setStripeRedirectStatus] = React.useState<'processing' | 'succeeded' | 'failed' | null>(null);
+  
+  // State to track context clearing process
+  const [isClearingContext, setIsClearingContext] = React.useState(false);
+  
+  // Redirecting indicator state
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
+  
+  // Ref to prevent multiple quote updates
+  const hasUpdatedQuoteRef = React.useRef(false);
+  
+  // Ref to store debounce timeout
+  const updateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to prevent multiple context clearing attempts
+  const hasClearedContextRef = React.useRef(false);
+  
+  // Unified function to clear context and redirect to home
+  const clearContextAndRedirect = React.useCallback(() => {
+    if (hasClearedContextRef.current) {
+      console.log('[confirmation] Context already cleared, skipping...');
+      return;
+    }
+    
+    console.log('[confirmation] Clearing context and redirecting to home...');
+    hasClearedContextRef.current = true;
+    setIsRedirecting(true);
+    setIsClearingContext(true);
+    
+    try {
+      // Clear all quote data from context and IndexedDB
+      console.log('[confirmation] Calling resetAllQuotes() to clear context and IndexedDB...');
+      resetAllQuotes();
+      console.log('[confirmation] ✅ Quote context cleared successfully');
+      
+      // Redirect to home page using hard replace to prevent back navigation
+      setTimeout(() => {
+        console.log('[confirmation] Redirecting to home page...');
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.replace('/');
+        } else {
+          router.replace('/');
+        }
+      }, 500); // Small delay to ensure context is cleared
+      
+    } catch (error) {
+      console.error('[confirmation] ❌ Error clearing quote context:', error);
+      // Still redirect even if clearing fails
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.replace('/');
+        } else {
+          router.replace('/');
+        }
+      }, 500);
+    } finally {
+      setIsClearingContext(false);
+    }
+  }, [resetAllQuotes, router]);
   
   // Handle Stripe redirects - this is the key fix!
   React.useEffect(() => {
@@ -231,7 +291,8 @@ function ConfirmationContent() {
   // Determine the effective payment status - prioritize Stripe redirect status
   const effectivePaymentStatus = stripeRedirectStatus || status;
   const isPaymentProcessing = effectivePaymentStatus === 'processing';
-  const hasPaymentSucceeded = effectivePaymentStatus === 'succeeded' || isPaymentAlreadyCompleted;
+  const isPaidInContext = (effectiveQuote?.paymentStatus === 'paid') || (effectiveQuote?.payment?.status === 'paid');
+  const hasPaymentSucceeded = (effectivePaymentStatus === 'succeeded') || isPaymentAlreadyCompleted || isPaidInContext;
 
   // Immediate debugging when component mounts
   console.log('[confirmation] Component mounted with:', {
@@ -383,18 +444,80 @@ function ConfirmationContent() {
   // Update payment status in QuoteContext when payment succeeds to mark Journey Stepper as complete
   React.useEffect(() => {
     if (hasPaymentSucceeded && effectiveQuoteType) {
-      console.log('[confirmation] Payment succeeded, updating payment status to paid');
+      // Prevent multiple updates that could cause loops
+      if (hasUpdatedQuoteRef.current) {
+        console.log('[confirmation] Quote already updated, skipping to prevent loop');
+        return;
+      }
       
-      // Update the quote with payment success status
-      updateQuote(effectiveQuoteType, { 
-        paymentStatus: 'paid',
-        payment: {
-          ...effectiveQuote?.payment,
-          status: 'paid'
-        }
+      // Additional check: if the quote is already marked as paid, skip update
+      if (effectiveQuote?.paymentStatus === 'paid' && effectiveQuote?.payment?.status === 'paid') {
+        console.log('[confirmation] Quote already marked as paid, skipping update');
+        hasUpdatedQuoteRef.current = true;
+        return;
+      }
+      
+      console.log('[confirmation] Payment succeeded, updating payment status to paid');
+      console.log('[confirmation] Current quote state:', {
+        paymentStatus: effectiveQuote?.paymentStatus,
+        paymentStatusDetail: effectiveQuote?.payment?.status,
+        hasUpdatedQuoteRef: hasUpdatedQuoteRef.current
       });
+      
+      // Clear any existing timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Debounce the update to prevent rapid successive calls
+      updateTimeoutRef.current = setTimeout(() => {
+        // Mark that we've updated this quote
+        hasUpdatedQuoteRef.current = true;
+        
+        // Update the quote with payment success status
+        updateQuote(effectiveQuoteType, { 
+          paymentStatus: 'paid',
+          payment: {
+            ...effectiveQuote?.payment,
+            status: 'paid'
+          }
+        });
+      }, 100); // 100ms debounce
     }
   }, [hasPaymentSucceeded, effectiveQuoteType, effectiveQuote?.payment, updateQuote]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Removed 20s auto-redirect countdown per request
+
+  // Prevent navigating back to confirmation after success: add popstate guard
+  React.useEffect(() => {
+    if (!hasPaymentSucceeded) return;
+    const onPopState = () => {
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.replace('/');
+      }
+    };
+    // Push a marker state so the immediate back lands here and triggers popstate
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ fromConfirmation: true }, '', window.location.href);
+      } catch {}
+      window.addEventListener('popstate', onPopState);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('popstate', onPopState);
+      }
+    };
+  }, [hasPaymentSucceeded]);
 
   // UI for each payment state
   let mainContent;
@@ -531,6 +654,48 @@ function ConfirmationContent() {
                 <div className="mt-8 text-center text-base text-muted-foreground">
                   <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. Your payment method has been saved and will be charged automatically 72 hours before your collection date.
                 </div>
+                
+                {/* Return Home Button */}
+                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-center space-y-3">
+                    <div className="text-green-800 text-sm">
+                      <strong>You're all set.</strong>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" hidden={!isRedirecting}></div>
+                    </div>
+                    <button
+                      onClick={clearContextAndRedirect}
+                      className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    >
+                      Return Home Now
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Redirecting State */}
+                {isRedirecting && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Redirecting to home page...</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Context Clearing Indicator */}
+                {isClearingContext && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Preparing fresh start:</strong> Clearing your booking data to prepare for future bookings...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
@@ -652,6 +817,48 @@ function ConfirmationContent() {
                 <div className="mt-8 text-center text-base text-muted-foreground">
                   <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. If you have questions, please call us or reply to your confirmation email.
                 </div>
+                
+                {/* Return Home Button */}
+                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-center space-y-3">
+                    <div className="text-green-800 text-sm">
+                      <strong>You're all set.</strong>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" hidden={!isRedirecting}></div>
+                    </div>
+                    <button
+                      onClick={clearContextAndRedirect}
+                      className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    >
+                      Return To Home Page
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Redirecting State */}
+                {isRedirecting && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Redirecting to home page...</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Context Clearing Indicator */}
+                {isClearingContext && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Preparing fresh start:</strong> Clearing your booking data to prepare for future bookings...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
@@ -775,8 +982,24 @@ function ConfirmationContent() {
           </CardContent>
         </Card>
       );
-    } else if (!clientSecret && !isFetchingClientSecret) {
-      // Show message when no client secret is available
+    } else if (!clientSecret && !isFetchingClientSecret && !isHydrated) {
+      // Show loading state while hydrating instead of "not found"
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Loading</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Loading your booking details</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">Please wait while we load your booking information...</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    } else if (!clientSecret && !isFetchingClientSecret && isHydrated) {
+      // Only show "not found" when we're hydrated and still don't have data
       mainContent = (
         <Card className="shadow-xl border-primary-200">
           <CardHeader className="flex flex-col items-center gap-2">

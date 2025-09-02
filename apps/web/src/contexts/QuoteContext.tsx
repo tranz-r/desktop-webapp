@@ -772,9 +772,12 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
   }, [state.activeQuoteType, saveToIndexDB]);
 
   const resetAllQuotes = useCallback(async () => {
+    console.log('[QuoteContext] Resetting all quotes and clearing context completely...');
+    
     setState(prev => {
       const newState = {
         ...prev,
+        activeQuoteType: null, // Reset active quote type
         quotes: {
           [QuoteOption.Send]: undefined,
           [QuoteOption.Receive]: undefined,
@@ -783,9 +786,15 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
         sharedData: {
           ...prev.sharedData,
           distanceMiles: undefined
+        },
+        metadata: {
+          ...prev.metadata,
+          lastActiveQuoteType: undefined, // Reset last active quote type
+          lastActivity: new Date().toISOString()
         }
       };
 
+      console.log('[QuoteContext] State reset to:', newState);
       return newState;
     });
 
@@ -797,10 +806,20 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
         [QuoteOption.Removals]: undefined
       };
       await saveToIndexDB(emptyQuotes);
+      
+      // Also clear metadata from IndexedDB
+      const resetMetadata = {
+        lastActiveQuoteType: undefined,
+        lastActivity: new Date().toISOString(),
+        version: '1.0.0'
+      };
+      await saveMetadataToIndexDB(resetMetadata);
+      
+      console.log('[QuoteContext] ✅ Successfully cleared all quotes and metadata from IndexedDB');
     } catch (error) {
       console.error('[QuoteContext] Failed to save to IndexedDB after resetting all quotes:', error);
     }
-  }, [saveToIndexDB]);
+  }, [saveToIndexDB, saveMetadataToIndexDB]);
 
   // Shared Data Management
   const updateSharedData = useCallback(async (data: Partial<SharedData>) => {
