@@ -313,47 +313,11 @@ function PayPageContent() {
       const saveData = await saveResponse.json();
       console.log('Quote successfully saved to backend with ETag:', saveData.etag);
 
-      // Now create the payment intent
-      const payload: any = {
-        van: toBackendVanType(activeQuote.vanType as string),
-        driverCount: driverCount ?? 1,
-        distanceMiles: Math.max(0, distanceMiles ?? 0),
-        origin: {
-          line1: origin?.line1 || '',
-          postcode: origin?.postcode || '',
-          floor: origin?.floor ?? 0,
-          hasElevator: Boolean(origin?.hasElevator),
-        },
-        destination: {
-          line1: destination?.line1 || '',
-          postcode: destination?.postcode || '',
-          floor: destination?.floor ?? 0,
-          hasElevator: Boolean(destination?.hasElevator),
-        },
-        pricingTier: toBackendPricingTier(pricingTier),
-        collectionDate: scheduleDateISO || new Date().toISOString(),
-        customer: {
-          fullName: customer?.fullName || '',
-          email: customer?.email || '',
-          phone: customer?.phone || '',
-          billingAddress: {
-            line1: customer?.billingAddress?.line1 || origin?.line1 || '',
-            postcode: customer?.billingAddress?.postcode || origin?.postcode || '',
-          },
-        },
-        cost: {
-          total: totalCost || 0,
-        },
-        paymentType: mapPaymentTypeToEnum(option),
-        depositPercentage: option === 'deposit' ? depositPercentage : undefined,
-        dueDate: scheduleDateISO || undefined,
-        bookingId: payment?.bookingId || undefined,
-      };
-
+      // Now create the payment intent using the same quote payload
       const resp = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-sheet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(quotePayload),
       });
       if (!resp.ok) {
         throw new Error(`Failed to create payment intent: ${resp.status}`);
@@ -367,6 +331,7 @@ function PayPageContent() {
         depositAmount: option === 'deposit' ? depositAmount : undefined,
         dueDate: scheduleDateISO,
       });
+      
       setClientSecret(data.paymentIntent);
     } catch (e) {
       console.error('Error in createPaymentForOption:', e);
