@@ -7,7 +7,8 @@ export function useQuoteBackend() {
   const transformToBackend = useCallback((quoteData: QuoteData, etag?: string): BackendQuote => {
 
     return {
-      sessionId: null, // Will be set by backend
+      id: quoteData.quoteId ?? null,
+      sessionId: quoteData.sessionId ?? null, // backend may set/refresh from cookie
       quoteReference: null, // Will be set by backend
       type: QuoteOption.Send, // Will be set by caller
       

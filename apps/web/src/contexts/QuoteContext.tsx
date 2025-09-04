@@ -249,6 +249,8 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
 
               // Transform backend quote to frontend format
               const frontendQuote: QuoteData = {
+                quoteId: backendQuote.id || undefined,
+                sessionId: backendQuote.sessionId || undefined,
                 quoteReference: backendQuote.quoteReference || undefined, // Extract from backend
                 items: backendQuote.items?.map(item => ({
                   id: item.id ? parseInt(item.id) : 0,
@@ -489,6 +491,8 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
             
             // Initialize the quote with the reference from backend
             const newQuote: QuoteData = {
+              quoteId: quoteResponse.quote.id || undefined,
+              sessionId: quoteResponse.quote.sessionId || undefined,
               quoteReference: quoteResponse.quote.quoteReference,
               items: [],
               origin: undefined,

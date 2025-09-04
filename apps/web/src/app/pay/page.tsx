@@ -228,7 +228,8 @@ function PayPageContent() {
       // Transform frontend data to backend contract format
       const quotePayload = {
         quote: {
-          sessionId: null, // Will be set by backend from cookie
+          id: activeQuote.quoteId || null,
+          sessionId: activeQuote.sessionId || null, // backend will still set/refresh from cookie
           quoteReference: activeQuote.quoteReference || null,
           type: activeQuoteType === 'send' ? 'Send' : activeQuoteType === 'receive' ? 'Receive' : 'Removals',
           vanType: toBackendVanType(activeQuote.vanType as string),
@@ -298,25 +299,11 @@ function PayPageContent() {
         ETag: currentEtag || "0" // Use stored ETag or default to "0"
       };
 
-      // Save quote to backend using the proper API endpoint
-      const saveResponse = await fetch(`${API_BASE_URL}/api/guest/quote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(quotePayload)
-      });
-
-      if (!saveResponse.ok) {
-        throw new Error(`Failed to save quote to backend: ${saveResponse.status}`);
-      }
-
-      const saveData = await saveResponse.json();
-      console.log('Quote successfully saved to backend with ETag:', saveData.etag);
-
-      // Now create the payment intent using the same quote payload
+      // Create the payment intent and save the quote
       const resp = await fetch(`${API_BASE_URL}/api/v1/checkout/payment-sheet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(quotePayload),
       });
       if (!resp.ok) {
@@ -388,7 +375,8 @@ function PayPageContent() {
         
         const quotePayload = {
           quote: {
-            sessionId: null,
+            id: activeQuote.quoteId || null,
+            sessionId: activeQuote.sessionId || null,
             quoteReference: activeQuote.quoteReference || null,
             type: activeQuoteType === 'send' ? 'Send' : activeQuoteType === 'receive' ? 'Receive' : 'Removals',
             vanType: toBackendVanType(activeQuote.vanType as string),

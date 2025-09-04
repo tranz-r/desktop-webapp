@@ -236,6 +236,10 @@ export enum QuoteOption {
 
 // Individual quote data structure for the context
 export interface QuoteData {
+  // Backend entity identifier (GUID as string)
+  quoteId?: string;
+  // Guest session identifier (from backend cookie/session)
+  sessionId?: string;
   // Quote Reference (from backend)
   quoteReference?: string;
   
