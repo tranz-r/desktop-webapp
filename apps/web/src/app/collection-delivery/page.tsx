@@ -14,6 +14,8 @@ import { useQuote } from "@/contexts/QuoteContext";
 import { AlertCircle, Loader2 } from "lucide-react";
 // Note: Removed unused imports - now using QuoteContext only
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
+import MapboxMap from '@/components/MapboxMap';
+import { useMemo } from 'react';
 
 export default function CollectionDeliveryPage() {
   const router = useRouter();
@@ -102,6 +104,23 @@ export default function CollectionDeliveryPage() {
     form.watch("originPostcode").trim().length > 0 &&
     form.watch("destinationLine1").trim().length > 0 &&
     form.watch("destinationPostcode").trim().length > 0;
+
+  // Memoize addresses to prevent unnecessary re-renders of MapboxMap
+  const addresses = useMemo(() => {
+    const originLine1 = form.watch("originLine1");
+    const originPostcode = form.watch("originPostcode");
+    const destinationLine1 = form.watch("destinationLine1");
+    const destinationPostcode = form.watch("destinationPostcode");
+    
+    // Only create addresses if all fields are filled and trimmed
+    if (originLine1?.trim() && originPostcode?.trim() && destinationLine1?.trim() && destinationPostcode?.trim()) {
+      return {
+        originAddress: `${originLine1.trim()}, ${originPostcode.trim()}`,
+        destinationAddress: `${destinationLine1.trim()}, ${destinationPostcode.trim()}`
+      };
+    }
+    return null;
+  }, [form.watch("originLine1"), form.watch("originPostcode"), form.watch("destinationLine1"), form.watch("destinationPostcode")]);
 
   // Note: Removed automatic origin sync useEffect to prevent infinite loops
   // Origin is now updated only when form is submitted
@@ -236,6 +255,18 @@ export default function CollectionDeliveryPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <CollectionDeliveryAddresses form={form} />
+                
+                {/* Interactive Map - Show when both addresses are available */}
+                {addresses && (
+                  <div className="mt-6">
+                    <MapboxMap 
+                      originAddress={addresses.originAddress}
+                      destinationAddress={addresses.destinationAddress}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+                
                 {/* Extra-cost notice similar to origin-destination */}
                 {((!form.watch("originElevator") && floorValueToNumber(form.watch("originFloor")) > 0) ||
                   (!form.watch("destinationElevator") && floorValueToNumber(form.watch("destinationFloor")) > 0)) && (

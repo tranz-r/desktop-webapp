@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import dynamicImport from "next/dynamic";
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const RouteLoadingOverlay = dynamicImport(() => import("@/components/RouteLoadingOverlay"), { ssr: false });
 
