@@ -8,6 +8,7 @@ interface MapboxMapProps {
   originAddress?: string;
   destinationAddress?: string;
   className?: string;
+  onDistanceUpdate?: (distanceMiles: number) => void;
 }
 
 interface MapRouteData {
@@ -18,7 +19,7 @@ interface MapRouteData {
   destination: { longitude: number; latitude: number; address: string };
 }
 
-export default function MapboxMap({ originAddress, destinationAddress, className }: MapboxMapProps) {
+export default function MapboxMap({ originAddress, destinationAddress, className, onDistanceUpdate }: MapboxMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -88,6 +89,11 @@ export default function MapboxMap({ originAddress, destinationAddress, className
         console.log('Route data received:', data);
         setRouteData(data);
         setError(null);
+        
+        // Pass distance back to parent component
+        if (onDistanceUpdate && data.distanceMiles) {
+          onDistanceUpdate(data.distanceMiles);
+        }
       } catch (err) {
         console.error('Route fetch error:', err);
         setError('Failed to load route');

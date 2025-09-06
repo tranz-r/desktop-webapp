@@ -128,59 +128,7 @@ export default function CollectionDeliveryPage() {
   // Note: Removed automatic destination sync useEffect to prevent infinite loops
   // Destination is now updated only when form is submitted
 
-  // Compute and persist distance when both addresses are set
-  React.useEffect(() => {
-    const oLine = form.watch("originLine1");
-    const oPc = form.watch("originPostcode");
-    const dLine = form.watch("destinationLine1");
-    const dPc = form.watch("destinationPostcode");
-
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-    const distanceApiUrl = `${apiBaseUrl}/api/v1/address/distance`;
-
-    if (!apiBaseUrl) {
-      console.error("❌ NEXT_PUBLIC_API_BASE_URL is not configured!");
-      return;
-    }
-
-    const hasOrigin = !!oLine && !!oPc;
-    const hasDest = !!dLine && !!dPc;
-
-    if (!hasOrigin || !hasDest) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const url = new URL(distanceApiUrl);
-    url.searchParams.set("originAddress", `${oLine}`);
-    url.searchParams.set("destinationAddress", `${dLine}`);
-
-    fetch(url.toString(), { signal: controller.signal })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
-        }
-      })
-      .then((miles) => {
-        const numeric = Number(miles);
-        if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
-          setDistanceMiles(numeric);
-          // Note: Removed quoteSession.setData to prevent unnecessary backend calls
-        }
-      })
-      .catch((error) => {
-        console.error("❌ Distance calculation failed:", error);
-      });
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("originLine1"),
-    form.watch("originPostcode"),
-    form.watch("destinationLine1"),
-    form.watch("destinationPostcode"),
-  ]);
+  // Note: Distance calculation removed - now handled by MapboxMap component via /api/v1/map/route
 
   // Rehydrate form values from saved context once hydrated
   React.useEffect(() => {
@@ -263,6 +211,7 @@ export default function CollectionDeliveryPage() {
                       originAddress={addresses.originAddress}
                       destinationAddress={addresses.destinationAddress}
                       className="w-full"
+                      onDistanceUpdate={setDistanceMiles}
                     />
                   </div>
                 )}
