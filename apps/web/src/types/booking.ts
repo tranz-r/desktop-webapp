@@ -47,6 +47,7 @@ export interface RateLeafDto {
   baseBlockHours: number;
   baseBlockPrice: number;
   hourlyAfter: number;
+  pickUpDropOff?: QuoteBreakdown;
 }
 
 export interface MoversDto {

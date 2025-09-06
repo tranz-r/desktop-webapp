@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useQuote } from '@/contexts/QuoteContext';
 
-import { Users, Wrench, Calculator, Info, Clock, PoundSterling } from 'lucide-react';
+import { Users, User, Wrench, Calculator, Info, Clock, PoundSterling } from 'lucide-react';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 import {
   fetchRemovalPricing,
@@ -515,7 +515,10 @@ export default function RemovalPricingPage() {
                       className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 1 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-lg sm:text-xl font-bold mb-2">1 Mover</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-5 w-5 text-primary fill-primary" />
+                        <div className="text-lg sm:text-xl font-bold">1 Mover</div>
+                      </div>
                       <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver only. Customer expected to lift, load, and unload.
                       </span>
@@ -529,7 +532,13 @@ export default function RemovalPricingPage() {
                       className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 2 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-lg sm:text-xl font-bold mb-2">2 Movers</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1">
+                          <User className="h-5 w-5 text-primary fill-primary" />
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="text-lg sm:text-xl font-bold">2 Movers</div>
+                      </div>
                       <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver & mate. Recommended for most moves.
                       </span>
@@ -543,7 +552,14 @@ export default function RemovalPricingPage() {
                       className={`flex flex-col items-center justify-center rounded-md border-2 bg-popover p-4 sm:p-6 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all ${selectedCrewSize === 3 ? 'border-primary bg-primary/5' : 'border-muted'
                         }`}
                     >
-                      <div className="text-lg sm:text-xl font-bold mb-2">3 Movers</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1">
+                          <User className="h-5 w-5 text-primary fill-primary" />
+                          <User className="h-5 w-5 text-primary" />
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="text-lg sm:text-xl font-bold">3 Movers</div>
+                      </div>
                       <span className="text-xs text-muted-foreground text-center mt-1 px-2">
                         Driver & 2 mates. For large or complex moves.
                       </span>
