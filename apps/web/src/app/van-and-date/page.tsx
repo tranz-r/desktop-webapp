@@ -57,18 +57,13 @@ export default function VanAndDatePage() {
   const [dateOpen, setDateOpen] = React.useState(false);
   const [dateError, setDateError] = React.useState<string | null>(null);
 
-  // Validate quote type and inventory
+  // Validate inventory
   React.useEffect(() => {
-    if (isHydrated && activeQuoteType !== 'removals') {
-      router.replace('/quote-option');
-      return;
-    }
-    
     if (!hasInventory(items.length)) {
       router.replace('/inventory');
       return;
     }
-  }, [isHydrated, activeQuoteType, items.length, router]);
+  }, [items.length, router]);
 
   // Calculate total volume from items
   const totalVolume = React.useMemo(() => {
@@ -131,12 +126,16 @@ export default function VanAndDatePage() {
       return;
     }
     
-    // Navigate to removal-pricing (crew size selection)
-    router.push('/removal-pricing');
+    // Navigate to appropriate pricing page based on quote type
+    if (activeQuoteType === 'removals') {
+      router.push('/removal-pricing');
+    } else {
+      router.push('/pricing');
+    }
   };
 
-  // Show loading while checking quote type and inventory
-  if (!isHydrated || activeQuoteType !== 'removals' || !hasInventory(items.length)) {
+  // Show loading while checking inventory
+  if (!isHydrated || !hasInventory(items.length)) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <StreamlinedHeader />
@@ -291,7 +290,7 @@ export default function VanAndDatePage() {
                 disabled={!selectedVan || !movingDate || !timeSlot}
                 className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm"
               >
-                Continue to Crew Selection →
+                Continue to Pricing →
               </Button>
             </div>
           </div>

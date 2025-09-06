@@ -262,7 +262,7 @@ function InventoryPageContent() {
           console.log('Pricing data stored successfully');
           
           // Navigate to Van & Date selection after successful API call
-          router.push('/pickup-dropoff');
+          router.push('/van-and-date');
         } else {
           // Handle error case - show user feedback and don't navigate
           console.error('Failed to get pricing data');

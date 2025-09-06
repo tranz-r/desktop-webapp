@@ -7,7 +7,7 @@ import { useQuote } from '@/contexts/QuoteContext';
 
 const STEPS = [
   { path: '/inventory', label: 'Inventory', icon: Package },
-  { path: '/pickup-dropoff', label: 'Van & Date', icon: Truck },
+  { path: '/van-and-date', label: 'Van & Date', icon: Truck },
   { path: '/pricing', label: 'Price Tier', icon: CreditCard },
   { path: '/origin-destination', label: 'Customer', icon: MapPin },
   { path: '/summary', label: 'Checkout', icon: CreditCard },
@@ -18,8 +18,8 @@ const STEPS = [
 const ALIASES = new Map<string, string>([
   ['/pay', '/summary'],
   ['/collection-delivery', '/inventory'],
-  ['/van-selection', '/pickup-dropoff'],
-  ['/van-and-date', '/pickup-dropoff'],
+  ['/van-selection', '/van-and-date'],
+  ['/pickup-dropoff', '/van-and-date'],
   ['/removal-pricing', '/pricing'],
 ]);
 
