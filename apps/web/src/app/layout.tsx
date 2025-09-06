@@ -22,6 +22,22 @@ export const metadata: Metadata = {
   description: "A modern full-stack starter template powered by Next.js",
 };
 
+// Suppress specific React warnings in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args[0];
+    if (
+      typeof message === 'string' && 
+      (message.includes('useInsertionEffect must not schedule updates') ||
+       message.includes('Warning: useInsertionEffect'))
+    ) {
+      return; // Suppress this specific warning
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{

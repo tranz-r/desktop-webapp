@@ -27,7 +27,7 @@ import { format } from 'date-fns';
 
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
-export default function RemovalsPage() {
+export default function VanAndDatePage() {
   const router = useRouter();
   const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
   
@@ -143,7 +143,7 @@ export default function RemovalsPage() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading removals configuration...</p>
+            <p className="mt-4 text-muted-foreground">Loading van and date configuration...</p>
           </div>
         </main>
         <Footer />
@@ -162,24 +162,12 @@ export default function RemovalsPage() {
             <div className="flex justify-center">
               <QuoteReferenceBanner variant="minimal" />
             </div>
-            
-            {/* Service Info */}
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-blue-900 text-xl font-bold flex items-center gap-2">
-                  🚚 Removals Service
-                </CardTitle>
-                <p className="text-blue-800 text-base leading-relaxed">
-                  Configure your removal service with van selection and scheduling. Crew size selection will be handled in the next step.
-                </p>
-              </CardHeader>
-            </Card>
 
             {/* Van Selection */}
             <Card className="border-primary-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-primary-700 text-lg font-semibold flex items-center gap-2">
-                  🚐 Van Selection
+                  Van Selection
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -212,7 +200,7 @@ export default function RemovalsPage() {
             <Card className="border-primary-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-primary-700 text-lg font-semibold flex items-center gap-2">
-                  📅 Date & Time
+                  Date & Time
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

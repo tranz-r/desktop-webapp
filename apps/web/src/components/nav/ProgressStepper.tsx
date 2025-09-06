@@ -19,7 +19,7 @@ const ALIASES = new Map<string, string>([
   ['/pay', '/summary'],
   ['/collection-delivery', '/inventory'],
   ['/van-selection', '/pickup-dropoff'],
-  ['/removals', '/pickup-dropoff'],
+  ['/van-and-date', '/pickup-dropoff'],
   ['/removal-pricing', '/pricing'],
 ]);
 

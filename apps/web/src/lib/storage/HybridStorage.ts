@@ -1,4 +1,4 @@
-import { idbGet, idbSet, idbRemove } from '@/lib/indexeddb/kv';
+import { idbGet, idbSet, idbRemove, idbClear } from '@/lib/indexeddb/kv';
 
 const PREFIX = 'tranzr:';
 
@@ -36,6 +36,25 @@ export const HybridStorage = {
       throw error; // Re-throw to let caller handle it
     }
   },
+
+  // Add utility functions for debugging and recovery
+  async clear(): Promise<void> {
+    try {
+      await idbClear();
+      console.log('[HybridStorage] CLEAR successful');
+    } catch (error) {
+      console.error('[HybridStorage] CLEAR failed:', error);
+      throw error;
+    }
+  },
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await idbGet('test', 'test');
+      return true;
+    } catch (error) {
+      console.warn('[HybridStorage] IndexedDB not available:', error);
+      return false;
+    }
+  }
 };
-
-

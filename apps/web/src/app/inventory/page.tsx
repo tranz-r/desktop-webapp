@@ -278,11 +278,11 @@ function InventoryPageContent() {
       return; // Exit early for Send/Receive quotes
     }
     
-    // For 'removals' option, continue to the dedicated Removals page
+    // For 'removals' option, continue to the dedicated Van and Date page
     console.log('Removals quote - proceeding directly to van selection');
     
-    // All validations passed, navigate to /removals
-    console.log('All validations passed, navigating to /removals');
+    // All validations passed, navigate to /van-and-date
+    console.log('All validations passed, navigating to /van-and-date');
     console.log('Quote type:', quoteType);
     console.log('Items count:', getTotalItems());
     console.log('Origin:', origin?.line1);
@@ -295,13 +295,13 @@ function InventoryPageContent() {
     
     try {
       console.log('Attempting navigation with router.push...');
-      await router.push('/removals');
+      await router.push('/van-and-date');
       console.log('Navigation completed successfully');
     } catch (navError) {
       console.error('Navigation failed:', navError);
       // Fallback navigation
       console.log('Using fallback navigation');
-      window.location.href = '/removals';
+      window.location.href = '/van-and-date';
     }
   };
   

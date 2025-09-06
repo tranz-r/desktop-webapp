@@ -3,6 +3,13 @@ import { getDb, stores } from './db';
 export async function idbGet<T>(key: string, fallback: T): Promise<T> {
   try {
     const db = await getDb();
+    
+    // Verify the object store exists before accessing it
+    if (!db.objectStoreNames.contains(stores.KV)) {
+      console.error('[IndexedDB] Object store "kv" does not exist');
+      return fallback;
+    }
+    
     const value = await db.get(stores.KV, key);
     console.log('[IndexedDB] GET:', key, 'Value:', value);
     if (value === undefined || value === null) return fallback;
@@ -16,6 +23,13 @@ export async function idbGet<T>(key: string, fallback: T): Promise<T> {
 export async function idbSet<T>(key: string, value: T): Promise<void> {
   try {
     const db = await getDb();
+    
+    // Verify the object store exists before accessing it
+    if (!db.objectStoreNames.contains(stores.KV)) {
+      console.error('[IndexedDB] Object store "kv" does not exist');
+      throw new Error('Object store "kv" does not exist');
+    }
+    
     await db.put(stores.KV, value, key);
     console.log('[IndexedDB] SET successful for key:', key, 'Value:', value);
   } catch (error) {
@@ -27,6 +41,13 @@ export async function idbSet<T>(key: string, value: T): Promise<void> {
 export async function idbRemove(key: string): Promise<void> {
   try {
     const db = await getDb();
+    
+    // Verify the object store exists before accessing it
+    if (!db.objectStoreNames.contains(stores.KV)) {
+      console.error('[IndexedDB] Object store "kv" does not exist');
+      throw new Error('Object store "kv" does not exist');
+    }
+    
     await db.delete(stores.KV, key);
     console.log('[IndexedDB] REMOVE successful for key:', key);
   } catch (error) {
@@ -35,4 +56,17 @@ export async function idbRemove(key: string): Promise<void> {
   }
 }
 
-
+// Add a function to clear all data (useful for debugging)
+export async function idbClear(): Promise<void> {
+  try {
+    const db = await getDb();
+    
+    if (db.objectStoreNames.contains(stores.KV)) {
+      await db.clear(stores.KV);
+      console.log('[IndexedDB] CLEAR successful');
+    }
+  } catch (error) {
+    console.error('[IndexedDB] CLEAR failed:', error);
+    throw error;
+  }
+}

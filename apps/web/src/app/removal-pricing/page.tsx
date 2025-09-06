@@ -1008,7 +1008,7 @@ export default function RemovalPricingPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8">
               <Button
                 variant="outline"
-                onClick={() => router.push('/removals')}
+                onClick={() => router.push('/van-and-date')}
                 className="w-full sm:w-auto px-6 py-2 text-base"
               >
                 ← Back to Van & Date
