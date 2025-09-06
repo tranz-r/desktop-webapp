@@ -12,7 +12,7 @@ import { useQuote } from "@/contexts/QuoteContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
+import { QuoteOption, QuoteRequest, QuoteItem } from "@/types/booking"
 import { Loader2 } from "lucide-react"
 
 
@@ -60,121 +60,7 @@ function InventoryPageContent() {
     return quotes[type];
   };
   
-  // Create quote request for the backend pricing API
-  const createQuoteRequest = (): QuoteRequest => {
-    // Convert cart items to QuoteItem format
-    const quoteItems: QuoteItem[] = items.map(item => ({
-      id: item.id,                    
-      name: item.name,                
-      lengthCm: item.lengthCm,
-      widthCm: item.widthCm,
-      heightCm: item.heightCm,
-      quantity: item.quantity         
-    }));
-    
-    // Calculate stairs floors from pickup and delivery addresses
-    const calculateStairsFloors = (): number => {
-      let totalStairsFloors = 0;
-      
-      // Origin (pickup) stairs - count floors if no elevator available
-      if (origin?.floor && origin.floor > 0 && !origin.hasElevator) {
-        totalStairsFloors += origin.floor;
-      }
-      
-      // Destination (delivery) stairs - count floors if no elevator available
-      if (destination?.floor && destination.floor > 0 && !destination.hasElevator) {
-        totalStairsFloors += destination.floor;
-      }
-      
-      return totalStairsFloors;
-    };
-    
-    // Determine if there's a long carry situation
-    const hasLongCarry = (): boolean => {
-      // Business rule: Consider it a long carry if either location is above 3rd floor without elevator
-      const originLongCarry = origin?.floor && origin.floor > 3 && !origin.hasElevator;
-      const destinationLongCarry = destination?.floor && destination.floor > 3 && !destination.hasElevator;
-      
-      return !!(originLongCarry || destinationLongCarry);
-    };
-    
-    return {
-      distanceMiles: activeQuote?.distanceMiles || 0,           
-      items: quoteItems,                                     
-      stairsFloors: calculateStairsFloors(),                 
-      longCarry: hasLongCarry(),                             
-      numberOfItemsToAssemble: activeQuote?.numberOfItemsToAssemble || 0,
-      numberOfItemsToDismantle: activeQuote?.numberOfItemsToDismantle || 0,
-      parkingFee: 0,                                         
-      ulezFee: 0,                                            
-      vatRegistered: true,                                   
-      requestedMovers: 0                                     
-    };
-  };
 
-  // Call the backend pricing API to get professional pricing calculation
-  const callCreateJobAsync = async (): Promise<PickUpDropOffPrice | null> => {
-    try {
-      // Check if we have required customer data
-      if (!origin?.line1 || !destination?.line1) {
-        console.error('Missing origin or destination addresses');
-        return null;
-      }
-
-      // Distance should already be calculated from /collection-delivery page
-      if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
-        console.error('Distance missing - this should have been calculated on /collection-delivery page');
-        return null;
-      }
-
-      const quoteRequest = createQuoteRequest();
-      
-      // Use environment variable for API base URL, fallback for development
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const apiUrl = `${apiBaseUrl}/api/v1/prices`;
-      
-      // Ensure we have a valid payload before sending
-      if (!quoteRequest || typeof quoteRequest !== 'object') {
-        console.error('Invalid quote request object:', quoteRequest);
-        throw new Error('Invalid quote request - payload is not an object');
-      }
-      
-      if (!quoteRequest.items || quoteRequest.items.length === 0) {
-        console.error('No items in quote request');
-        throw new Error('No items to quote');
-      }
-      
-      console.log('Calling backend pricing API with request:', quoteRequest);
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(quoteRequest)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
-      
-      const data: PickUpDropOffPrice = await response.json();
-      console.log('Backend pricing API response:', data);
-      return data;
-    } catch (error) {
-      console.error('Error calling CreateJobAsync:', error);
-      return null;
-    }
-  };
-
-  // Update pricing data in the quote context
-  const updatePricing = (pricingData: any) => {
-    if (activeQuoteType) {
-      updateQuote(activeQuoteType, pricingData);
-    }
-  };
   
   // Sync quote data to QuoteContext (local only, no backend call)
   const syncQuote = () => {
@@ -227,59 +113,8 @@ function InventoryPageContent() {
       return;
     }
     
-    // Check if we need to make API call based on quote option
-    if (quoteType === QuoteOption.Send || quoteType === QuoteOption.Receive) {
-      
-      // Validate required data before making API call
-      if (!origin?.line1 || !destination?.line1) {
-        alert('Please complete the pickup and delivery addresses first.');
-        router.push('/collection-delivery');
-        return;
-      }
-      
-      // Validate distance is present (it should be calculated from /collection-delivery)
-      if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
-        console.error('Distance is missing from customer context!');
-        alert('Distance calculation missing. Please complete the address details.');
-        return;
-      }
-      
-      // Check if we have items to quote
-      if (getTotalItems() === 0) {
-        alert('Please add some items to your inventory first.');
-        return;
-      }
-      
-      setIsLoading(true);
-      
-      try {
-        console.log('Calling backend pricing API for Send/Receive quote...');
-        const pricingData = await callCreateJobAsync();
-        
-        if (pricingData) {
-          // Store the API response in quote context
-          updatePricing({ pickUpDropOffPrice: pricingData });
-          console.log('Pricing data stored successfully');
-          
-          // Navigate to Van & Date selection after successful API call
-          router.push('/van-and-date');
-        } else {
-          // Handle error case - show user feedback and don't navigate
-          console.error('Failed to get pricing data');
-          alert('Unable to calculate pricing. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error in handleContinueClick:', error);
-        alert('Unable to calculate pricing. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-      
-      return; // Exit early for Send/Receive quotes
-    }
-    
-    // For 'removals' option, continue to the dedicated Van and Date page
-    console.log('Removals quote - proceeding directly to van selection');
+    // For all quote types, continue to the Van and Date page
+    console.log('Proceeding to van and date selection for quote type:', quoteType);
     
     // All validations passed, navigate to /van-and-date
     console.log('All validations passed, navigating to /van-and-date');
