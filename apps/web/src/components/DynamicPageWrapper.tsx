@@ -59,11 +59,6 @@ export const DynamicResult = dynamic(() => import('../app/result/page'), {
   loading: () => <div>Loading...</div>
 });
 
-export const DynamicTestBackend = dynamic(() => import('../app/test-backend/page'), {
-  ssr: false,
-  loading: () => <div>Loading...</div>
-});
-
 export const DynamicQuotation = dynamic(() => import('../app/quotation/page'), {
   ssr: false,
   loading: () => <div>Loading...</div>

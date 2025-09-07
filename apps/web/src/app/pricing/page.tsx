@@ -16,6 +16,7 @@ import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 import { Users, User, Wrench, Calculator, Check, Clock, Star, Truck } from 'lucide-react';
 import Footer from '@/components/Footer';
 import type { RemovalPricingDto, CachedRemovalPricing } from '@/types/booking';
+import { getApiUrl } from '@/lib/api/config';
 
 // Utility function to check if cached removal pricing is still valid
 function isCachedRemovalPricingValid(cached: CachedRemovalPricing | undefined): boolean {
@@ -222,7 +223,7 @@ export default function PricingPage() {
         headers['If-Match'] = etag;
       }
 
-      const response = await fetch(`http://localhost:5247/api/v1/prices`, {
+      const response = await fetch(getApiUrl('/api/v1/prices'), {
         method: 'POST',
         headers,
         body: JSON.stringify({

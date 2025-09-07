@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation } from 'lucide-react';
+import { getApiUrl } from '@/lib/api/config';
 
 interface MapboxMapProps {
   originAddress?: string;
@@ -77,8 +78,7 @@ export default function MapboxMap({ originAddress, destinationAddress, className
 
     const fetchRoute = async () => {
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5247';
-        const url = new URL(`${apiBaseUrl}/api/v1/map/route`);
+        const url = new URL(getApiUrl('/api/v1/map/route'));
         url.searchParams.set('originAddress', originAddress);
         url.searchParams.set('destinationAddress', destinationAddress);
 
