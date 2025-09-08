@@ -14,8 +14,8 @@ export default function LegalDocumentRenderer({
   markdownContent, 
   compact = false 
 }: LegalDocumentRendererProps) {
-  const h2 = compact ? "text-lg font-bold mb-3 text-primary" : "text-xl font-bold mb-4 text-primary";
-  const h3 = compact ? "text-sm font-semibold mb-2 text-secondary-700" : "text-base font-semibold mb-3 text-secondary-700";
+  const h2 = compact ? "text-lg font-bold mb-3 text-primary break-words" : "text-xl font-bold mb-4 text-primary break-words";
+  const h3 = compact ? "text-sm font-semibold mb-2 text-secondary-700 break-words" : "text-base font-semibold mb-3 text-secondary-700 break-words";
   const section = compact ? "space-y-2" : "space-y-3";
   const sep = compact ? "my-4" : "my-6";
 
@@ -43,7 +43,7 @@ export default function LegalDocumentRenderer({
     h1: ({ children, ...props }: any) => {
       const id = generateAnchorId(children);
       return (
-        <h1 id={id} className="text-2xl font-bold mb-4 text-primary" {...props}>
+        <h1 id={id} className="text-xl sm:text-2xl font-bold mb-4 text-primary break-words" {...props}>
           {children}
         </h1>
       );
@@ -67,7 +67,7 @@ export default function LegalDocumentRenderer({
     h4: ({ children, ...props }: any) => {
       const id = generateAnchorId(children);
       return (
-        <h4 id={id} className="text-sm font-semibold mb-2 text-accent-700" {...props}>
+        <h4 id={id} className="text-sm font-semibold mb-2 text-accent-700 break-words" {...props}>
           {children}
         </h4>
       );
@@ -75,7 +75,7 @@ export default function LegalDocumentRenderer({
     h5: ({ children, ...props }: any) => {
       const id = generateAnchorId(children);
       return (
-        <h5 id={id} className="text-sm font-medium mb-2 text-black-600" {...props}>
+        <h5 id={id} className="text-sm font-medium mb-2 text-black-600 break-words" {...props}>
           {children}
         </h5>
       );
@@ -83,13 +83,13 @@ export default function LegalDocumentRenderer({
     h6: ({ children, ...props }: any) => {
       const id = generateAnchorId(children);
       return (
-        <h6 id={id} className="text-sm font-medium mb-2 text-black-500" {...props}>
+        <h6 id={id} className="text-sm font-medium mb-2 text-black-500 break-words" {...props}>
           {children}
         </h6>
       );
     },
     p: ({ children, ...props }: any) => (
-      <p className="text-sm mb-3" {...props}>
+      <p className="text-sm mb-3 break-words leading-relaxed" {...props}>
         {children}
       </p>
     ),
@@ -104,17 +104,17 @@ export default function LegalDocumentRenderer({
       </em>
     ),
     ul: ({ children, ...props }: any) => (
-      <ul className="list-disc list-inside space-y-2 mb-4" {...props}>
+      <ul className="list-disc list-inside space-y-2 mb-4 break-words" {...props}>
         {children}
       </ul>
     ),
     ol: ({ children, ...props }: any) => (
-      <ol className="list-decimal list-inside space-y-2 mb-4" {...props}>
+      <ol className="list-decimal list-inside space-y-2 mb-4 break-words" {...props}>
         {children}
       </ol>
     ),
     li: ({ children, ...props }: any) => (
-      <li className="text-sm" {...props}>
+      <li className="text-sm break-words leading-relaxed" {...props}>
         {children}
       </li>
     ),
@@ -141,12 +141,12 @@ export default function LegalDocumentRenderer({
       </tr>
     ),
     th: ({ children, ...props }: any) => (
-      <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-sm text-primary" {...props}>
+      <th className="border border-gray-300 px-2 sm:px-3 py-2 text-left font-semibold text-xs sm:text-sm text-primary break-words" {...props}>
         {children}
       </th>
     ),
     td: ({ children, ...props }: any) => (
-      <td className="border border-gray-300 px-3 py-2 text-sm" {...props}>
+      <td className="border border-gray-300 px-2 sm:px-3 py-2 text-xs sm:text-sm break-words" {...props}>
         {children}
       </td>
     ),
@@ -168,7 +168,7 @@ export default function LegalDocumentRenderer({
   };
 
   return (
-    <div className="text-sm space-y-4">
+    <div className="text-sm space-y-4 max-w-full overflow-hidden">
       <ReactMarkdown 
         components={components}
         remarkPlugins={[remarkGfm]}

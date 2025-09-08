@@ -94,111 +94,111 @@ export default function TermsAndConditionsPage() {
               {document && !loading && !error && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                   {/* TOC */}
-                  <nav className="lg:col-span-1 sticky top-28 self-start bg-muted/40 rounded-md p-4 text-sm">
-                    <strong className="block mb-2">Contents</strong>
-                    <ol className="space-y-1 list-decimal list-inside">
+                  <nav className="lg:col-span-1 sticky top-28 self-start bg-muted/40 rounded-md p-4 text-sm max-w-full overflow-hidden hidden lg:block">
+                    <strong className="block mb-2 break-words">Contents</strong>
+                    <ol className="space-y-1 list-decimal list-inside break-words">
                       <li>
-                        <a className="hover:underline" href="#1-cost-of-service-payment-terms">
+                        <a className="hover:underline break-words" href="#1-cost-of-service-payment-terms">
                           Cost of service &amp; payment terms
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#2-customer-responsibility-and-expectations">
+                        <a className="hover:underline break-words" href="#2-customer-responsibility-and-expectations">
                           Customer responsibility and expectations
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#3-insurance-and-valuation-coverage-for-customer-belongings">
+                        <a className="hover:underline break-words" href="#3-insurance-and-valuation-coverage-for-customer-belongings">
                           Insurance and valuation coverage
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#4-building-insurance-coi-certificate-of-liability-insurance">
+                        <a className="hover:underline break-words" href="#4-building-insurance-coi-certificate-of-liability-insurance">
                           Building Insurance – COI
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#5-claims-and-refunds">
+                        <a className="hover:underline break-words" href="#5-claims-and-refunds">
                           Claims and refunds
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#6-safety-of-moving-crews-and-customers">
+                        <a className="hover:underline break-words" href="#6-safety-of-moving-crews-and-customers">
                           Safety of moving crews and customers
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#7-contactless-moving-services">
+                        <a className="hover:underline break-words" href="#7-contactless-moving-services">
                           Contactless moving services
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#8-long-distance-moving-services">
+                        <a className="hover:underline break-words" href="#8-long-distance-moving-services">
                           Long distance moving services
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#9-storage-services">
+                        <a className="hover:underline break-words" href="#9-storage-services">
                           Storage services
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#10-packing-and-unpacking">
+                        <a className="hover:underline break-words" href="#10-packing-and-unpacking">
                           Packing and unpacking
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#11-plastic-moving-totes-bins-for-hire">
+                        <a className="hover:underline break-words" href="#11-plastic-moving-totes-bins-for-hire">
                           Plastic moving totes/bins for hire
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#12-moving-supplies-to-purchase">
+                        <a className="hover:underline break-words" href="#12-moving-supplies-to-purchase">
                           Moving supplies to purchase
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#13-tvs-and-electronics">
+                        <a className="hover:underline break-words" href="#13-tvs-and-electronics">
                           TVs and electronics
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#14-special-handling">
+                        <a className="hover:underline break-words" href="#14-special-handling">
                           Special handling
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#15-furniture-assembly-disassembly">
+                        <a className="hover:underline break-words" href="#15-furniture-assembly-disassembly">
                           Furniture assembly &amp; disassembly
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#16-furniture-mattress-disposal">
+                        <a className="hover:underline break-words" href="#16-furniture-mattress-disposal">
                           Furniture &amp; mattress disposal
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#17-client-referral-programme">
+                        <a className="hover:underline break-words" href="#17-client-referral-programme">
                           Client referral programme
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#18-military-moving-discount-programme">
+                        <a className="hover:underline break-words" href="#18-military-moving-discount-programme">
                           Military moving discount programme
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#19-customer-privacy">
+                        <a className="hover:underline break-words" href="#19-customer-privacy">
                           Customer privacy
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#20-liability-waiver-during-a-state-of-emergency-pandemic-or-natural-disaster">
+                        <a className="hover:underline break-words" href="#20-liability-waiver-during-a-state-of-emergency-pandemic-or-natural-disaster">
                           Liability during state of emergency or disaster
                         </a>
                       </li>
                       <li>
-                        <a className="hover:underline" href="#21-disclaimer-of-warranties-limitation-of-liability">
+                        <a className="hover:underline break-words" href="#21-disclaimer-of-warranties-limitation-of-liability">
                           Disclaimer of warranties; limitation of liability
                         </a>
                       </li>
@@ -206,9 +206,11 @@ export default function TermsAndConditionsPage() {
                   </nav>
 
                   {/* Content */}
-                  <div className="lg:col-span-3">
+                  <div className="lg:col-span-3 max-w-full overflow-hidden">
                     <ScrollArea className="h-[70vh] pr-2">
-                      <LegalDocumentRenderer markdownContent={document.markdownContent} />
+                      <div className="max-w-full overflow-hidden">
+                        <LegalDocumentRenderer markdownContent={document.markdownContent} />
+                      </div>
                     </ScrollArea>
                   </div>
                 </div>
