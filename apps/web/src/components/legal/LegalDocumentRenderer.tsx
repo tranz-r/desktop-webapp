@@ -3,6 +3,7 @@
 import React from 'react';
 import { Separator } from '@/components/ui/separator';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface LegalDocumentRendererProps {
   markdownContent: string;
@@ -13,8 +14,8 @@ export default function LegalDocumentRenderer({
   markdownContent, 
   compact = false 
 }: LegalDocumentRendererProps) {
-  const h2 = compact ? "text-lg font-semibold" : "text-xl font-semibold";
-  const h3 = compact ? "text-sm font-semibold" : "text-base font-semibold";
+  const h2 = compact ? "text-lg font-bold mb-3 text-primary" : "text-xl font-bold mb-4 text-primary";
+  const h3 = compact ? "text-sm font-semibold mb-2 text-secondary-700" : "text-base font-semibold mb-3 text-secondary-700";
   const section = compact ? "space-y-2" : "space-y-3";
   const sep = compact ? "my-4" : "my-6";
 
@@ -39,6 +40,14 @@ export default function LegalDocumentRenderer({
 
   // Custom components for markdown rendering
   const components = {
+    h1: ({ children, ...props }: any) => {
+      const id = generateAnchorId(children);
+      return (
+        <h1 id={id} className="text-2xl font-bold mb-4 text-primary" {...props}>
+          {children}
+        </h1>
+      );
+    },
     h2: ({ children, ...props }: any) => {
       const id = generateAnchorId(children);
       return (
@@ -55,8 +64,32 @@ export default function LegalDocumentRenderer({
         </h3>
       );
     },
+    h4: ({ children, ...props }: any) => {
+      const id = generateAnchorId(children);
+      return (
+        <h4 id={id} className="text-sm font-semibold mb-2 text-accent-700" {...props}>
+          {children}
+        </h4>
+      );
+    },
+    h5: ({ children, ...props }: any) => {
+      const id = generateAnchorId(children);
+      return (
+        <h5 id={id} className="text-sm font-medium mb-2 text-black-600" {...props}>
+          {children}
+        </h5>
+      );
+    },
+    h6: ({ children, ...props }: any) => {
+      const id = generateAnchorId(children);
+      return (
+        <h6 id={id} className="text-sm font-medium mb-2 text-black-500" {...props}>
+          {children}
+        </h6>
+      );
+    },
     p: ({ children, ...props }: any) => (
-      <p className="text-sm" {...props}>
+      <p className="text-sm mb-3" {...props}>
         {children}
       </p>
     ),
@@ -71,12 +104,12 @@ export default function LegalDocumentRenderer({
       </em>
     ),
     ul: ({ children, ...props }: any) => (
-      <ul className="list-disc list-inside space-y-1" {...props}>
+      <ul className="list-disc list-inside space-y-2 mb-4" {...props}>
         {children}
       </ul>
     ),
     ol: ({ children, ...props }: any) => (
-      <ol className="list-decimal list-inside space-y-1" {...props}>
+      <ol className="list-decimal list-inside space-y-2 mb-4" {...props}>
         {children}
       </ol>
     ),
@@ -93,7 +126,7 @@ export default function LegalDocumentRenderer({
       </div>
     ),
     thead: ({ children, ...props }: any) => (
-      <thead className="bg-gray-50" {...props}>
+      <thead className="bg-primary/10" {...props}>
         {children}
       </thead>
     ),
@@ -108,7 +141,7 @@ export default function LegalDocumentRenderer({
       </tr>
     ),
     th: ({ children, ...props }: any) => (
-      <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-sm" {...props}>
+      <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-sm text-primary" {...props}>
         {children}
       </th>
     ),
@@ -121,7 +154,7 @@ export default function LegalDocumentRenderer({
     a: ({ href, children, ...props }: any) => (
       <a 
         href={href} 
-        className="text-blue-600 hover:text-blue-800 underline" 
+        className="text-accent-600 hover:text-accent-800 underline font-medium" 
         {...props}
       >
         {children}
@@ -135,8 +168,11 @@ export default function LegalDocumentRenderer({
   };
 
   return (
-    <div className="text-sm">
-      <ReactMarkdown components={components}>
+    <div className="text-sm space-y-4">
+      <ReactMarkdown 
+        components={components}
+        remarkPlugins={[remarkGfm]}
+      >
         {markdownContent}
       </ReactMarkdown>
     </div>
