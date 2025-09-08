@@ -29,10 +29,6 @@ export const DynamicVanSelection = dynamic(() => import('../app/van-selection/pa
   loading: () => <div>Loading...</div>
 });
 
-export const DynamicPickupDropoff = dynamic(() => import('../app/pickup-dropoff/page'), {
-  ssr: false,
-  loading: () => <div>Loading...</div>
-});
 
 export const DynamicPricing = dynamic(() => import('../app/pricing/page'), {
   ssr: false,
