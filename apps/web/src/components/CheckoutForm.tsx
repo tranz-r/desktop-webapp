@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import TermsContent from '@/components/legal/TermsContent';
+import LegalDocumentRenderer from '@/components/legal/LegalDocumentRenderer';
+import { useLegalDocument } from '@/hooks/useLegalDocument';
 
 import { API_BASE_URL } from '@/lib/api/config';
 
@@ -24,6 +25,12 @@ export function CheckoutForm({ returnUrl, clientSecret, paymentIntentId }: Props
   const [processing, setProcessing] = React.useState(false);
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [termsOpen, setTermsOpen] = React.useState(false);
+
+  // Fetch terms and conditions
+  const { document: termsDocument, loading: termsLoading } = useLegalDocument({
+    documentType: 'terms-and-conditions',
+    autoFetch: true,
+  });
 
   // Note: clientSecret is now passed as a prop from parent component
 
@@ -110,7 +117,17 @@ export function CheckoutForm({ returnUrl, clientSecret, paymentIntentId }: Props
             <DialogTitle>Terms & Conditions</DialogTitle>
           </DialogHeader>
           <div className="h-[70vh] overflow-y-auto pr-2">
-            <TermsContent compact />
+            {termsLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-sm text-muted-foreground">Loading terms and conditions...</div>
+              </div>
+            ) : termsDocument ? (
+              <LegalDocumentRenderer markdownContent={termsDocument.markdownContent} compact />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-sm text-muted-foreground">Unable to load terms and conditions</div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
