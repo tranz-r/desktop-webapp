@@ -92,9 +92,36 @@ export default function PrivacyPolicyPage() {
               />
               
               {document && !loading && !error && (
-                <ScrollArea className="h-[70vh] pr-2">
-                  <LegalDocumentRenderer markdownContent={document.markdownContent} />
-                </ScrollArea>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* TOC */}
+                  <nav className="lg:col-span-1 sticky top-28 self-start bg-muted/40 rounded-md p-4 text-sm max-w-full overflow-hidden hidden lg:block">
+                    <strong className="block mb-2 break-words">Contents</strong>
+                    <ol className="space-y-1 list-decimal list-inside break-words">
+                      <li><a className="hover:underline break-words" href="#1-what-information-do-we-collect">What information do we collect?</a></li>
+                      <li><a className="hover:underline break-words" href="#2-how-do-we-process-your-information">How do we process your information?</a></li>
+                      <li><a className="hover:underline break-words" href="#3-what-legal-bases-do-we-rely-on-to-process-your-personal-information">What legal bases do we rely on to process your personal information?</a></li>
+                      <li><a className="hover:underline break-words" href="#4-when-and-with-whom-do-we-share-your-personal-information">When and with whom do we share your personal information?</a></li>
+                      <li><a className="hover:underline break-words" href="#5-do-we-use-cookies-and-other-tracking-technologies">Do we use cookies and other tracking technologies?</a></li>
+                      <li><a className="hover:underline break-words" href="#6-how-do-we-handle-your-social-logins">How do we handle your social logins?</a></li>
+                      <li><a className="hover:underline break-words" href="#7-how-long-do-we-keep-your-information">How long do we keep your information?</a></li>
+                      <li><a className="hover:underline break-words" href="#8-how-do-we-keep-your-information-safe">How do we keep your information safe?</a></li>
+                      <li><a className="hover:underline break-words" href="#9-what-are-your-privacy-rights">What are your privacy rights?</a></li>
+                      <li><a className="hover:underline break-words" href="#10-controls-for-do-not-track-features">Controls for Do-Not-Track features</a></li>
+                      <li><a className="hover:underline break-words" href="#11-do-we-make-updates-to-this-notice">Do we make updates to this notice?</a></li>
+                      <li><a className="hover:underline break-words" href="#12-how-can-you-contact-us-about-this-notice">How can you contact us about this notice?</a></li>
+                      <li><a className="hover:underline break-words" href="#13-how-can-you-review-update-or-delete-the-data-we-collect-from-you">How can you review, update, or delete the data we collect from you?</a></li>
+                    </ol>
+                  </nav>
+
+                  {/* Content */}
+                  <div className="lg:col-span-3 max-w-full overflow-hidden">
+                    <ScrollArea className="h-[70vh] pr-2">
+                      <div className="max-w-full overflow-hidden">
+                        <LegalDocumentRenderer markdownContent={document.markdownContent} />
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>

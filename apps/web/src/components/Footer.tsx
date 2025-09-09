@@ -93,7 +93,7 @@ export default function Footer() {
                 Contact Us
               </Link>
               <Link
-                href="#"
+                href="/privacy-policy"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Privacy Policy
@@ -102,7 +102,7 @@ export default function Footer() {
                 href="/terms-and-conditions"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
-                Terms of Service
+                Terms and Conditions
               </Link>
             </div>
           </div>
