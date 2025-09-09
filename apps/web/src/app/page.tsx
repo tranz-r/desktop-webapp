@@ -162,7 +162,7 @@ export default function HomePage() {
         highlightedText="storage"
         description="We will pick up your items from your doorstep and deliver them to our secure storage facility, where they will be safely stored for as little or as long of you like. Just let us know when you need your items back and we will drop them off at a time that suits you."
         buttonText="GET A STORAGE QUOTE"
-        imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
+        imageSrc="/images/tranzr-two-man-smile.png"
         imageAlt="Professional storage service with moving boxes"
         href="/quote-option"
       />

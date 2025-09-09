@@ -13,6 +13,7 @@ import StorageSection from "@/components/StorageSection";
 import GuaranteeComponent from "@/components/GuaranteeComponent";
 import SVGImagesComponent from "@/components/SVGImagesComponent";
 import PromotionalSection from "@/components/PromotionalSection";
+import CTASection from "@/components/CTASection";
 import SvgFullPackingMove from "@/components/FullPackingMove";
 import SvgLocalMovesSVG from "@/components/LocalMovesSVG";
 import ValuableItemMoveSVG from "@/components/ValuableItemMove";
@@ -248,26 +249,12 @@ export default function TwentyFourSevenMovingPage() {
 
 
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Need a Move Right Now?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Don't wait! Our 24/7 moving team is ready to help you move at any hour. 
-            Contact us now for immediate assistance.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-              Emergency Move <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-              Call Now
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTASection
+        title="Need a Move Right Now?"
+        description="Don't wait! Our 24/7 moving team is ready to help you move at any hour. Contact us now for immediate assistance."
+        primaryButtonText="Emergency Move"
+        secondaryButtonText="Call Now"
+      />
 
       {/* Storage Section */}
       <StorageSection
@@ -275,7 +262,7 @@ export default function TwentyFourSevenMovingPage() {
         highlightedText="storage"
         description="We will pick up your items from your doorstep and deliver them to our secure Northamptonshire storage facility, where they will be safely stored for as little or as long as you like. Just let us know when you need your items back and we will drop them off at a time that suits you."
         buttonText="GET A STORAGE QUOTE"
-        imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
+        imageSrc="/images/two-movers.jpg"
         imageAlt="24/7 storage service"
       />
 
