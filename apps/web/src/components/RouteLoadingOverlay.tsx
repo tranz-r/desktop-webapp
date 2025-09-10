@@ -7,77 +7,45 @@ import { usePathname } from "next/navigation";
 
 export default function RouteLoadingOverlay() {
   const pathname = usePathname();
-  const [visible, setVisible] = React.useState(false);
-  const fallbackTimerRef = React.useRef<number | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [currentPath, setCurrentPath] = React.useState(pathname);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Only show for real route transitions: intercept History API and popstate
+  // Show loading when pathname changes
   React.useEffect(() => {
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    if (currentPath !== pathname) {
+      setIsLoading(true);
+      setCurrentPath(pathname);
+      
+      // Hide loading after a short delay
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
+    }
+  }, [pathname, currentPath]);
 
-    const startFallback = () => {
-      if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
-      fallbackTimerRef.current = window.setTimeout(() => setVisible(false), 3000);
-    };
-
-    const shouldShowFor = (url: string | URL | null | undefined): boolean => {
-      if (!url) return false;
-      try {
-        const next = new URL(String(url), window.location.href);
-        return next.origin === window.location.origin && next.pathname !== window.location.pathname;
-      } catch {
-        return false;
-      }
-    };
-
-    history.pushState = function (...args: any[]) {
-      try {
-        const url = args[2];
-        if (shouldShowFor(url)) {
-          setVisible(true);
-          startFallback();
-        }
-      } catch {}
-      return originalPushState.apply(this, args as any);
-    } as any;
-
-    history.replaceState = function (...args: any[]) {
-      try {
-        const url = args[2];
-        if (shouldShowFor(url)) {
-          setVisible(true);
-          startFallback();
-        }
-      } catch {}
-      return originalReplaceState.apply(this, args as any);
-    } as any;
-
-    const onPopState = () => {
-      setVisible(true);
-      startFallback();
-    };
-
-    window.addEventListener("popstate", onPopState);
-
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
     return () => {
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-      window.removeEventListener("popstate", onPopState);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  // Hide when pathname updates (route is ready)
-  React.useEffect(() => {
-    if (!visible) return;
-    if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
-    setVisible(false);
-  }, [pathname, visible]);
-
-  if (!visible) return null;
+  if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm">
-      <Card className="shadow-sm">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/70 backdrop-blur-sm"
+      style={{ 
+        scrollBehavior: 'auto',
+        pointerEvents: 'none'
+      }}
+    >
+      <Card 
+        className="shadow-sm"
+        style={{ pointerEvents: 'auto' }}
+      >
         <CardContent className="p-6 flex flex-col items-center gap-3">
           <Spinner size="lg" />
           <div className="text-sm text-muted-foreground">Loading…</div>
@@ -86,5 +54,3 @@ export default function RouteLoadingOverlay() {
     </div>
   );
 }
-
-

@@ -1,189 +1,142 @@
 "use client"
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react"
 import { StreamlinedHeader } from "@/components/StreamlinedHeader"
 import Footer from "@/components/Footer"
 import { CategoryList } from "@/components/inventory/CategoryList"
 import { SearchCommand } from "@/components/inventory/SearchCommand"
 import { ItemGrid } from "@/components/inventory/ItemGrid"
-import { useCart } from "@/contexts/CartContext"
-import { useBooking } from "@/contexts/BookingContext"
-import { useQuoteOption } from "@/contexts/QuoteOptionContext"
+import { useQuote } from "@/contexts/QuoteContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { QuoteOption, QuoteRequest, QuoteItem, PickUpDropOffPrice } from "@/types/booking"
+import { QuoteOption, QuoteRequest, QuoteItem } from "@/types/booking"
 import { Loader2 } from "lucide-react"
+
 
 // Popular items list for quick adding
 
 function InventoryPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { getTotalItems, items } = useCart()
-  const { updatePricing, customer, originDestination } = useBooking()
-  const { option } = useQuoteOption()
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote
+  } = useQuote()
+  
+  // Get active quote data
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined
+  const quoteType = activeQuoteType
+  const customer = activeQuote?.customer
+  const origin = activeQuote?.origin
+  const destination = activeQuote?.destination
   const router = useRouter()
+
+  
+  // Get items from active quote in QuoteContext
+  const items = activeQuote?.items || []
   
   const handleAddItem = () => {
     // The actual cart functionality is handled in SearchCommand and ItemGrid components
     // This is just a callback for any additional logic if needed
   }
+
+  // Helper functions for the new context API
+  const getTotalItems = () => {
+    // Use QuoteContext items directly
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+
+
+  const getActiveQuoteData = () => {
+    return activeQuote;
+  };
+
+  const getQuoteData = (type: QuoteOption) => {
+    return quotes[type];
+  };
   
-  const createQuoteRequest = (): QuoteRequest => {
-    // Convert cart items to QuoteItem format
-    const quoteItems: QuoteItem[] = items.map(item => ({
-      id: item.id,                    
-      name: item.name,                
-      lengthCm: item.length,
-      widthCm: item.width,
-      heightCm: item.height,
-      quantity: item.quantity         
-    }));
-    
-    // Calculate stairs floors from pickup and delivery addresses
-    const calculateStairsFloors = (): number => {
-      let totalStairsFloors = 0;
-      
-      // Origin (pickup) stairs - count floors if no elevator available
-      if (customer?.origin?.floor && customer.origin.floor > 0 && !customer.origin.hasElevator) {
-        totalStairsFloors += customer.origin.floor;
-      }
-      
-      // Destination (delivery) stairs - count floors if no elevator available
-      if (customer?.destination?.floor && customer.destination.floor > 0 && !customer.destination.hasElevator) {
-        totalStairsFloors += customer.destination.floor;
-      }
-      
-      return totalStairsFloors;
-    };
-    
-    // Determine if there's a long carry situation
-    const hasLongCarry = (): boolean => {
-      // Business rule: Consider it a long carry if either location is above 3rd floor without elevator
-      const originLongCarry = customer?.origin?.floor && customer.origin.floor > 3 && !customer.origin.hasElevator;
-      const destinationLongCarry = customer?.destination?.floor && customer.destination.floor > 3 && !customer.destination.hasElevator;
-      
-      return !!(originLongCarry || destinationLongCarry);
-    };
-    
-    return {
-      distanceMiles: customer?.distanceMiles || 0,           
-      items: quoteItems,                                     
-      stairsFloors: calculateStairsFloors(),                 
-      longCarry: hasLongCarry(),                             
-      numberOfItemsToAssemble: 0,                            
-      numberOfItemsToDismantle: 0,                           
-      parkingFee: 0,                                         
-      ulezFee: 0,                                            
-      vatRegistered: true,                                   
-      requestedMovers: 0                                     
-    };
-  };
 
-  const callCreateJobAsync = async (): Promise<PickUpDropOffPrice | null> => {
+  
+  // Sync quote data to QuoteContext (local only, no backend call)
+  const syncQuote = () => {
+    if (!activeQuoteType) return false;
+    
     try {
-      // Check if we have required customer data
-      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
-        console.error('Missing origin or destination addresses');
-        return null;
-      }
-
-      // Distance should already be calculated from /collection-delivery page
-      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
-        console.error('Distance missing - this should have been calculated on /collection-delivery page');
-        return null;
-      }
-
-      const quoteRequest = createQuoteRequest();
-      
-      // Use environment variable for API base URL, fallback for development
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const apiUrl = `${apiBaseUrl}/api/v1/prices`;
-      
-      // Ensure we have a valid payload before sending
-      if (!quoteRequest || typeof quoteRequest !== 'object') {
-        console.error('Invalid quote request object:', quoteRequest);
-        throw new Error('Invalid quote request - payload is not an object');
-      }
-      
-      if (!quoteRequest.items || quoteRequest.items.length === 0) {
-        console.error('No items in quote request');
-        throw new Error('No items to quote');
-      }
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(quoteRequest)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
-      
-      const data: PickUpDropOffPrice = await response.json();
-      return data;
+      // Update the active quote with current items locally
+      // Don't call updateQuote here as it triggers backend API calls
+      // The items are already in the QuoteContext from the components
+      console.log('Items synced locally:', items);
+      return true;
     } catch (error) {
-      console.error('Error calling CreateJobAsync:', error);
-      return null;
+      console.error('Failed to sync quote data locally:', error);
+      return false;
     }
-  };
+  }
+  
+
+
+
   
   const handleContinueClick = async () => {
-    // Check if we need to make API call based on quote option
-    if (option === QuoteOption.Send || option === QuoteOption.Receive) {
-      
-      // Validate required data before making API call
-      if (!customer?.origin?.line1 || !customer?.destination?.line1) {
-        alert('Please complete the pickup and delivery addresses first.');
-        router.push('/collection-delivery');
-        return;
-      }
-      
-      // Validate distance is present (it should be calculated from /collection-delivery)
-      if (!customer?.distanceMiles || customer.distanceMiles === 0) {
-        console.error('Distance is missing from customer context!');
-        alert('Distance calculation missing. Please complete the address details.');
-        router.push('/collection-delivery');
-        return;
-      }
-      
-      // Check if we have items to quote
-      if (getTotalItems() === 0) {
-        alert('Please add some items to your inventory first.');
-        return;
-      }
-      
-      setIsLoading(true);
-      
-      try {
-        const pricingData = await callCreateJobAsync();
-        
-        if (pricingData) {
-          // Store the API response in booking context
-          updatePricing({ pickUpDropOffPrice: pricingData });
-          
-          // Navigate to Van & Date selection after successful API call
-          router.push('/pickup-dropoff');
-        } else {
-          // Handle error case - show user feedback and don't navigate
-          console.error('Failed to get pricing data');
-          alert('Unable to calculate pricing. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error in handleContinueClick:', error);
-        alert('Unable to calculate pricing. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // For 'removals' option, continue to Van & Date selection
-      router.push('/pickup-dropoff');
+    console.log('Continue button clicked, starting navigation process...');
+    
+    // First, sync the current items to QuoteContext
+    const syncSuccess = syncQuote();
+    if (!syncSuccess) {
+      console.error('Failed to sync quote data');
+      alert('Failed to save inventory data. Please try again.');
+      return;
+    }
+    
+    // Check if we have items to quote
+    if (getTotalItems() === 0) {
+      alert('Please add some items to your inventory first.');
+      return;
+    }
+    
+    // Check if addresses are set (if not, redirect to collection-delivery)
+    if (!origin?.line1 || !destination?.line1) {
+      console.log('Addresses missing, redirecting to collection-delivery');
+      router.push('/collection-delivery');
+      return;
+    }
+    
+    // Check if distance is calculated (if not, redirect to collection-delivery)
+    if (!activeQuote?.distanceMiles || activeQuote.distanceMiles === 0) {
+      console.log('Distance missing, redirecting to collection-delivery');
+      router.push('/collection-delivery');
+      return;
+    }
+    
+    // For all quote types, continue to the Van and Date page
+    console.log('Proceeding to van and date selection for quote type:', quoteType);
+    
+    // All validations passed, navigate to /van-and-date
+    console.log('All validations passed, navigating to /van-and-date');
+    console.log('Quote type:', quoteType);
+    console.log('Items count:', getTotalItems());
+    console.log('Origin:', origin?.line1);
+    console.log('Destination:', destination?.line1);
+    console.log('Distance:', activeQuote?.distanceMiles);
+    
+    // Add a small delay to ensure state updates are processed
+    console.log('Adding small delay before navigation...');
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      console.log('Attempting navigation with router.push...');
+      await router.push('/van-and-date');
+      console.log('Navigation completed successfully');
+    } catch (navError) {
+      console.error('Navigation failed:', navError);
+      // Fallback navigation
+      console.log('Using fallback navigation');
+      window.location.href = '/van-and-date';
     }
   };
   
@@ -225,7 +178,15 @@ function InventoryPageContent() {
           </div>
 
           {/* Continue button - always visible */}
-          <div className="flex justify-end pt-4 border-t border-gray-200 flex-shrink-0">
+          <div className="flex justify-between pt-4 border-t border-gray-200 flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/collection-delivery')}
+              className="px-6 py-2 text-base"
+            >
+              ← Back to Collection & Delivery
+            </Button>
+            
             <Button 
               size="lg"
               className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
@@ -277,22 +238,30 @@ function InventoryPageContent() {
             </div>
 
             {/* Continue button - always visible */}
-            <div className="flex justify-end pt-4 border-t border-gray-200">
-                          <Button 
-              size="lg"
-              className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
-              onClick={handleContinueClick}
-              disabled={getTotalItems() === 0 || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Calculating pricing...
-                </>
-              ) : (
-                'Continue to Van Selection'
-              )}
-            </Button>
+            <div className="flex justify-between pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/collection-delivery')}
+                className="px-6 py-2 text-base"
+              >
+                ← Back to Collection & Delivery
+              </Button>
+              
+              <Button 
+                size="lg"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 text-lg font-semibold"
+                onClick={handleContinueClick}
+                disabled={getTotalItems() === 0 || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Calculating pricing...
+                  </>
+                ) : (
+                  'Continue to Van Selection'
+                )}
+              </Button>
             </div>
           </div>
         </div>

@@ -1,3 +1,7 @@
+"use client";
+
+export const dynamic = 'force-dynamic';
+
 import MovingComponent from "@/components/MovingComponent";
 import Footer from "@/components/Footer";
 import PromotionalSection from "@/components/PromotionalSection";

@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Shield, Clock, MapPin, Truck, Users, CheckCircle, Package, Building } from "lucide-react";
-import StorageSection from "@/components/StorageSection";
+import CTASection from "@/components/CTASection";
 
 export default function StoragePage() {
   return (
@@ -302,26 +304,12 @@ export default function StoragePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Ready to Get Started with Storage?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Get your free storage quote today. Our storage experts are ready to help you 
-            find the perfect storage solution for your needs.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-              Get Storage Quote <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-              Schedule Tour
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTASection
+        title="Ready to Get Started with Storage?"
+        description="Get your free storage quote today. Our storage experts are ready to help you find the perfect storage solution for your needs."
+        primaryButtonText="Get Storage Quote"
+        secondaryButtonText="Schedule Tour"
+      />
 
       <Footer />
     </div>

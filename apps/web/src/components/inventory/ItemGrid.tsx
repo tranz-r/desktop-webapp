@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus } from "lucide-react"
-import { useCart } from "@/contexts/CartContext"
+import { useQuote } from "@/contexts/QuoteContext"
 
 interface Item {
   id: number
@@ -19,14 +19,14 @@ interface Item {
 
 interface ItemGridProps {
   selectedCategory: number | null
-  onAddItem: (item: Item) => void
+  onAddItem: (item: Item, quantity?: number) => void
 }
 
 export function ItemGrid({ selectedCategory, onAddItem }: ItemGridProps) {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
   const [quantities, setQuantities] = useState<Record<number, number>>({})
-  const { addItem } = useCart()
+  const { activeQuoteType, quotes, updateQuote } = useQuote()
 
   useEffect(() => {
     if (!selectedCategory) {
@@ -82,17 +82,43 @@ export function ItemGrid({ selectedCategory, onAddItem }: ItemGridProps) {
 
   const handleAddToCart = (item: Item) => {
     const quantity = quantities[item.id] || 1
-    addItem({
-      id: item.id,
-      name: item.name,
-      height: item.height,
-      width: item.width,
-      length: item.length,
-      volume: item.volume_m3,
-    }, quantity)
     
-    // Call the original onAddItem callback
-    onAddItem(item)
+    // Call the onAddItem callback to add to the quote context
+    onAddItem(item, quantity)
+    
+    // Add item directly to QuoteContext
+    if (activeQuoteType) {
+      // Get existing items from the context
+      const existingItems = quotes[activeQuoteType]?.items || []
+      
+      // Check if item already exists and update quantity, or add new item
+      const existingItemIndex = existingItems.findIndex(existing => existing.id === item.id)
+      let newItems
+      
+      if (existingItemIndex >= 0) {
+        // Update existing item quantity
+        newItems = [...existingItems]
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + quantity
+        }
+      } else {
+        // Add new item
+        newItems = [
+          ...existingItems,
+          {
+            id: item.id,
+            name: item.name,
+            lengthCm: item.length,
+            widthCm: item.width,
+            heightCm: item.height,
+            quantity: quantity
+          }
+        ]
+      }
+      
+      updateQuote(activeQuoteType, { items: newItems })
+    }
   }
 
   return (

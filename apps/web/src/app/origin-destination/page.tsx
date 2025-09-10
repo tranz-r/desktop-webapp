@@ -1,11 +1,14 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
-import { useBooking } from "@/contexts/BookingContext";
+import { useQuote } from "@/contexts/QuoteContext";
 import { Address } from "@/types/booking";
+import { BackendCustomer } from "@/lib/api/quote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
@@ -21,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { AlertCircle, Building2, MapPin } from "lucide-react";
+// Note: Removed unused imports - now using QuoteContext only
 
 type FormValues = {
   originLine1: string;
@@ -58,34 +62,104 @@ function floorValueToNumber(val: string): number {
 
 export default function OriginDestinationPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { isHydrated, vehicle, originDestination, updateOriginDestination } = booking;
-  const selectedVan = vehicle.selectedVan;
-  const setOrigin = (addr: Address) => updateOriginDestination({ origin: addr });
-  const setDestination = (addr: Address) => updateOriginDestination({ destination: addr });
-  const setDistanceMiles = (miles: number) => updateOriginDestination({ distanceMiles: Math.max(0, Number(miles) || 0) });
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote,
+    isHydrated
+  } = useQuote();
+  
+  // Get origin and destination from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  const removalsQuote = quotes.removals;
+  // Note: Removed quoteSession - now using QuoteContext only
+  // Note: Van selection happens on /pickup-dropoff page, not here
+  // This page is for customer details and address confirmation
+
+  // Helper functions for the new context API
+  const setOrigin = (originData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { origin: originData });
+    }
+  };
+
+  const setDestination = (destinationData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { destination: destinationData });
+    }
+  };
+
+  const setDistanceMiles = (miles: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { distanceMiles: miles });
+    }
+  };
+
+  const setCustomerName = (name: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, fullName: name } 
+      });
+    }
+  };
+
+  const setCustomerEmail = (email: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, email } 
+      });
+    }
+  };
+
+  const setCustomerPhone = (phone: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { ...activeQuote?.customer, phone } 
+      });
+    }
+  };
+
+  const setBillingAddress = (line1: string, postcode: string) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { 
+        customer: { 
+          ...activeQuote?.customer, 
+          billingAddress: { line1, postcode } 
+        } 
+      });
+    }
+  };
+
+  const updateVehicle = (vehicleData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, vehicleData);
+    }
+  };
 
   const form = useForm<FormValues>({
     defaultValues: {
-  originLine1: originDestination?.origin?.line1 || "",
-  originPostcode: originDestination?.origin?.postcode || "",
+      originLine1: origin?.line1 || "",
+      originPostcode: origin?.postcode || "",
       originFloor: "ground",
       originElevator: true,
-  destinationLine1: originDestination?.destination?.line1 || "",
-  destinationPostcode: originDestination?.destination?.postcode || "",
+      destinationLine1: destination?.line1 || "",
+      destinationPostcode: destination?.postcode || "",
       destinationFloor: "ground",
       destinationElevator: true,
-  fullName: originDestination?.fullName || "",
-  email: originDestination?.email || "",
-  phone: originDestination?.phone || "",
-  billingLine1: originDestination?.billingAddress?.line1 || "",
-  billingPostcode: originDestination?.billingAddress?.postcode || "",
+      fullName: activeQuote?.customer?.fullName || "",
+      email: activeQuote?.customer?.email || "",
+      phone: activeQuote?.customer?.phone || "",
+      billingLine1: activeQuote?.customer?.billingAddress?.line1 || "",
+      billingPostcode: activeQuote?.customer?.billingAddress?.postcode || "",
     },
     mode: "onChange",
   });
 
-  const o = originDestination?.origin;
-  const d = originDestination?.destination;
+  const o = origin;
+  const d = destination;
   const collectedAddresses = !!o?.line1 && !!o?.postcode && !!d?.line1 && !!d?.postcode;
   const showExtraCost =
     ((!o?.hasElevator && (o?.floor ?? 0) > 0) || (!d?.hasElevator && (d?.floor ?? 0) > 0));
@@ -97,7 +171,10 @@ export default function OriginDestinationPage() {
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
 
-  function onSubmit(values: FormValues) {
+  // Note: Removed continuous sync useEffect to prevent infinite loops
+  // Customer details are now synced only when form is submitted
+
+  async function onSubmit(values: FormValues) {
     const origin: Address = {
       line1: values.originLine1,
       postcode: values.originPostcode,
@@ -110,21 +187,37 @@ export default function OriginDestinationPage() {
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
     };
-    updateOriginDestination({
-      origin,
-      destination,
-      distanceMiles: originDestination?.distanceMiles ?? 0,
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      billingAddress: { line1: values.billingLine1, postcode: values.billingPostcode },
-    });
+    setOrigin(origin);
+    setDestination(destination);
+    setDistanceMiles(distanceMiles ?? 0);
+    setCustomerName(values.fullName);
+    setCustomerEmail(values.email);
+    setCustomerPhone(values.phone);
+    setBillingAddress(values.billingLine1, values.billingPostcode);
 
-    // Ensure flow: must have selected a van before pricing per rules
-    if (!selectedVan) {
-      router.push("/van-selection");
-      return;
+    // Save customer data to backend via quote update
+    try {
+      if (activeQuoteType) {
+        await updateQuote(activeQuoteType, {
+          customer: {
+            fullName: values.fullName,
+            email: values.email,
+            phone: values.phone,
+            billingAddress: {
+              line1: values.billingLine1,
+              postcode: values.billingPostcode,
+              hasElevator: true,
+              floor: 0
+            }
+          }
+        });
+        console.log('Customer data saved successfully via quote update');
+      }
+    } catch (error) {
+      console.error('Failed to save customer data:', error);
     }
+
+    // Navigate to summary page
     router.push("/summary");
   }
 
@@ -142,9 +235,9 @@ export default function OriginDestinationPage() {
 
   // When hydrated, rehydrate form fields for floors/elevators from saved state if present
   React.useEffect(() => {
-    if (!isHydrated || !originDestination) return;
-    const o = originDestination.origin;
-    const d = originDestination.destination;
+    if (!isHydrated) return;
+    const o = origin;
+    const d = destination;
     if (o?.floor !== undefined) {
       form.setValue('originFloor', o.floor === 0 ? 'ground' : (o.floor >= 6 ? '6+' : String(o.floor)));
     }
@@ -157,7 +250,7 @@ export default function OriginDestinationPage() {
     if (typeof d?.hasElevator === 'boolean') {
       form.setValue('destinationElevator', d.hasElevator);
     }
-  }, [isHydrated, originDestination]);
+  }, [isHydrated, origin, destination]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -166,12 +259,7 @@ export default function OriginDestinationPage() {
       <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
-          {/* Flow guard: if booking hasn't hydrated yet, avoid premature redirects; if no van selected, direct user */}
-          {isHydrated && !selectedVan && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm">
-              Please select a van first to continue. You'll be redirected to van selection if you proceed.
-            </div>
-          )}
+          {/* Note: Van selection happens on /pickup-dropoff page, this page is for customer details */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Customer Details */}
@@ -365,9 +453,9 @@ export default function OriginDestinationPage() {
         )}
 
         {/* Total distance from context */}
-        {typeof originDestination?.distanceMiles === 'number' && Number.isFinite(originDestination.distanceMiles!) && originDestination.distanceMiles! > 0 && (
+        {typeof distanceMiles === 'number' && Number.isFinite(distanceMiles) && distanceMiles > 0 && (
           <div className="mt-4 w-full text-center text-lg text-muted-foreground font-extrabold">
-            Total distance: {Math.round(originDestination.distanceMiles!)} miles
+            Total distance: {Math.round(distanceMiles)} miles
           </div>
         )}
 
@@ -378,7 +466,23 @@ export default function OriginDestinationPage() {
         </div>
       </CardContent>
     </Card>
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                // Go back to the appropriate pricing page based on quote type
+                if (activeQuoteType === 'removals') {
+                  router.push('/removal-pricing');
+                } else {
+                  router.push('/pricing');
+                }
+              }}
+              className="px-6 py-2 text-base"
+            >
+              ← Back to Pricing
+            </Button>
+            
             <Button type="submit" disabled={!isReady}>
               Next: Pricing
             </Button>

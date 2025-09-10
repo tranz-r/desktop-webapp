@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus, Trash2 } from "lucide-react"
-import { useCart } from "@/contexts/CartContext"
+import { useQuote } from "@/contexts/QuoteContext"
 import {
   Sheet,
   SheetContent,
@@ -15,22 +15,59 @@ import {
 import { CartIcon } from "./CartIcon"
 
 export function CartModal() {
-  const { items, removeItem, updateQuantity, updateItemDimensions, getTotalItems, getTotalVolume } = useCart()
+  const { activeQuoteType, quotes, updateQuote } = useQuote()
   const [editingItem, setEditingItem] = useState<number | null>(null)
   const [editDimensions, setEditDimensions] = useState<{
-    height: number
-    width: number
-    length: number
+    heightCm: number
+    widthCm: number
+    lengthCm: number
   } | null>(null)
+  
+  // Get items from active quote
+  const items = activeQuoteType ? quotes[activeQuoteType]?.items || [] : []
+  
+  // Helper functions
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0)
+  }
+  
+  const getTotalVolume = () => {
+    return items.reduce((total, item) => {
+      const volumeM3 = (item.lengthCm * item.widthCm * item.heightCm * item.quantity) / 1000000
+      return total + volumeM3
+    }, 0)
+  }
+  
+  const removeItem = (itemId: number) => {
+    if (!activeQuoteType) return
+    const newItems = items.filter(item => item.id !== itemId)
+    updateQuote(activeQuoteType, { items: newItems })
+  }
+  
+  const updateQuantity = (itemId: number, quantity: number) => {
+    if (!activeQuoteType || quantity < 1) return
+    const newItems = items.map(item => 
+      item.id === itemId ? { ...item, quantity } : item
+    )
+    updateQuote(activeQuoteType, { items: newItems })
+  }
+  
+  const updateItemDimensions = (itemId: number, dimensions: { heightCm: number; widthCm: number; lengthCm: number }) => {
+    if (!activeQuoteType) return
+    const newItems = items.map(item => 
+      item.id === itemId ? { ...item, ...dimensions } : item
+    )
+    updateQuote(activeQuoteType, { items: newItems })
+  }
 
   const handleEditDimensions = (itemId: number) => {
     const item = items.find(i => i.id === itemId)
     if (item) {
       setEditingItem(itemId)
       setEditDimensions({
-        height: item.height,
-        width: item.width,
-        length: item.length,
+        heightCm: item.heightCm,
+        widthCm: item.widthCm,
+        lengthCm: item.lengthCm,
       })
     }
   }
@@ -48,7 +85,7 @@ export function CartModal() {
     setEditDimensions(null)
   }
 
-  const updateDimension = (dimension: 'height' | 'width' | 'length', value: number) => {
+  const updateDimension = (dimension: 'heightCm' | 'widthCm' | 'lengthCm', value: number) => {
     if (editDimensions) {
       setEditDimensions({
         ...editDimensions,
@@ -90,10 +127,10 @@ export function CartModal() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium truncate">{item.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {item.length} × {item.width} × {item.height} cm
+                        {item.lengthCm} × {item.widthCm} × {item.heightCm} cm
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Volume: {item.volume.toFixed(2)} m³
+                        Volume: {((item.lengthCm * item.widthCm * item.heightCm) / 1000000).toFixed(2)} m³
                       </p>
                     </div>
                     <Button
@@ -163,8 +200,8 @@ export function CartModal() {
                           <label className="text-xs text-muted-foreground">Length (cm)</label>
                           <Input
                             type="number"
-                            value={editDimensions?.length || 0}
-                            onChange={(e) => updateDimension('length', parseInt(e.target.value) || 0)}
+                            value={editDimensions?.lengthCm || 0}
+                            onChange={(e) => updateDimension('lengthCm', parseInt(e.target.value) || 0)}
                             className="h-8 text-sm"
                             min="1"
                           />
@@ -173,8 +210,8 @@ export function CartModal() {
                           <label className="text-xs text-muted-foreground">Width (cm)</label>
                           <Input
                             type="number"
-                            value={editDimensions?.width || 0}
-                            onChange={(e) => updateDimension('width', parseInt(e.target.value) || 0)}
+                            value={editDimensions?.widthCm || 0}
+                            onChange={(e) => updateDimension('widthCm', parseInt(e.target.value) || 0)}
                             className="h-8 text-sm"
                             min="1"
                           />
@@ -183,8 +220,8 @@ export function CartModal() {
                           <label className="text-xs text-muted-foreground">Height (cm)</label>
                           <Input
                             type="number"
-                            value={editDimensions?.height || 0}
-                            onChange={(e) => updateDimension('height', parseInt(e.target.value) || 0)}
+                            value={editDimensions?.heightCm || 0}
+                            onChange={(e) => updateDimension('heightCm', parseInt(e.target.value) || 0)}
                             className="h-8 text-sm"
                             min="1"
                           />

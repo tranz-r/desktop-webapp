@@ -1,0 +1,127 @@
+# Removal Pricing Implementation Rules
+
+## Overview
+Implement frontend integration with the backend `/api/v1/prices/removal-prices` endpoint to replace the current complex pricing calculation with static pricing data.
+
+## Backend Endpoint Details
+- **URL**: `GET /api/v1/prices/removal-prices`
+- **Response Type**: `RemovalPricingDto`
+- **Caching**: ETag-based with 5-minute cache control
+- **Purpose**: Provides static removal pricing data based on crew size and service level
+
+## Pricing Structure Rules
+
+### Crew Size & Service Level Pricing
+| Crew Size | Service Level | Base Block | Base Price | Hourly Rate After |
+|-----------|---------------|-------------|------------|-------------------|
+| **1 Mover** | Standard | 3 hours | £250 | £65/hour |
+| **1 Mover** | Premium | 4 hours | £350 | £75/hour |
+| **2 Movers** | Standard | 3 hours | £300 | £75/hour |
+| **2 Movers** | Premium | 4 hours | £450 | £85/hour |
+| **3 Movers** | Standard | 3 hours | £350 | £85/hour |
+| **3 Movers** | Premium | 4 hours | £500 | £95/hour |
+
+## Data Structure Requirements
+
+### Backend Response Structure
+```typescript
+interface RemovalPricingDto {
+  version: string;           // SHA256 hash for cache validation
+  currency: string;          // "GBP"
+  generatedAt: DateTimeOffset;
+  rates: RatesDto;
+}
+
+interface RatesDto {
+  one: MoversDto;           // 1 mover pricing (Driver Only)
+  two: MoversDto;           // 2 movers pricing (Driver + Mate)
+  three: MoversDto;         // 3 movers pricing (Driver + 2 Mates)
+  standardServiceTexts: ServiceTextDto[];  // Standard tier features
+  premiumServiceTexts: ServiceTextDto[];   // Premium tier features
+}
+
+interface MoversDto {
+  standard: RateLeafDto;     // Standard service level
+  premium: RateLeafDto;      // Premium service level
+}
+
+interface RateLeafDto {
+  baseBlockHours: number;    // 3 or 4 hours depending on service level
+  baseBlockPrice: number;    // Base price for the block
+  hourlyAfter: number;       // Hourly rate after block hours
+}
+```
+
+## Implementation Requirements
+
+### 1. API Client Creation
+- Create `lib/api/removal-pricing.ts`
+- Implement `fetchRemovalPricing()` function
+- Handle ETag caching for efficiency
+
+### 2. Frontend Data Flow Updates
+- Replace current `POST /api/v1/prices` call with `GET /api/v1/prices/removal-prices`
+- Transform backend data structure to match frontend expectations
+- Implement real-time pricing calculation based on crew size changes
+
+### 3. Pricing Calculation Logic
+```typescript
+function calculateBasePrice(
+  crewSize: number, 
+  serviceLevel: 'standard' | 'premium',
+  hours: number,
+  pricingData: RemovalPricingDto
+): number {
+  // Get rates for selected crew size
+  const crewRates = getCrewRates(crewSize, pricingData);
+  const rateLeaf = serviceLevel === 'premium' ? crewRates.premium : crewRates.standard;
+  
+  // Calculate base price + additional hours
+  const basePrice = rateLeaf.baseBlockPrice;
+  if (hours <= rateLeaf.baseBlockHours) return basePrice;
+  
+  const additionalHours = hours - rateLeaf.baseBlockHours;
+  const additionalCost = additionalHours * rateLeaf.hourlyAfter;
+  
+  return basePrice + additionalCost;
+}
+```
+
+### 4. Dynamic Service Features
+- Use `standardServiceTexts` and `premiumServiceTexts` arrays from backend
+- Replace hardcoded service features with dynamic data
+- Display service features based on selected service level
+
+### 5. Crew Size Impact Display
+- Show pricing for all crew sizes (1, 2, 3 movers)
+- Update pricing in real-time when crew size changes
+- Display crew size recommendations based on inventory volume
+
+## File Modifications Required
+
+### New Files
+- `lib/api/removal-pricing.ts` - API client for removal pricing
+
+### Modified Files
+- `app/removal-pricing/page.tsx` - Update API calls and data handling
+- `lib/api/quote.ts` - Add removal pricing types (if needed)
+
+## Benefits
+✅ **Performance**: Static pricing data loads once, no complex calculations  
+✅ **Consistency**: Backend and frontend use same pricing logic  
+✅ **Maintainability**: Service features managed in database, not hardcoded  
+✅ **Scalability**: Easy to add new crew sizes or service levels  
+✅ **User Experience**: Real-time pricing updates as selections change  
+✅ **Accuracy**: Pricing matches exact business rules  
+
+## Testing Requirements
+- Verify API endpoint integration
+- Test pricing calculations for all crew sizes and service levels
+- Validate real-time pricing updates
+- Check ETag caching functionality
+- Ensure service features display correctly
+
+## Dependencies
+- Backend `/api/v1/prices/removal-prices` endpoint must be functional
+- ETag caching must work properly
+- Service features must be populated in backend database

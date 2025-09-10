@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
@@ -9,8 +11,7 @@ import RecommendationBanner from '@/components/van/RecommendationBanner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
  
-import { useCart } from '@/contexts/CartContext';
-import { useBooking } from '@/contexts/BookingContext';
+import { useQuote } from '@/contexts/QuoteContext';
 import { VAN_TABLE, recommendVanByVolume } from '@/lib/recommend-van';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -26,34 +27,74 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
+// Note: Removed unused imports - now using QuoteContext only
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 
 export default function VanSelectionPage() {
   const router = useRouter();
-  const { getTotalVolume, items } = useCart();
-  const booking = useBooking();
-  const { vehicle, schedule, updateVehicle, updateSchedule, isHydrated } = booking;
-  const selectedVan = vehicle.selectedVan;
-  const driverCount = vehicle.driverCount;
-  const hours = schedule.hours;
-  const flexibleTime = schedule.flexibleTime || false;
-  const timeSlot = schedule.timeSlot;
-  const setVan = (van: VanType) => updateVehicle({ selectedVan: van });
-  const setDriverCount = (count: number) => updateVehicle({ driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
-  const setHours = (h: number) => updateSchedule({ hours: Math.max(4, Math.floor(h)) });
-  const setFlexibleTime = (flex: boolean) => updateSchedule({ flexibleTime: !!flex });
-  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => updateSchedule({ timeSlot: slot });
+  const { activeQuoteType, quotes, updateQuote, isHydrated } = useQuote();
+  
+  // Get data from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const items = activeQuote?.items || [];
+  
+  const selectedVan = activeQuote?.vanType;
+  const driverCount = activeQuote?.driverCount || 2;
+  const hours = activeQuote?.hours || 4;
+  const flexibleTime = activeQuote?.flexibleTime || false;
+  const timeSlot = activeQuote?.timeSlot;
+  
+  // Helper functions to update quote data
+  const setVan = (van: VanType) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { vanType: van });
+    }
+  };
+  
+  const setDriverCount = (count: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { driverCount: Math.max(1, Math.min(3, Math.floor(count))) });
+    }
+  };
+  
+  const setHours = (h: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { hours: Math.max(4, Math.floor(h)) });
+    }
+  };
+  
+  const setFlexibleTime = (flex: boolean) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { flexibleTime: !!flex });
+    }
+  };
+  
+  const setTimeSlot = (slot: 'morning' | 'afternoon' | 'evening') => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { timeSlot: slot });
+    }
+  };
+  
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [movingDate, setMovingDate] = React.useState<string>('');
   const [dateOpen, setDateOpen] = React.useState(false);
   const [dateError, setDateError] = React.useState<string | null>(null);
+  // Note: Removed quoteSession - now using QuoteContext only
  
 
   React.useEffect(() => {
     if (!hasInventory(items.length)) router.replace('/inventory');
   }, [items.length, router]);
 
-  const totalVolume = getTotalVolume();
+  // Calculate total volume from items
+  const totalVolume = React.useMemo(() => {
+    return items.reduce((total, item) => {
+      const itemVolume = (item.lengthCm * item.widthCm * item.heightCm * item.quantity) / 1000000; // Convert to m³
+      return total + itemVolume;
+    }, 0);
+  }, [items]);
+  
   const recommended = React.useMemo(() => recommendVanByVolume(totalVolume), [totalVolume]);
 
   React.useEffect(() => {
@@ -63,28 +104,35 @@ export default function VanSelectionPage() {
 
   // Rehydrate moving date from schedule if available
   React.useEffect(() => {
-    if (isHydrated && !movingDate && schedule?.dateISO) {
+    if (isHydrated && !movingDate && activeQuote?.collectionDate) {
       try {
-        const d = new Date(schedule.dateISO);
+        const d = new Date(activeQuote.collectionDate);
         if (!isNaN(d.getTime())) {
           setMovingDate(format(d, 'yyyy-MM-dd'));
         }
       } catch {}
     }
-  }, [isHydrated, schedule?.dateISO, movingDate]);
+  }, [isHydrated, activeQuote?.collectionDate, movingDate]);
 
   // Avoid hydration mismatch by rendering after mount
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Persist minimal schedule data (local for date only) and update booking collection date
-  React.useEffect(() => {
-    try {
-      const schedule = { movingDate, hours, flexibleTime, timeSlot };
-      localStorage.setItem('schedule', JSON.stringify(schedule));
-    } catch {}
-  }, [movingDate, hours, flexibleTime, timeSlot]);
+  // Note: Removed quoteSession.setData useEffect to prevent unnecessary backend calls
+  // Data is now managed through QuoteContext only
+
+  // Helper function to update schedule data
+  const updateSchedule = (scheduleData: { dateISO?: string; hours?: number; flexibleTime?: boolean; timeSlot?: 'morning' | 'afternoon' | 'evening' }) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, {
+        collectionDate: scheduleData.dateISO,
+        hours: scheduleData.hours,
+        flexibleTime: scheduleData.flexibleTime,
+        timeSlot: scheduleData.timeSlot,
+      });
+    }
+  };
 
   // Ensure minimum hours is 4 to align with new business rule
   React.useEffect(() => {
@@ -97,7 +145,7 @@ export default function VanSelectionPage() {
     if (movingDate) {
       // Save ISO date only
       updateSchedule({ dateISO: new Date(movingDate).toISOString() });
-  setDateError(null);
+      setDateError(null);
     }
   }, [movingDate, updateSchedule]);
 
@@ -113,6 +161,12 @@ export default function VanSelectionPage() {
       <main className="flex-1">
       <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
         <div className="container mx-auto px-4 space-y-6">
+          
+          {/* Quote Reference Banner - Subtle display */}
+          <div className="flex justify-center">
+            <QuoteReferenceBanner variant="subtle" />
+          </div>
+          
           {/* Vehicle & Crew */}
           <Card className="border-primary-200">
             <CardHeader>

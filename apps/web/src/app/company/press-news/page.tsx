@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Calendar, Newspaper, Award, Users, TrendingUp, Star, ExternalLink } from "lucide-react";
+import CTASection from "@/components/CTASection";
 
 export default function PressNewsPage() {
   return (
@@ -407,27 +408,11 @@ export default function PressNewsPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Stay Connected with Tranzr Moves
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Follow us for the latest news, updates, and insights from the moving industry.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/quote-option">
-              <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-              Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            </Link>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-              Contact Media Team
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTASection
+        title="Stay Connected with Tranzr Moves"
+        description="Follow us for the latest news, updates, and insights from the moving industry."
+        secondaryButtonText="Contact Media Team"
+      />
 
       <Footer />
     </div>

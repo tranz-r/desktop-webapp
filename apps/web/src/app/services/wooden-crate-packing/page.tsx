@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import Link from 'next/link';
 import Header from "@/components/Header";
@@ -283,7 +285,7 @@ export default function WoodenCratePackingPage() {
         highlightedText="storage"
         description="We will pick up your items from your doorstep and deliver them to our secure Northamptonshire storage facility, where they will be safely stored for as little or as long as you like. Just let us know when you need your items back and we will drop them off at a time that suits you."
         buttonText="GET A STORAGE QUOTE"
-        imageSrc="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600<StorageSection />q=80"
+        imageSrc="/images/two-movers.jpg"
         imageAlt="Storage service"
       />
       <SVGImagesComponent />

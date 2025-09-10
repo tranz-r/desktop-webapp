@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from "react";
 import { StreamlinedHeader } from "@/components/StreamlinedHeader";
 import Footer from "@/components/Footer";
@@ -8,13 +10,47 @@ import { useForm } from "react-hook-form";
 import CollectionDeliveryAddresses, { CollectionDeliveryFormValues, floorValueToNumber } from "@/components/address/CollectionDeliveryAddresses";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useBooking } from "@/contexts/BookingContext";
+import { useQuote } from "@/contexts/QuoteContext";
 import { AlertCircle, Loader2 } from "lucide-react";
+// Note: Removed unused imports - now using QuoteContext only
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
+import MapboxMap from '@/components/MapboxMap';
+import { useMemo } from 'react';
 
 export default function CollectionDeliveryPage() {
   const router = useRouter();
-  const booking = useBooking();
-  const { originDestination, updateOriginDestination, isHydrated, customer } = booking;
+  const { 
+    activeQuoteType,
+    quotes,
+    updateQuote,
+    isHydrated 
+  } = useQuote();
+  
+  // Get origin and destination from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const origin = activeQuote?.origin;
+  const destination = activeQuote?.destination;
+  const distanceMiles = activeQuote?.distanceMiles;
+  // Note: Removed quoteSession - now using QuoteContext only
+
+  // Helper functions to update quote data
+  const setOrigin = (originData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { origin: originData });
+    }
+  };
+
+  const setDestination = (destinationData: any) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { destination: destinationData });
+    }
+  };
+
+  const setDistanceMiles = (miles: number) => {
+    if (activeQuoteType) {
+      updateQuote(activeQuoteType, { distanceMiles: miles });
+    }
+  };
 
   // Prevent initial flicker by showing a modern loading state until hydrated
   if (!isHydrated) {
@@ -41,24 +77,24 @@ export default function CollectionDeliveryPage() {
 
   const form = useForm<CollectionDeliveryFormValues>({
     defaultValues: {
-      originLine1: originDestination?.origin?.line1 || "",
-      originPostcode: originDestination?.origin?.postcode || "",
+      originLine1: origin?.line1 || "",
+      originPostcode: origin?.postcode || "",
       originFloor:
-        (originDestination?.origin?.floor ?? 0) === 0
+        (origin?.floor ?? 0) === 0
           ? "ground"
-          : (originDestination?.origin?.floor ?? 0) >= 6
+          : (origin?.floor ?? 0) >= 6
           ? "6+"
-          : String(originDestination?.origin?.floor ?? "ground"),
-      originElevator: originDestination?.origin?.hasElevator ?? true,
-      destinationLine1: originDestination?.destination?.line1 || "",
-      destinationPostcode: originDestination?.destination?.postcode || "",
+          : String(origin?.floor ?? "ground"),
+      originElevator: origin?.hasElevator ?? true,
+      destinationLine1: destination?.line1 || "",
+      destinationPostcode: destination?.postcode || "",
       destinationFloor:
-        (originDestination?.destination?.floor ?? 0) === 0
+        (destination?.floor ?? 0) === 0
           ? "ground"
-          : (originDestination?.destination?.floor ?? 0) >= 6
+          : (destination?.floor ?? 0) >= 6
           ? "6+"
-          : String(originDestination?.destination?.floor ?? "ground"),
-      destinationElevator: originDestination?.destination?.hasElevator ?? true,
+          : String(destination?.floor ?? "ground"),
+      destinationElevator: destination?.hasElevator ?? true,
     },
     mode: "onChange",
   });
@@ -69,96 +105,36 @@ export default function CollectionDeliveryPage() {
     form.watch("destinationLine1").trim().length > 0 &&
     form.watch("destinationPostcode").trim().length > 0;
 
-  // Persist origin fields to context as user edits
-  React.useEffect(() => {
-    const origin = {
-      line1: form.watch("originLine1") || "",
-      postcode: form.watch("originPostcode") || "",
-      floor: floorValueToNumber(form.watch("originFloor")),
-      hasElevator: !!form.watch("originElevator"),
-    };
-    updateOriginDestination({ origin });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("originLine1"),
-    form.watch("originPostcode"),
-    form.watch("originFloor"),
-    form.watch("originElevator"),
-  ]);
-
-  // Persist destination fields to context as user edits
-  React.useEffect(() => {
-    const destination = {
-      line1: form.watch("destinationLine1") || "",
-      postcode: form.watch("destinationPostcode") || "",
-      floor: floorValueToNumber(form.watch("destinationFloor")),
-      hasElevator: !!form.watch("destinationElevator"),
-    };
-    updateOriginDestination({ destination });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("destinationLine1"),
-    form.watch("destinationPostcode"),
-    form.watch("destinationFloor"),
-    form.watch("destinationElevator"),
-  ]);
-
-  // Compute and persist distance when both addresses are set
-  React.useEffect(() => {
-    const oLine = form.watch("originLine1");
-    const oPc = form.watch("originPostcode");
-    const dLine = form.watch("destinationLine1");
-    const dPc = form.watch("destinationPostcode");
-    const baseUrl = process.env.NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL;
-
-    if (!baseUrl) {
-      console.error("❌ NEXT_PUBLIC_ADDRESS_DISTANCE_BASE_URL is not configured!");
-      return;
+  // Memoize addresses to prevent unnecessary re-renders of MapboxMap
+  const addresses = useMemo(() => {
+    const originLine1 = form.watch("originLine1");
+    const originPostcode = form.watch("originPostcode");
+    const destinationLine1 = form.watch("destinationLine1");
+    const destinationPostcode = form.watch("destinationPostcode");
+    
+    // Only create addresses if all fields are filled and trimmed
+    if (originLine1?.trim() && originPostcode?.trim() && destinationLine1?.trim() && destinationPostcode?.trim()) {
+      return {
+        originAddress: `${originLine1.trim()}, ${originPostcode.trim()}`,
+        destinationAddress: `${destinationLine1.trim()}, ${destinationPostcode.trim()}`
+      };
     }
+    return null;
+  }, [form.watch("originLine1"), form.watch("originPostcode"), form.watch("destinationLine1"), form.watch("destinationPostcode")]);
 
-    const hasOrigin = !!oLine && !!oPc;
-    const hasDest = !!dLine && !!dPc;
+  // Note: Removed automatic origin sync useEffect to prevent infinite loops
+  // Origin is now updated only when form is submitted
 
-    if (!hasOrigin || !hasDest) {
-      return;
-    }
+  // Note: Removed automatic destination sync useEffect to prevent infinite loops
+  // Destination is now updated only when form is submitted
 
-    const controller = new AbortController();
-    const url = new URL(baseUrl);
-    url.searchParams.set("originAddress", `${oLine}`);
-    url.searchParams.set("destinationAddress", `${dLine}`);
-
-    fetch(url.toString(), { signal: controller.signal })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          return Promise.reject(new Error(`HTTP ${res.status}: ${res.statusText}`));
-        }
-      })
-      .then((miles) => {
-        const numeric = Number(miles);
-        if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
-          updateOriginDestination({ distanceMiles: numeric });
-        }
-      })
-      .catch((error) => {
-        console.error("❌ Distance calculation failed:", error);
-      });
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.watch("originLine1"),
-    form.watch("originPostcode"),
-    form.watch("destinationLine1"),
-    form.watch("destinationPostcode"),
-  ]);
+  // Note: Distance calculation removed - now handled by MapboxMap component via /api/v1/map/route
 
   // Rehydrate form values from saved context once hydrated
   React.useEffect(() => {
     if (!isHydrated) return;
-    const o = originDestination?.origin;
-    const d = originDestination?.destination;
+    const o = origin;
+    const d = destination;
     if (o) {
       if (o.line1) form.setValue("originLine1", o.line1, { shouldDirty: false });
       if (o.postcode) form.setValue("originPostcode", o.postcode, { shouldDirty: false });
@@ -188,24 +164,25 @@ export default function CollectionDeliveryPage() {
 
   function onSubmit(values: CollectionDeliveryFormValues) {
     // Preserve the distance that was calculated during address entry
-    const preservedDistance = customer?.distanceMiles || originDestination?.distanceMiles;
+    const preservedDistance = distanceMiles;
 
-    updateOriginDestination({
-      origin: {
-        line1: values.originLine1,
-        postcode: values.originPostcode,
-        floor: floorValueToNumber(values.originFloor),
-        hasElevator: values.originElevator,
-      },
-      destination: {
-        line1: values.destinationLine1,
-        postcode: values.destinationPostcode,
-        floor: floorValueToNumber(values.destinationFloor),
-        hasElevator: values.destinationElevator,
-      },
-      // Preserve the calculated distance
-      distanceMiles: preservedDistance,
+    setOrigin({
+      line1: values.originLine1,
+      postcode: values.originPostcode,
+      floor: floorValueToNumber(values.originFloor),
+      hasElevator: values.originElevator,
     });
+
+    setDestination({
+      line1: values.destinationLine1,
+      postcode: values.destinationPostcode,
+      floor: floorValueToNumber(values.destinationFloor),
+      hasElevator: values.destinationElevator,
+    });
+
+    if (preservedDistance) {
+      setDistanceMiles(preservedDistance);
+    }
 
     // Proceed to inventory step
     router.push("/inventory");
@@ -217,9 +194,28 @@ export default function CollectionDeliveryPage() {
       <main className="flex-1">
         <section className="pt-32 md:pt-36 lg:pt-44 pb-10 bg-white">
           <div className="container mx-auto px-4">
+            {/* Quote Reference Banner - Subtle display */}
+            <div className="mb-6 flex justify-center">
+              {/* <QuoteReferenceBanner variant="subtle" /> */}
+              <QuoteReferenceBanner variant="minimal" />
+            </div>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <CollectionDeliveryAddresses form={form} />
+                
+                {/* Interactive Map - Show when both addresses are available */}
+                {addresses && (
+                  <div className="mt-6">
+                    <MapboxMap 
+                      originAddress={addresses.originAddress}
+                      destinationAddress={addresses.destinationAddress}
+                      className="w-full"
+                      onDistanceUpdate={setDistanceMiles}
+                    />
+                  </div>
+                )}
+                
                 {/* Extra-cost notice similar to origin-destination */}
                 {((!form.watch("originElevator") && floorValueToNumber(form.watch("originFloor")) > 0) ||
                   (!form.watch("destinationElevator") && floorValueToNumber(form.watch("destinationFloor")) > 0)) && (
@@ -230,14 +226,23 @@ export default function CollectionDeliveryPage() {
                     </div>
                   </div>
                 )}
-                {typeof originDestination?.distanceMiles === "number" &&
-                  Number.isFinite(originDestination.distanceMiles!) &&
-                  originDestination.distanceMiles! > 0 && (
+                {typeof distanceMiles === "number" &&
+                  Number.isFinite(distanceMiles) &&
+                  distanceMiles > 0 && (
                     <div className="w-full text-center text-lg text-muted-foreground font-extrabold">
-                      Total distance: {Math.round(originDestination.distanceMiles!)} miles
+                      Total distance: {Math.round(distanceMiles)} miles
                     </div>
                   )}
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/quote-option')}
+                    className="px-6 py-2 text-base"
+                  >
+                    ← Back to Quote Options
+                  </Button>
+                  
                   <Button type="submit" disabled={!isReady}>
                     Next
                   </Button>

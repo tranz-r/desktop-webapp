@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, Phone, Mail, MapPin, Clock, MessageSquare } from "lucide-react";
+import CTASection from "@/components/CTASection";
 
 export default function ContactPage() {
   return (
@@ -321,28 +322,11 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Ready to Start Your Moving Journey?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Contact us today for a free quote or to discuss your moving needs. 
-            Our team is ready to help you move with confidence.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/quote-option">
-              <Button size="lg" className="bg-secondary-400 hover:bg-secondary-500 text-white font-bold text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-              Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            </Link>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-              Call Us Now
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTASection
+        title="Ready to Start Your Moving Journey?"
+        description="Contact us today for a free quote or to discuss your moving needs. Our team is ready to help you move with confidence."
+        secondaryButtonText="Call Us Now"
+      />
 
       <Footer />
     </div>

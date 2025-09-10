@@ -1,14 +1,22 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { Suspense } from 'react';
-import { useBooking } from '@/contexts/BookingContext';
-import { useSearchParams } from 'next/navigation';
+import { useQuote } from '@/contexts/QuoteContext';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { StreamlinedHeader } from '@/components/StreamlinedHeader';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+// Note: Removed unused imports - now using QuoteContext only
+import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
+import { API_BASE_URL } from '@/lib/api/config';
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // Hook placed at module scope per React rules
 function usePaymentStatus(clientSecret: string | null) {
@@ -22,12 +30,15 @@ function usePaymentStatus(clientSecret: string | null) {
     
     // Don't start checking until we have a client secret
     if (!clientSecret) {
+      console.log('[confirmation] usePaymentStatus: No clientSecret, setting loading state');
       setLoading(true);
       setError(null);
       setStatus('');
       setMessage('');
       return;
     }
+    
+    console.log('[confirmation] usePaymentStatus: Starting payment status check with clientSecret:', clientSecret);
     
     (async () => {
       const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
@@ -46,6 +57,7 @@ function usePaymentStatus(clientSecret: string | null) {
 
         // Determine if this is a Setup Intent or Payment Intent based on the client secret
         const isSetupIntent = clientSecret.startsWith('seti_');
+        console.log('[confirmation] usePaymentStatus: Intent type:', isSetupIntent ? 'SetupIntent' : 'PaymentIntent');
         
         if (isSetupIntent) {
           // Handle Setup Intent (for "Pay later" option)
@@ -62,6 +74,7 @@ function usePaymentStatus(clientSecret: string | null) {
           }
           if (cancelled) return;
           
+          console.log('[confirmation] usePaymentStatus: SetupIntent status:', setupIntent.status);
           setStatus(setupIntent.status);
           switch (setupIntent.status) {
             case 'succeeded':
@@ -97,6 +110,7 @@ function usePaymentStatus(clientSecret: string | null) {
           }
           if (cancelled) return;
           
+          console.log('[confirmation] usePaymentStatus: PaymentIntent status:', paymentIntent.status, paymentIntent); // Debug log
           setStatus(paymentIntent.status);
           switch (paymentIntent.status) {
             case 'succeeded':
@@ -135,34 +149,261 @@ function usePaymentStatus(clientSecret: string | null) {
 }
 
 function ConfirmationContent() {
-  const booking = useBooking();
+  const { 
+    activeQuoteType, 
+    quotes, 
+    updateQuote,
+    isHydrated,
+    getQuoteReference,
+    resetAllQuotes
+  } = useQuote();
   const params = useSearchParams();
+  const router = useRouter();
   const refFromUrl = params.get('ref');
+  
+  // Check for Stripe redirect parameters (payment_intent_client_secret)
+  const paymentIntentClientSecret = params.get('payment_intent_client_secret');
+  
   const [clientSecret, setClientSecret] = React.useState<string>('');
   const [isFetchingClientSecret, setIsFetchingClientSecret] = React.useState(false);
+  const [isPaymentAlreadyCompleted, setIsPaymentAlreadyCompleted] = React.useState(false);
+  const [stripeRedirectStatus, setStripeRedirectStatus] = React.useState<'processing' | 'succeeded' | 'failed' | null>(null);
+  
+  // State to track context clearing process
+  const [isClearingContext, setIsClearingContext] = React.useState(false);
+  
+  // Redirecting indicator state
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
+  
+  // Ref to prevent multiple quote updates
+  const hasUpdatedQuoteRef = React.useRef(false);
+  
+  // Ref to store debounce timeout
+  const updateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to prevent multiple context clearing attempts
+  const hasClearedContextRef = React.useRef(false);
+  
+  // Unified function to clear context and redirect to home
+  const clearContextAndRedirect = React.useCallback(() => {
+    if (hasClearedContextRef.current) {
+      console.log('[confirmation] Context already cleared, skipping...');
+      return;
+    }
+    
+    console.log('[confirmation] Clearing context and redirecting to home...');
+    hasClearedContextRef.current = true;
+    setIsRedirecting(true);
+    setIsClearingContext(true);
+    
+    try {
+      // Clear all quote data from context and IndexedDB
+      console.log('[confirmation] Calling resetAllQuotes() to clear context and IndexedDB...');
+      resetAllQuotes();
+      console.log('[confirmation] ✅ Quote context cleared successfully');
+      
+      // Redirect to home page using hard replace to prevent back navigation
+      setTimeout(() => {
+        console.log('[confirmation] Redirecting to home page...');
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.replace('/');
+        } else {
+          router.replace('/');
+        }
+      }, 500); // Small delay to ensure context is cleared
+      
+    } catch (error) {
+      console.error('[confirmation] ❌ Error clearing quote context:', error);
+      // Still redirect even if clearing fails
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.replace('/');
+        } else {
+          router.replace('/');
+        }
+      }, 500);
+    } finally {
+      setIsClearingContext(false);
+    }
+  }, [resetAllQuotes, router]);
+  
+  // Handle Stripe redirects - this is the key fix!
+  React.useEffect(() => {
+    if (paymentIntentClientSecret && !stripeRedirectStatus) {
+      console.log('[confirmation] Detected Stripe redirect with client secret, retrieving payment intent...');
+      
+      const handleStripeRedirect = async () => {
+        try {
+          const stripe = await stripePromise;
+          if (!stripe) return;
+          
+          const { paymentIntent } = await stripe.retrievePaymentIntent(paymentIntentClientSecret);
+          console.log('[confirmation] Stripe payment intent retrieved:', paymentIntent?.status);
+          
+          if (paymentIntent) {
+            setStripeRedirectStatus(paymentIntent.status as any);
+            
+            // If payment succeeded, mark as completed
+            if (paymentIntent.status === 'succeeded') {
+              setIsPaymentAlreadyCompleted(true);
+              console.log('[confirmation] Payment already completed via Stripe redirect');
+            }
+          }
+        } catch (error) {
+          console.error('[confirmation] Error retrieving Stripe payment intent:', error);
+          setStripeRedirectStatus('failed');
+        }
+      };
+      
+      handleStripeRedirect();
+    }
+  }, [paymentIntentClientSecret, stripeRedirectStatus]);
   const { loading, status, message, error } = usePaymentStatus(clientSecret);
-  const job = booking.payment?.jobDetails;
-  const [jobFetchAttempts, setJobFetchAttempts] = React.useState(0);
+  
+  // Get payment data from active quote
+  const activeQuote = activeQuoteType ? quotes[activeQuoteType] : undefined;
+  const quoteData = activeQuote; // Use quote data directly instead of job details
 
-  const { payment } = booking;
+  // If no active quote type, try to find a quote with payment data
+  const quoteWithPayment = React.useMemo(() => {
+    if (activeQuoteType && quotes[activeQuoteType]?.payment) {
+      return { type: activeQuoteType, quote: quotes[activeQuoteType] };
+    }
+    
+    // Search through all quotes to find one with payment data
+    for (const [type, quote] of Object.entries(quotes)) {
+      if (quote?.payment?.paymentIntentId) {
+        console.log('[confirmation] Found quote with payment data:', { type, paymentIntentId: quote.payment.paymentIntentId });
+        return { type: type as any, quote };
+      }
+    }
+    
+    return null;
+  }, [activeQuoteType, quotes]);
+
+  // Use the quote with payment data if available
+  const effectiveQuote = quoteWithPayment?.quote || activeQuote;
+  const effectiveQuoteType = quoteWithPayment?.type || activeQuoteType;
+
+  const payment = effectiveQuote?.payment;
   const paymentIntentId = payment?.paymentIntentId;
+
+  // Determine the effective payment status - prioritize Stripe redirect status
+  const effectivePaymentStatus = stripeRedirectStatus || status;
+  const isPaymentProcessing = effectivePaymentStatus === 'processing';
+  const isPaidInContext = (effectiveQuote?.paymentStatus === 'paid') || (effectiveQuote?.payment?.status === 'paid');
+  const hasPaymentSucceeded = (effectivePaymentStatus === 'succeeded') || isPaymentAlreadyCompleted || isPaidInContext;
+
+  // Immediate debugging when component mounts
+  console.log('[confirmation] Component mounted with:', {
+    isHydrated,
+    activeQuoteType,
+    activeQuote: !!activeQuote,
+    payment: !!payment,
+    paymentIntentId,
+    quotes: Object.keys(quotes),
+    refFromUrl,
+    paymentIntentClientSecret: !!paymentIntentClientSecret,
+    stripeRedirectStatus
+  });
+
+  // Detailed inspection of QuoteContext
+  console.log('[confirmation] QuoteContext inspection:', {
+    allQuotes: quotes,
+    activeQuoteType,
+    effectiveQuoteType,
+    effectiveQuote: !!effectiveQuote,
+    activeQuoteDetails: activeQuote,
+    effectiveQuoteDetails: effectiveQuote,
+    activeQuotePayment: activeQuote?.payment,
+    effectiveQuotePayment: effectiveQuote?.payment,
+    activeQuotePaymentIntentId: activeQuote?.payment?.paymentIntentId,
+    effectiveQuotePaymentIntentId: effectiveQuote?.payment?.paymentIntentId,
+    allPaymentData: Object.values(quotes).map(q => q?.payment).filter(Boolean),
+    quoteKeys: Object.keys(quotes),
+    quoteValues: Object.values(quotes).map(q => ({
+      hasPayment: !!q?.payment,
+      paymentIntentId: q?.payment?.paymentIntentId,
+      paymentType: q?.payment?.paymentType
+    }))
+  });
+
+  console.log('[confirmation] Debug data:', {
+    activeQuoteType,
+    activeQuote,
+    payment,
+    paymentIntentId,
+    clientSecret,
+    status,
+    loading,
+    isPaymentAlreadyCompleted
+  });
+
+  // Summary of current state for debugging
+  console.log('[confirmation] State summary:', {
+    hasPaymentIntentId: !!paymentIntentId,
+    hasClientSecret: !!clientSecret,
+    currentStatus: effectivePaymentStatus,
+    isLoading: loading,
+    isPaymentCompleted: isPaymentAlreadyCompleted,
+    willShowProcessing: isPaymentProcessing || (loading && !error && !isPaymentAlreadyCompleted)
+  });
+
+  // Helper function to update payment data
+  const updatePayment = React.useCallback((paymentData: any) => {
+    if (effectiveQuoteType) {
+      updateQuote(effectiveQuoteType, { payment: { ...effectiveQuote?.payment, ...paymentData } });
+    }
+  }, [effectiveQuoteType, effectiveQuote?.payment, updateQuote]);
 
   // Fetch client secret using stored PaymentIntentId
   React.useEffect(() => {
+    console.log('[confirmation] useEffect triggered for fetchClientSecret:', { 
+      paymentIntentId, 
+      effectiveQuoteType,
+      isHydrated,
+      hasPaymentIntentId: !!paymentIntentId 
+    });
+    
+    // Don't proceed if not hydrated or no payment intent ID
+    if (!isHydrated || !paymentIntentId) {
+      console.log('[confirmation] Skipping fetch - not hydrated or no paymentIntentId:', { isHydrated, paymentIntentId });
+      return;
+    }
+    
     const fetchClientSecret = async () => {
-      if (!paymentIntentId) return;
-
+      console.log('[confirmation] Fetching client secret for paymentIntentId:', paymentIntentId);
       setIsFetchingClientSecret(true);
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`);
+        const url = `${API_BASE_URL}/api/v1/checkout/payment-intent?paymentIntentId=${encodeURIComponent(paymentIntentId)}`;
+        console.log('[confirmation] Making API call to:', url);
+        
+        const response = await fetch(url);
+        
+        console.log('[confirmation] API response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch payment intent: ${response.status}`);
         }
         
         const data = await response.json();
-        setClientSecret(data.clientSecret);
+        console.log('[confirmation] Payment intent response:', data); // Debug log
+        
+        if (data.clientSecret) {
+          console.log('[confirmation] Setting client secret');
+          setClientSecret(data.clientSecret);
+        } else if (data.status === 'succeeded') {
+          // Payment already completed, log this information
+          console.log('[confirmation] Payment already completed, status:', data.status);
+          // Set the status directly since payment is already completed
+          setIsPaymentAlreadyCompleted(true);
+          // Update the payment status in the context if it's not already set
+          if (effectiveQuote?.paymentStatus !== 'paid') {
+            updateQuote(effectiveQuoteType!, { paymentStatus: 'paid' });
+          }
+        } else {
+          console.log('[confirmation] No client secret and payment not completed:', data);
+        }
       } catch (error) {
         console.error('Error fetching client secret:', error);
       } finally {
@@ -173,59 +414,120 @@ function ConfirmationContent() {
     if (paymentIntentId) {
       fetchClientSecret();
     }
-  }, [paymentIntentId]);
+  }, [paymentIntentId, isHydrated]); // Include isHydrated in dependencies
 
   // Promote status to Paid locally once payment succeeded (backend may still show Pending)
-  React.useEffect(() => {
-    if (status === 'succeeded' && job && job.paymentStatus && job.paymentStatus.toLowerCase() === 'pending') {
-      booking.updatePayment?.({ jobDetails: { ...job, paymentStatus: 'Paid' } });
-    }
-  }, [status, job, booking]);
-
+  // REMOVED: This useEffect was causing data loss by triggering multiple state updates
+  // The payment status is already handled in the usePaymentStatus hook above
+  
   // If we arrive without a bookingId in context (fresh navigation) but have ref param, hydrate it immediately
   React.useEffect(() => {
-    if (refFromUrl && !booking.payment?.bookingId) {
-      booking.updatePayment({ bookingId: refFromUrl });
+    if (refFromUrl && !payment?.bookingId) {
+      updatePayment({ bookingId: refFromUrl });
     }
-  }, [refFromUrl, booking]);
+  }, [refFromUrl, payment?.bookingId, updatePayment]);
 
-  // Refetch job details while payment succeeded but job not yet in context (race condition protection)
+  // Update quote data when payment succeeds to ensure we have all necessary information
   React.useEffect(() => {
-    if (status !== 'succeeded') return;
-    if (booking.payment?.jobDetails) return; // already have it
-    if (jobFetchAttempts > 10) return; // stop after retries
-    const quoteId = booking.payment?.bookingId;
-    if (!quoteId) return;
-    const baseUrl = process.env.NEXT_PUBLIC_JOBS_BASE_URL;
-    if (!baseUrl) return;
-    const controller = new AbortController();
-    fetch(`${baseUrl}?quoteId=${encodeURIComponent(quoteId)}`, { signal: controller.signal })
-      .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch job details')))
-      .then(j => {
-        const jobObj = Array.isArray(j) ? j[0] : j;
-        if (jobObj && jobObj.quoteId) {
-          booking.updatePayment?.({ jobDetails: jobObj, bookingId: jobObj.quoteId });
-        } else if (jobObj) {
-          booking.updatePayment?.({ jobDetails: jobObj });
-        }
-      })
-      .catch(e => console.warn('[confirmation] job fetch attempt failed', jobFetchAttempts, e))
-      .finally(() => {
-        if (!booking.payment?.jobDetails) {
-          setTimeout(() => setJobFetchAttempts(a => a + 1), 1000);
-        }
+    if (!hasPaymentSucceeded) return;
+    if (!effectiveQuote) return;
+    
+    console.log('[confirmation] Payment succeeded, updating quote data:', { effectivePaymentStatus, effectiveQuote, payment, isPaymentAlreadyCompleted });
+    
+    // Ensure we have a bookingId for the quote
+    if (!payment?.bookingId) {
+      const bookingId = refFromUrl || crypto.randomUUID();
+      updatePayment({ bookingId });
+    }
+  }, [hasPaymentSucceeded, effectiveQuote, payment?.bookingId, refFromUrl, updatePayment]);
+
+  // Update payment status in QuoteContext when payment succeeds to mark Journey Stepper as complete
+  React.useEffect(() => {
+    if (hasPaymentSucceeded && effectiveQuoteType) {
+      // Prevent multiple updates that could cause loops
+      if (hasUpdatedQuoteRef.current) {
+        console.log('[confirmation] Quote already updated, skipping to prevent loop');
+        return;
+      }
+      
+      // Additional check: if the quote is already marked as paid, skip update
+      if (effectiveQuote?.paymentStatus === 'paid' && effectiveQuote?.payment?.status === 'paid') {
+        console.log('[confirmation] Quote already marked as paid, skipping update');
+        hasUpdatedQuoteRef.current = true;
+        return;
+      }
+      
+      console.log('[confirmation] Payment succeeded, updating payment status to paid');
+      console.log('[confirmation] Current quote state:', {
+        paymentStatus: effectiveQuote?.paymentStatus,
+        paymentStatusDetail: effectiveQuote?.payment?.status,
+        hasUpdatedQuoteRef: hasUpdatedQuoteRef.current
       });
-    return () => controller.abort();
-  }, [status, booking, jobFetchAttempts]);
+      
+      // Clear any existing timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Debounce the update to prevent rapid successive calls
+      updateTimeoutRef.current = setTimeout(() => {
+        // Mark that we've updated this quote
+        hasUpdatedQuoteRef.current = true;
+        
+        // Update the quote with payment success status
+        updateQuote(effectiveQuoteType, { 
+          paymentStatus: 'paid',
+          payment: {
+            ...effectiveQuote?.payment,
+            status: 'paid'
+          }
+        });
+      }, 100); // 100ms debounce
+    }
+  }, [hasPaymentSucceeded, effectiveQuoteType, effectiveQuote?.payment, updateQuote]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Removed 20s auto-redirect countdown per request
+
+  // Prevent navigating back to confirmation after success: add popstate guard
+  React.useEffect(() => {
+    if (!hasPaymentSucceeded) return;
+    const onPopState = () => {
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.replace('/');
+      }
+    };
+    // Push a marker state so the immediate back lands here and triggers popstate
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ fromConfirmation: true }, '', window.location.href);
+      } catch {}
+      window.addEventListener('popstate', onPopState);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('popstate', onPopState);
+      }
+    };
+  }, [hasPaymentSucceeded]);
+
   // UI for each payment state
   let mainContent;
   
   // Get payment type from context to show appropriate messages
-  const paymentType = booking.payment?.paymentType;
+  const paymentType = payment?.paymentType;
   const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
   
   // Show loading state while checking payment status
-  if (loading && clientSecret) {
+  if (loading && clientSecret && !isPaymentAlreadyCompleted) {
     mainContent = (
       <Card className="shadow-xl border-primary-200">
         <CardHeader className="flex flex-col items-center gap-2">
@@ -243,7 +545,7 @@ function ConfirmationContent() {
         </CardContent>
       </Card>
     );
-  } else if (status === 'succeeded') {
+  } else if (hasPaymentSucceeded) {
     if (isSetupIntent || paymentType === 'later') {
       // Setup Intent succeeded (Pay later option)
       mainContent = (
@@ -254,15 +556,17 @@ function ConfirmationContent() {
             <div className="text-sm text-muted-foreground text-center">Your payment method has been saved securely. We'll charge the full amount 72 hours before your collection date.</div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {job ? (
+            {effectiveQuote ? (
               <>
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reference</span>
-                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{job.quoteId}</span>
+                  <span className="text-xs text-muted-foreground">Quote Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">
+                    {effectiveQuoteType ? getQuoteReference(effectiveQuoteType) || 'N/A' : 'N/A'}
+                  </span>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="text-blue-800 text-sm">
-                    <strong>Important:</strong> Your payment method has been saved. The full amount of £{job.cost.total?.toFixed(2) || 'TBD'} will be charged automatically 72 hours before your scheduled collection date.
+                    <strong>Important:</strong> Your payment method has been saved. The full amount of £{effectiveQuote.totalCost?.toFixed(2) || 'TBD'} will be charged automatically 72 hours before your scheduled collection date.
                   </div>
                 </div>
                 <Table className="mb-4">
@@ -276,10 +580,10 @@ function ConfirmationContent() {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>{job.vanType}</TableCell>
-                      <TableCell>{job.pricingTier}</TableCell>
-                      <TableCell>{job.driverCount}</TableCell>
-                      <TableCell>{job.distanceMiles} miles</TableCell>
+                      <TableCell>{effectiveQuote.vanType}</TableCell>
+                      <TableCell>{effectiveQuote.pricingTier}</TableCell>
+                      <TableCell>{effectiveQuote.driverCount}</TableCell>
+                      <TableCell>{effectiveQuote.distanceMiles} miles</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -289,11 +593,17 @@ function ConfirmationContent() {
                       <CardTitle className="text-base">Pickup</CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div>{job.origin.addressLine1}</div>
-                      {job.origin.addressLine2 && <div>{job.origin.addressLine2}</div>}
-                      <div>{job.origin.city}</div>
-                      <div>{job.origin.postCode}</div>
-                      {job.origin.country && <div>{job.origin.country}</div>}
+                      {effectiveQuote.origin ? (
+                        <>
+                          <div>{effectiveQuote.origin.line1}</div>
+                          {effectiveQuote.origin.line2 && <div>{effectiveQuote.origin.line2}</div>}
+                          <div>{effectiveQuote.origin.city}</div>
+                          <div>{effectiveQuote.origin.postcode}</div>
+                          {effectiveQuote.origin.country && <div>{effectiveQuote.origin.country}</div>}
+                        </>
+                      ) : (
+                        <div className="text-muted-foreground">Address not specified</div>
+                      )}
                     </CardContent>
                   </Card>
                   <Card className="bg-muted/40">
@@ -301,11 +611,17 @@ function ConfirmationContent() {
                       <CardTitle className="text-base">Delivery</CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div>{job.destination.addressLine1}</div>
-                      {job.destination.addressLine2 && <div>{job.destination.addressLine2}</div>}
-                      <div>{job.destination.city}</div>
-                      <div>{job.destination.postCode}</div>
-                      {job.destination.country && <div>{job.destination.country}</div>}
+                      {effectiveQuote.destination ? (
+                        <>
+                          <div>{effectiveQuote.destination.line1}</div>
+                          {effectiveQuote.destination.line2 && <div>{effectiveQuote.destination.line2}</div>}
+                          <div>{effectiveQuote.destination.city}</div>
+                          <div>{effectiveQuote.destination.postcode}</div>
+                          {effectiveQuote.destination.country && <div>{effectiveQuote.destination.country}</div>}
+                        </>
+                      ) : (
+                        <div className="text-muted-foreground">Address not specified</div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -319,10 +635,10 @@ function ConfirmationContent() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {job.inventoryItems?.map((item: any, idx: number) => (
+                      {effectiveQuote.items?.map((item: any, idx: number) => (
                         <TableRow key={idx}>
                           <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.height} × {item.width} × {item.depth}</TableCell>
+                          <TableCell>{item.heightCm} × {item.widthCm} × {item.lengthCm}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                         </TableRow>
                       ))}
@@ -338,6 +654,48 @@ function ConfirmationContent() {
                 <div className="mt-8 text-center text-base text-muted-foreground">
                   <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. Your payment method has been saved and will be charged automatically 72 hours before your collection date.
                 </div>
+                
+                {/* Return Home Button */}
+                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-center space-y-3">
+                    <div className="text-green-800 text-sm">
+                      <strong>You're all set.</strong>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" hidden={!isRedirecting}></div>
+                    </div>
+                    <button
+                      onClick={clearContextAndRedirect}
+                      className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    >
+                      Return Home Now
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Redirecting State */}
+                {isRedirecting && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Redirecting to home page...</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Context Clearing Indicator */}
+                {isClearingContext && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Preparing fresh start:</strong> Clearing your booking data to prepare for future bookings...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
@@ -362,11 +720,13 @@ function ConfirmationContent() {
             <div className="text-sm text-muted-foreground text-center">Your booking is complete. Below are your details and next steps.</div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {job ? (
+            {effectiveQuote ? (
               <>
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reference</span>
-                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">{job.quoteId}</span>
+                  <span className="text-xs text-muted-foreground">Quote Reference</span>
+                  <span className="font-mono text-lg font-bold text-primary-700 tracking-wide">
+                    {effectiveQuoteType ? getQuoteReference(effectiveQuoteType) || 'N/A' : 'N/A'}
+                  </span>
                 </div>
                 <Table className="mb-4">
                   <TableHeader>
@@ -379,10 +739,10 @@ function ConfirmationContent() {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>{job.vanType}</TableCell>
-                      <TableCell>{job.pricingTier}</TableCell>
-                      <TableCell>{job.driverCount}</TableCell>
-                      <TableCell>{job.distanceMiles} miles</TableCell>
+                      <TableCell>{effectiveQuote.vanType}</TableCell>
+                      <TableCell>{effectiveQuote.pricingTier}</TableCell>
+                      <TableCell>{effectiveQuote.driverCount}</TableCell>
+                      <TableCell>{effectiveQuote.distanceMiles} miles</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -392,11 +752,17 @@ function ConfirmationContent() {
                       <CardTitle className="text-base">Pickup</CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div>{job.origin.addressLine1}</div>
-                      {job.origin.addressLine2 && <div>{job.origin.addressLine2}</div>}
-                      <div>{job.origin.city}</div>
-                      <div>{job.origin.postCode}</div>
-                      {job.origin.country && <div>{job.origin.country}</div>}
+                      {effectiveQuote.origin ? (
+                        <>
+                          <div>{effectiveQuote.origin.line1}</div>
+                          {effectiveQuote.origin.line2 && <div>{effectiveQuote.origin.line2}</div>}
+                          <div>{effectiveQuote.origin.city}</div>
+                          <div>{effectiveQuote.origin.postcode}</div>
+                          {effectiveQuote.origin.country && <div>{effectiveQuote.origin.country}</div>}
+                        </>
+                      ) : (
+                        <div className="text-muted-foreground">Address not specified</div>
+                      )}
                     </CardContent>
                   </Card>
                   <Card className="bg-muted/40">
@@ -404,11 +770,17 @@ function ConfirmationContent() {
                       <CardTitle className="text-base">Delivery</CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div>{job.destination.addressLine1}</div>
-                      {job.destination.addressLine2 && <div>{job.destination.addressLine2}</div>}
-                      <div>{job.destination.city}</div>
-                      <div>{job.destination.postCode}</div>
-                      {job.destination.country && <div>{job.destination.country}</div>}
+                      {effectiveQuote.destination ? (
+                        <>
+                          <div>{effectiveQuote.destination.line1}</div>
+                          {effectiveQuote.destination.line2 && <div>{effectiveQuote.destination.line2}</div>}
+                          <div>{effectiveQuote.destination.city}</div>
+                          <div>{effectiveQuote.destination.postcode}</div>
+                          {effectiveQuote.destination.country && <div>{effectiveQuote.destination.country}</div>}
+                        </>
+                      ) : (
+                        <div className="text-muted-foreground">Address not specified</div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -422,10 +794,10 @@ function ConfirmationContent() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {job.inventoryItems?.map((item: any, idx: number) => (
+                      {effectiveQuote.items?.map((item: any, idx: number) => (
                         <TableRow key={idx}>
                           <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.height} × {item.width} × {item.depth}</TableCell>
+                          <TableCell>{item.heightCm} × {item.widthCm} × {item.lengthCm}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                         </TableRow>
                       ))}
@@ -434,20 +806,59 @@ function ConfirmationContent() {
                 </div>
                 <div className="mt-6 flex flex-col items-center gap-2">
                   {(() => {
-                    const displayStatus = status === 'succeeded'
-                      ? (job.paymentStatus && job.paymentStatus.toLowerCase() !== 'pending' ? job.paymentStatus : 'Paid')
-                      : (job.paymentStatus || 'Pending');
+                    const displayStatus = effectivePaymentStatus === 'succeeded'
+                      ? (effectiveQuote.paymentStatus && effectiveQuote.paymentStatus.toLowerCase() !== 'pending' ? effectiveQuote.paymentStatus : 'Paid')
+                      : (effectiveQuote.paymentStatus || 'Pending');
                     return (
                       <Badge variant="outline" className="text-lg px-4 py-2">Status: {displayStatus}</Badge>
                     );
                   })()}
-                  {job.receiptUrl && (
-                    <a href={job.receiptUrl} target="_blank" rel="noopener" className="text-primary-700 underline text-sm">Download Receipt</a>
-                  )}
                 </div>
                 <div className="mt-8 text-center text-base text-muted-foreground">
                   <strong>Next steps:</strong> Our team will contact you soon to confirm your booking and arrange logistics. If you have questions, please call us or reply to your confirmation email.
                 </div>
+                
+                {/* Return Home Button */}
+                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-center space-y-3">
+                    <div className="text-green-800 text-sm">
+                      <strong>You're all set.</strong>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" hidden={!isRedirecting}></div>
+                    </div>
+                    <button
+                      onClick={clearContextAndRedirect}
+                      className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    >
+                      Return To Home Page
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Redirecting State */}
+                {isRedirecting && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Redirecting to home page...</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Context Clearing Indicator */}
+                {isClearingContext && (
+                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="text-blue-800 text-sm">
+                        <strong>Preparing fresh start:</strong> Clearing your booking data to prepare for future bookings...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center gap-4 text-center text-sm text-muted-foreground animate-pulse">
@@ -463,7 +874,7 @@ function ConfirmationContent() {
         </Card>
       );
     }
-  } else if (status === 'processing' || (loading && !error)) {
+  } else if (isPaymentProcessing) {
     const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
     const title = isSetupIntent ? 'Setting up payment method' : 'Your payment is being processed';
     const description = isSetupIntent 
@@ -486,7 +897,7 @@ function ConfirmationContent() {
         </CardContent>
       </Card>
     );
-  } else if (status === 'requires_payment_method') {
+  } else if (effectivePaymentStatus === 'requires_payment_method') {
     const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
     const title = isSetupIntent ? 'Payment method setup failed' : 'Payment failed';
     const description = isSetupIntent 
@@ -509,7 +920,7 @@ function ConfirmationContent() {
         </CardContent>
       </Card>
     );
-  } else if (status === 'requires_action') {
+  } else if (effectivePaymentStatus === 'requires_action') {
     const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
     const title = isSetupIntent ? 'Payment method setup requires authentication' : 'Payment requires authentication';
     const description = isSetupIntent 
@@ -530,7 +941,7 @@ function ConfirmationContent() {
         </CardContent>
       </Card>
     );
-  } else if (status === 'canceled') {
+  } else if (effectivePaymentStatus === 'canceled') {
     const isSetupIntent = clientSecret && clientSecret.startsWith('seti_');
     const title = isSetupIntent ? 'Payment method setup was canceled' : 'Payment was canceled';
     const description = isSetupIntent 
@@ -571,8 +982,24 @@ function ConfirmationContent() {
           </CardContent>
         </Card>
       );
-    } else if (!clientSecret && !isFetchingClientSecret) {
-      // Show message when no client secret is available
+    } else if (!clientSecret && !isFetchingClientSecret && !isHydrated) {
+      // Show loading state while hydrating instead of "not found"
+      mainContent = (
+        <Card className="shadow-xl border-primary-200">
+          <CardHeader className="flex flex-col items-center gap-2">
+            <Badge variant="outline" className="mb-2 text-lg px-4 py-2">Loading</Badge>
+            <CardTitle className="text-2xl font-bold text-primary-700 text-center">Loading your booking details</CardTitle>
+            <div className="text-sm text-muted-foreground text-center">Please wait while we load your booking information...</div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    } else if (!clientSecret && !isFetchingClientSecret && isHydrated) {
+      // Only show "not found" when we're hydrated and still don't have data
       mainContent = (
         <Card className="shadow-xl border-primary-200">
           <CardHeader className="flex flex-col items-center gap-2">
@@ -611,7 +1038,15 @@ function ConfirmationContent() {
   <StreamlinedHeader hideCart />
       <main className="flex-1">
         <section className="pt-32 lg:pt-40 pb-10 bg-white">
-          <div className="container mx-auto px-4 max-w-2xl">
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold text-center mb-8">Payment Confirmation</h1>
+            
+            
+            {/* Quote Reference Banner - Subtle display */}
+            <div className="mb-6 flex justify-center">
+              <QuoteReferenceBanner variant="subtle" />
+            </div>
+            
             {isFetchingClientSecret ? (
               <div className="min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
