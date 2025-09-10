@@ -18,8 +18,8 @@ const quicksand = Quicksand({
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Tempo - Modern SaaS Starter",
-  description: "A modern full-stack starter template powered by Next.js",
+  title: "Tranzr Moves",
+  description: "Tranzr Moves, removals, house moves, and storage services",
 };
 
 // Suppress specific React warnings in development
@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" />
+      {/* <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" /> */}
       <body className={`${quicksand.variable} font-quicksand`}>
         <Providers>
           {children}

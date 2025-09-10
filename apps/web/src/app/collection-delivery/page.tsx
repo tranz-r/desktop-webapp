@@ -233,7 +233,16 @@ export default function CollectionDeliveryPage() {
                       Total distance: {Math.round(distanceMiles)} miles
                     </div>
                   )}
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/quote-option')}
+                    className="px-6 py-2 text-base"
+                  >
+                    ← Back to Quote Options
+                  </Button>
+                  
                   <Button type="submit" disabled={!isReady}>
                     Next
                   </Button>

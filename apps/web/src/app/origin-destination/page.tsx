@@ -466,7 +466,23 @@ export default function OriginDestinationPage() {
         </div>
       </CardContent>
     </Card>
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                // Go back to the appropriate pricing page based on quote type
+                if (activeQuoteType === 'removals') {
+                  router.push('/removal-pricing');
+                } else {
+                  router.push('/pricing');
+                }
+              }}
+              className="px-6 py-2 text-base"
+            >
+              ← Back to Pricing
+            </Button>
+            
             <Button type="submit" disabled={!isReady}>
               Next: Pricing
             </Button>

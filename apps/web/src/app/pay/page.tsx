@@ -188,6 +188,18 @@ function PayPageContent() {
     return Math.round((totalCost * (depositPercentage / 100)) * 100) / 100;
   }, [totalCost]);
 
+  // Calculate if move date is more than 72 hours away
+  const isMoveDateMoreThan72Hours = React.useMemo(() => {
+    if (!scheduleDateISO) return false;
+    
+    const moveDate = new Date(scheduleDateISO);
+    const now = new Date();
+    const timeDifference = moveDate.getTime() - now.getTime();
+    const hoursDifference = timeDifference / (1000 * 60 * 60);
+    
+    return hoursDifference > 72;
+  }, [scheduleDateISO]);
+
   function toBackendVanType(v?: string) {
     if (!v) return undefined as unknown as string;
     const map: Record<string, string> = {
@@ -468,6 +480,17 @@ function PayPageContent() {
     saveQuoteData();
   }, [isHydrated, activeQuote?.vanType, origin, destination, activeQuoteType, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, getCurrentEtag]);
 
+  // Reset selected option if 'Pay later' is selected but move date is now less than 72 hours away
+  React.useEffect(() => {
+    if (selectedOption === 'later' && !isMoveDateMoreThan72Hours) {
+      setSelectedOption('full');
+      // Also trigger payment creation for 'full' when switching from 'later'
+      if (isHydrated && !isCreatingIntent) {
+        createPaymentForOption('full');
+      }
+    }
+  }, [selectedOption, isMoveDateMoreThan72Hours, isHydrated, isCreatingIntent, createPaymentForOption]);
+
   // Auto-select "Pay in full" by default and create payment intent
   React.useEffect(() => {
     if (isHydrated && !clientSecret && !isCreatingIntent && selectedOption === 'full') {
@@ -581,7 +604,7 @@ function PayPageContent() {
                 <>
                   {/* Removed initial spinner/text to avoid visible flicker */}
                   <div className="space-y-4 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className={`grid grid-cols-1 gap-3 ${isMoveDateMoreThan72Hours ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
                       <button
                         type="button"
                         onClick={async () => { setSelectedOption('full'); await createPaymentForOption('full'); }}
@@ -645,38 +668,59 @@ function PayPageContent() {
                         </div>
                       </button>
                       
-                      <button
-                        type="button"
-                        onClick={async () => { setSelectedOption('later'); await createPaymentForOption('later'); }}
-                        disabled={isCreatingIntent || isPaymentCompleted}
-                        className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
-                          selectedOption === 'later' 
-                            ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
-                            : 'border-muted hover:border-primary/40 hover:shadow-md'
-                        } ${isPaymentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-lg text-foreground">Pay later</div>
-                            {selectedOption === 'later' && (
-                              <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                      {isMoveDateMoreThan72Hours && (
+                        <button
+                          type="button"
+                          onClick={async () => { setSelectedOption('later'); await createPaymentForOption('later'); }}
+                          disabled={isCreatingIntent || isPaymentCompleted}
+                          className={`text-left rounded-lg border-2 p-6 transition-all duration-200 ${
+                            selectedOption === 'later' 
+                              ? 'border-primary bg-primary/5 ring-4 ring-primary/20 shadow-lg' 
+                              : 'border-muted hover:border-primary/40 hover:shadow-md'
+                          } ${isPaymentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="font-semibold text-lg text-foreground">Pay later</div>
+                              {selectedOption === 'later' && (
+                                <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <div className="text-3xl font-bold text-primary">
+                                £0.00
                               </div>
-                            )}
+                              <div className="text-xs text-muted-foreground">
+                                Set up payment. We'll charge <b>£{(totalCost || 0).toFixed(2)}</b> 72 hours before collection day.
+                              </div>
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <div className="text-3xl font-bold text-primary">
-                              £0.00
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Set up payment. We'll charge <b>£{(totalCost || 0).toFixed(2)}</b> 72 hours before collection day.
-                            </div>
+                        </button>
+                      )}
+                    </div>
+                    {!isMoveDateMoreThan72Hours && scheduleDateISO && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          <div className="text-yellow-800 text-sm">
+                            <strong>Pay Later Unavailable:</strong> Your move date is less than 72 hours away. 
+                            Please choose "Pay in full" or "Pay deposit" to secure your booking.
                           </div>
                         </div>
-                      </button>
-                    </div>
+                      </div>
+                    )}
                     {isCreatingIntent && (
-                      <div className="text-sm text-blue-600">Preparing your payment…</div>
+                      <div className="text-sm text-blue-600 flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Preparing your payment…
+                      </div>
                     )}
                   </div>
                   {!isLoadingClientSecret && initDelayDone && isHydrated && hasAttemptedPaymentInit && !clientSecret && paymentIntentId && (
