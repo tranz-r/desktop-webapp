@@ -244,7 +244,7 @@ export default function CollectionDeliveryPage() {
                   </Button>
                   
                   <Button type="submit" disabled={!isReady}>
-                    Next
+                    Continue to Inventory
                   </Button>
                 </div>
               </form>

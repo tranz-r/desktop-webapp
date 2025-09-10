@@ -238,32 +238,41 @@ export default function VanAndDatePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-base font-medium">Preferred Time Slot</Label>
-                  <RadioGroup value={timeSlot || 'morning'} onValueChange={(v: string) => {
+                  <Label className="text-base font-medium">Preferred Time Slot <span className="text-red-600">*</span></Label>
+                  <RadioGroup value={timeSlot || ''} onValueChange={(v: string) => {
                     const newTimeSlot = v as 'morning' | 'afternoon' | 'evening';
                     setTimeSlot(newTimeSlot);
                   }} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
-                      timeSlot === 'morning' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
-                    }`}>
+                    <div 
+                      className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
+                        timeSlot === 'morning' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setTimeSlot('morning')}
+                    >
                       <RadioGroupItem value="morning" id="slot-morning" />
                       <Label htmlFor="slot-morning" className="cursor-pointer font-medium">
                         <div className="font-semibold text-gray-900">Morning</div>
                         <div className="text-sm text-gray-600">8:00 - 12:00</div>
                       </Label>
                     </div>
-                    <div className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
-                      timeSlot === 'afternoon' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
-                    }`}>
+                    <div 
+                      className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
+                        timeSlot === 'afternoon' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setTimeSlot('afternoon')}
+                    >
                       <RadioGroupItem value="afternoon" id="slot-afternoon" />
                       <Label htmlFor="slot-afternoon" className="cursor-pointer font-medium">
                         <div className="font-semibold text-gray-900">Afternoon</div>
                         <div className="text-sm text-gray-600">12:00 - 16:00</div>
                       </Label>
                     </div>
-                    <div className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
-                      timeSlot === 'evening' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
-                    }`}>
+                    <div 
+                      className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
+                        timeSlot === 'evening' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setTimeSlot('evening')}
+                    >
                       <RadioGroupItem value="evening" id="slot-evening" />
                       <Label htmlFor="slot-evening" className="cursor-pointer font-medium">
                         <div className="font-semibold text-gray-900">Evening</div>
@@ -288,7 +297,7 @@ export default function VanAndDatePage() {
               <Button
                 onClick={handleContinue}
                 disabled={!selectedVan || !movingDate || !timeSlot}
-                className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm"
+                className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue to Pricing →
               </Button>

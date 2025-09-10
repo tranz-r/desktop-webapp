@@ -254,9 +254,6 @@ export function CartModal() {
               <span className="font-medium">Total Volume:</span>
               <span>{getTotalVolume().toFixed(2)} m³</span>
             </div>
-            <Button className="w-full bg-primary-600 hover:bg-primary-700">
-              Continue to Pricing
-            </Button>
           </div>
         )}
       </SheetContent>
