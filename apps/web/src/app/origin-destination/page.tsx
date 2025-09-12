@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { AlertCircle, Building2, MapPin } from "lucide-react";
+import { AlertCircle, Building2, MapPin, ChevronLeft } from "lucide-react";
 // Note: Removed unused imports - now using QuoteContext only
 
 type FormValues = {
@@ -466,26 +466,27 @@ export default function OriginDestinationPage() {
         </div>
       </CardContent>
     </Card>
-          <div className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                // Go back to the appropriate pricing page based on quote type
-                if (activeQuoteType === 'removals') {
-                  router.push('/removal-pricing');
-                } else {
-                  router.push('/pricing');
-                }
-              }}
-              className="px-6 py-2 text-base"
-            >
-              ← Back to Pricing
-            </Button>
-            
-            <Button type="submit" disabled={!isReady}>
-              Next: Pricing
-            </Button>
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (activeQuoteType === 'removals') {
+                    router.push('/removal-pricing');
+                  } else {
+                    router.push('/pricing');
+                  }
+                }}
+                className="px-6 py-2 text-base"
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              
+              <Button type="submit" disabled={!isReady}>
+                Next
+              </Button>
+            </div>
           </div>
             </form>
           </Form>

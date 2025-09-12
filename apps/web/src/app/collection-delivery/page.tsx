@@ -11,7 +11,7 @@ import CollectionDeliveryAddresses, { CollectionDeliveryFormValues, floorValueTo
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useQuote } from "@/contexts/QuoteContext";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, ChevronLeft } from "lucide-react";
 // Note: Removed unused imports - now using QuoteContext only
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 import MapboxMap from '@/components/MapboxMap';
@@ -233,19 +233,21 @@ export default function CollectionDeliveryPage() {
                       Total distance: {Math.round(distanceMiles)} miles
                     </div>
                   )}
-                <div className="pt-4 flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push('/quote-option')}
-                    className="px-6 py-2 text-base"
-                  >
-                    ← Back to Quote Options
-                  </Button>
-                  
-                  <Button type="submit" disabled={!isReady}>
-                    Continue to Inventory
-                  </Button>
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push('/quote-option')}
+                      className="px-6 py-2 text-base"
+                    >
+                      <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                    
+                    <Button type="submit" disabled={!isReady}>
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </form>
             </Form>

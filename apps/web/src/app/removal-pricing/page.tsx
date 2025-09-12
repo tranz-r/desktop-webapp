@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useQuote } from '@/contexts/QuoteContext';
 
-import { Users, User, Wrench, Calculator, Info, Clock, PoundSterling } from 'lucide-react';
+import { Users, User, Wrench, Calculator, Info, Clock, PoundSterling, ChevronLeft } from 'lucide-react';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
 import {
   fetchRemovalPricing,
@@ -1005,22 +1005,24 @@ export default function RemovalPricingPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8">
-              <Button
-                variant="outline"
-                onClick={() => router.push('/van-and-date')}
-                className="w-full sm:w-auto px-6 py-2 text-base"
-              >
-                ← Back to Van & Date
-              </Button>
+            <div className="pt-8">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/van-and-date')}
+                  className="px-6 py-2 text-base"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
 
-              <Button
-                onClick={handleContinue}
-                disabled={!selectedCrewSize || !selectedTier || isCalculating}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue to Origin & Destination →
-              </Button>
+                <Button
+                  onClick={handleContinue}
+                  disabled={!selectedCrewSize || !selectedTier || isCalculating}
+                  className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </section>

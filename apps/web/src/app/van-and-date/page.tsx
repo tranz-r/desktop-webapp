@@ -22,7 +22,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { VanType } from '@/types/booking';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
@@ -285,22 +285,24 @@ export default function VanAndDatePage() {
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-between items-center pt-8">
-              <Button
-                variant="outline"
-                onClick={() => router.push('/inventory')}
-                className="px-6 py-2 text-base"
-              >
-                ← Back to Inventory
-              </Button>
-              
-              <Button
-                onClick={handleContinue}
-                disabled={!selectedVan || !movingDate || !timeSlot}
-                className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue to Pricing →
-              </Button>
+            <div className="pt-8">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/inventory')}
+                  className="px-6 py-2 text-base"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                
+                <Button
+                  onClick={handleContinue}
+                  disabled={!selectedVan || !movingDate || !timeSlot}
+                  className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </section>

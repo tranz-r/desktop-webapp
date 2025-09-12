@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useQuote } from '@/contexts/QuoteContext';
 import { QuoteReferenceBanner } from '@/components/QuoteReferenceBanner';
-import { Users, User, Wrench, Calculator, Check, Clock, Star, Truck } from 'lucide-react';
+import { Users, User, Wrench, Calculator, Check, Clock, Star, Truck, ChevronLeft } from 'lucide-react';
 import Footer from '@/components/Footer';
 import type { RemovalPricingDto, CachedRemovalPricing } from '@/types/booking';
 import { getApiUrl } from '@/lib/api/config';
@@ -888,22 +888,24 @@ export default function PricingPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8">
-              <Button
-                variant="outline"
-                onClick={() => router.push('/inventory')}
-                className="w-full sm:w-auto px-6 py-2 text-base"
-              >
-                ← Back to Inventory
-              </Button>
+            <div className="pt-8">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/inventory')}
+                  className="px-6 py-2 text-base"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
 
-              <Button
-                onClick={handleContinue}
-                disabled={!selectedCrewSize || !selectedTier || isCalculating}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue to Origin & Destination →
-              </Button>
+                <Button
+                  onClick={handleContinue}
+                  disabled={!selectedCrewSize || !selectedTier || isCalculating}
+                  className="bg-primary hover:bg-primary/90 px-8 py-2 text-base font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </section>
