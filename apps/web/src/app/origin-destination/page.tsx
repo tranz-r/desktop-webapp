@@ -520,7 +520,7 @@ export default function OriginDestinationPage() {
                     ) : (
                       <FormField
                         control={form.control}
-                        name="billingPostcode"
+                        name="billingPlaceName"
                         rules={{ required: "Billing address is required" }}
                         render={({ field }) => (
                           <FormItem>
