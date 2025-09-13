@@ -211,20 +211,54 @@ export default function OriginDestinationPage() {
   // Customer details are now synced only when form is submitted
 
   async function onSubmit(values: FormValues) {
-    const origin: Address = {
-      line1: values.originLine1,
-      postcode: values.originPostcode,
+    // Preserve existing rich address data and only update floor/elevator
+    const updatedOrigin: Address = {
+      line1: origin?.line1 || "",
+      postcode: origin?.postcode || "",
+      city: origin?.city || "",
+      country: origin?.country || "GB",
       floor: floorValueToNumber(values.originFloor),
       hasElevator: values.originElevator,
+      // Preserve all extended Mapbox fields
+      fullAddress: origin?.fullAddress || "",
+      addressNumber: origin?.addressNumber || "",
+      street: origin?.street || "",
+      neighborhood: origin?.neighborhood || "",
+      district: origin?.district || "",
+      region: origin?.region || "",
+      regionCode: origin?.regionCode || "",
+      countryCode: origin?.countryCode || "gb",
+      placeName: origin?.placeName || "",
+      accuracy: origin?.accuracy || "",
+      mapboxId: origin?.mapboxId || "",
+      latitude: origin?.latitude || 0,
+      longitude: origin?.longitude || 0,
     };
-    const destination: Address = {
-      line1: values.destinationLine1,
-      postcode: values.destinationPostcode,
+    const updatedDestination: Address = {
+      line1: destination?.line1 || "",
+      postcode: destination?.postcode || "",
+      city: destination?.city || "",
+      country: destination?.country || "GB",
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
+      // Preserve all extended Mapbox fields
+      fullAddress: destination?.fullAddress || "",
+      addressNumber: destination?.addressNumber || "",
+      street: destination?.street || "",
+      neighborhood: destination?.neighborhood || "",
+      district: destination?.district || "",
+      region: destination?.region || "",
+      regionCode: destination?.regionCode || "",
+      countryCode: destination?.countryCode || "gb",
+      placeName: destination?.placeName || "",
+      accuracy: destination?.accuracy || "",
+      mapboxId: destination?.mapboxId || "",
+      latitude: destination?.latitude || 0,
+      longitude: destination?.longitude || 0,
     };
-    setOrigin(origin);
-    setDestination(destination);
+    
+    setOrigin(updatedOrigin);
+    setDestination(updatedDestination);
     setDistanceMiles(distanceMiles ?? 0);
     setCustomerName(values.fullName);
     setCustomerEmail(values.email);
@@ -232,8 +266,8 @@ export default function OriginDestinationPage() {
     
     // Handle billing address - either copy from pickup or use entered values
     const billingAddress = values.sameAsPickup ? {
-      line1: values.originLine1,
-      postcode: values.originPostcode,
+      line1: origin?.line1 || "",
+      postcode: origin?.postcode || "",
       city: origin?.city || "",
       country: origin?.country || "GB",
       floor: floorValueToNumber(values.originFloor),
