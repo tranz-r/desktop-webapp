@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -21,6 +22,35 @@ import PeoplePackingSVG from "@/components/PeoplePacking";
 import TileInfoSVGComponent from "@/components/TileInfoSVGComponent";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  // Function to handle Learn More navigation based on service ID
+  const handleLearnMore = (serviceId: string) => {
+    const routeMap: Record<string, string> = {
+      // Moving services
+      '247-moving': '/moving/24-7',
+      'local-residential-moving': '/moving/local-residential',
+      'long-distance-moving': '/moving/long-distance',
+      'office-commercial-moves': '/moving/commercial',
+      'small-moves': '/moving/small-moves',
+      'last-minute-moves': '/moving/last-minute',
+      // Packing services
+      'full-packing': '/services/full-packing',
+      'platinum-packing': '/services/white-glove',
+      'plastic-bin-hire': '/services/plastic-bin-rental',
+      'box-material-delivery': '/services/box-delivery',
+      'valuable-item-packing': '/services/valuable-items',
+      'pianos': '/services/piano-moving',
+    };
+
+    const route = routeMap[serviceId];
+    if (route) {
+      router.push(route);
+    } else {
+      console.warn(`No route found for service ID: ${serviceId}`);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header sticky={false} />
@@ -91,7 +121,7 @@ export default function HomePage() {
               title="24/7/365 Moving"
               description="The only moving company in Northamptonshire that offers any day and time moving services. No matter how big or small your move is we will move it."
               svgComponent={Svg247Moving}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
 
             {/* Local Residential Moving */}
@@ -100,7 +130,7 @@ export default function HomePage() {
               title="Local Residential Moving Services"
               description="We specialize in local residential Northamptonshire and UK moves. We can move you across all of the London Area and surrounding UK locations."
               svgComponent={PeoplePackingSVG}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
 
             {/* Long Distance Moving */}
@@ -109,7 +139,7 @@ export default function HomePage() {
               title="Long Distance Moving Services"
               description="From Northamptonshire to Edinburgh, Manchester and Cardiff we can move you to any location in the UK. With on time long distance delivery dates and safe packing we will get you settled into your new home quickly."
               svgComponent={SvgLongDistanceSVG}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
 
             {/* Office and Commercial Moves */}
@@ -118,7 +148,7 @@ export default function HomePage() {
               title="Office and Commercial Moves"
               description="We can move your office overnight, on the weekend and during holidays to minimize your downtime. With full office packing and unpacking our staff will be up and running the next morning."
               svgComponent={SvgOfficeMoveSVG}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
 
             {/* Small Moves */}
@@ -127,7 +157,7 @@ export default function HomePage() {
               title="Small Moves"
               description="Need to move a few small items or moving out of a studio with minimal furniture? Do not lift a finger with our small move service."
               svgComponent={SvgSmallMoveSVG}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
 
             {/* Last Minute Moves */}
@@ -136,7 +166,7 @@ export default function HomePage() {
               title="Last Minute Moves"
               description="Need to move urgently, our last minute moving service will help you the day you get you into your new address asap! We also offer emergency packing and storage services."
               svgComponent={SvgLastMinuteMove}
-              onLearnMore={(id) => console.log(`Learn more clicked for ${id}`)}
+              onLearnMore={handleLearnMore}
             />
           </div>
         </div>
@@ -151,7 +181,7 @@ export default function HomePage() {
       />
 
       {/* SVG Images Component */}
-      <SVGImagesComponent />
+      <SVGImagesComponent onLearnMore={handleLearnMore} />
 
       {/* Guarantee Section */}
       <GuaranteeComponent />
