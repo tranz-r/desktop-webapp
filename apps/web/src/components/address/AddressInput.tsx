@@ -57,13 +57,13 @@ export default function AddressInput({
   const [isAddressSelected, setIsAddressSelected] = useState(false);
   const [selectedAddressData, setSelectedAddressData] = useState<any>(null);
   
-  // Handle Mapbox retrieve event - following the example exactly
+  // Handle Mapbox retrieve event - for complete addresses
   const handleAutofillRetrieve = (response: any) => {
     if (response && response.features && response.features.length > 0) {
       const feature = response.features[0];
       const properties = feature.properties;
 
-      console.log("properties", properties);
+      console.log("Complete address properties:", properties);
       
       // Extract comprehensive address data from the feature
       const addressData = {
@@ -92,7 +92,7 @@ export default function AddressInput({
       setSelectedAddressData(addressData);
       setIsAddressSelected(true);
       
-      // Update the main input with place_name for display (cleaner format)
+      // Update the main input with full address for display
       onChange(addressData.fullAddress);
       
       // Call the callback with structured data
@@ -101,6 +101,16 @@ export default function AddressInput({
       }
     }
   };
+
+  // Handle Mapbox suggest event - for partial addresses
+  const handleAutofillSuggest = (response: any) => {
+    console.log("Suggest event triggered:", response);
+    // This fires when suggestions are shown, but not when selected
+    // We can use this to detect when user is typing vs selecting
+  };
+
+  // Check if current value looks like a partial address (no postcode)
+  const isPartialAddress = value && value.trim().length > 0 && !/\b[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}\b/i.test(value);
   
   // Function to handle changing the address
   const handleChangeAddress = () => {
@@ -171,6 +181,7 @@ export default function AddressInput({
         React.createElement(AddressAutofill as any, {
           accessToken: accessToken,
           onRetrieve: handleAutofillRetrieve,
+          onSuggest: handleAutofillSuggest,
           options: {
             // Bias toward addresses with house numbers and postcodes
             proximity: undefined, // Could add user's location here if available
@@ -226,6 +237,13 @@ export default function AddressInput({
             name: 'country'
           })
         ])
+      )}
+      
+      {/* Show helpful message for partial addresses */}
+      {isPartialAddress && !isAddressSelected && (
+        <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded p-2 mt-1">
+          💡 <strong>Tip:</strong> Start typing your full address and select a complete address with postcode for better service accuracy
+        </div>
       )}
     </div>
   );
