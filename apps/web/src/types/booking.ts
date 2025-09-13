@@ -172,6 +172,19 @@ export interface Address {
   hasElevator?: boolean;  // true if elevator available
   latitude?: number;
   longitude?: number;
+  
+  // Extended Mapbox fields for complete address data
+  fullAddress?: string;           // Complete formatted address
+  addressNumber?: string;         // House/building number
+  street?: string;               // Street name
+  neighborhood?: string;         // Neighborhood/district
+  district?: string;             // District/borough
+  region?: string;               // State/region
+  regionCode?: string;           // State/region code
+  countryCode?: string;          // Country code (e.g., 'gb')
+  placeName?: string;            // Full place name from Mapbox
+  accuracy?: string;             // Address accuracy level
+  mapboxId?: string;             // Mapbox feature ID
 }
 
 // Nested, slice-based shapes (v2)

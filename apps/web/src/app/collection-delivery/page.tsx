@@ -79,6 +79,8 @@ export default function CollectionDeliveryPage() {
     defaultValues: {
       originLine1: origin?.line1 || "",
       originPostcode: origin?.postcode || "",
+      originCity: origin?.city || "",
+      originCountry: origin?.country || "GB",
       originFloor:
         (origin?.floor ?? 0) === 0
           ? "ground"
@@ -88,6 +90,8 @@ export default function CollectionDeliveryPage() {
       originElevator: origin?.hasElevator ?? true,
       destinationLine1: destination?.line1 || "",
       destinationPostcode: destination?.postcode || "",
+      destinationCity: destination?.city || "",
+      destinationCountry: destination?.country || "GB",
       destinationFloor:
         (destination?.floor ?? 0) === 0
           ? "ground"
@@ -95,6 +99,36 @@ export default function CollectionDeliveryPage() {
           ? "6+"
           : String(destination?.floor ?? "ground"),
       destinationElevator: destination?.hasElevator ?? true,
+      
+      // Extended Mapbox fields for origin
+      originFullAddress: origin?.fullAddress || "",
+      originAddressNumber: origin?.addressNumber || "",
+      originStreet: origin?.street || "",
+      originNeighborhood: origin?.neighborhood || "",
+      originDistrict: origin?.district || "",
+      originRegion: origin?.region || "",
+      originRegionCode: origin?.regionCode || "",
+      originCountryCode: origin?.countryCode || "gb",
+      originPlaceName: origin?.placeName || "",
+      originAccuracy: origin?.accuracy || "",
+      originMapboxId: origin?.mapboxId || "",
+      originLatitude: origin?.latitude || 0,
+      originLongitude: origin?.longitude || 0,
+      
+      // Extended Mapbox fields for destination
+      destinationFullAddress: destination?.fullAddress || "",
+      destinationAddressNumber: destination?.addressNumber || "",
+      destinationStreet: destination?.street || "",
+      destinationNeighborhood: destination?.neighborhood || "",
+      destinationDistrict: destination?.district || "",
+      destinationRegion: destination?.region || "",
+      destinationRegionCode: destination?.regionCode || "",
+      destinationCountryCode: destination?.countryCode || "gb",
+      destinationPlaceName: destination?.placeName || "",
+      destinationAccuracy: destination?.accuracy || "",
+      destinationMapboxId: destination?.mapboxId || "",
+      destinationLatitude: destination?.latitude || 0,
+      destinationLongitude: destination?.longitude || 0,
     },
     mode: "onChange",
   });
@@ -169,15 +203,49 @@ export default function CollectionDeliveryPage() {
     setOrigin({
       line1: values.originLine1,
       postcode: values.originPostcode,
+      city: values.originCity,
+      country: values.originCountry,
       floor: floorValueToNumber(values.originFloor),
       hasElevator: values.originElevator,
+      
+      // Extended Mapbox fields
+      fullAddress: values.originFullAddress,
+      addressNumber: values.originAddressNumber,
+      street: values.originStreet,
+      neighborhood: values.originNeighborhood,
+      district: values.originDistrict,
+      region: values.originRegion,
+      regionCode: values.originRegionCode,
+      countryCode: values.originCountryCode,
+      placeName: values.originPlaceName,
+      accuracy: values.originAccuracy,
+      mapboxId: values.originMapboxId,
+      latitude: values.originLatitude,
+      longitude: values.originLongitude,
     });
 
     setDestination({
       line1: values.destinationLine1,
       postcode: values.destinationPostcode,
+      city: values.destinationCity,
+      country: values.destinationCountry,
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
+      
+      // Extended Mapbox fields
+      fullAddress: values.destinationFullAddress,
+      addressNumber: values.destinationAddressNumber,
+      street: values.destinationStreet,
+      neighborhood: values.destinationNeighborhood,
+      district: values.destinationDistrict,
+      region: values.destinationRegion,
+      regionCode: values.destinationRegionCode,
+      countryCode: values.destinationCountryCode,
+      placeName: values.destinationPlaceName,
+      accuracy: values.destinationAccuracy,
+      mapboxId: values.destinationMapboxId,
+      latitude: values.destinationLatitude,
+      longitude: values.destinationLongitude,
     });
 
     if (preservedDistance) {

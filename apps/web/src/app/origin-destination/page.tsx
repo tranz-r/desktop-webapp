@@ -391,7 +391,7 @@ export default function OriginDestinationPage() {
     <Card className="border-primary-200">
       <CardHeader>
         <CardTitle className="text-primary-700 text-base">
-          Provide pickup and delivery addresses
+          Pickup and delivery addresses
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -406,7 +406,7 @@ export default function OriginDestinationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="text-sm font-medium text-gray-900">{o?.line1}</div>
+                <div className="text-sm font-medium text-gray-900">{o?.fullAddress}</div>
                 {o?.postcode && (
                   <div className="text-xs text-gray-600">{o.postcode}</div>
                 )}
@@ -426,7 +426,7 @@ export default function OriginDestinationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="text-sm font-medium text-gray-900">{d?.line1}</div>
+                <div className="text-sm font-medium text-gray-900">{d?.fullAddress}</div>
                 {d?.postcode && (
                   <div className="text-xs text-gray-600">{d.postcode}</div>
                 )}
