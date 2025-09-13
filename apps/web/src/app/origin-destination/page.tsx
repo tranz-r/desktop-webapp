@@ -11,6 +11,8 @@ import { Address } from "@/types/booking";
 import { BackendCustomer } from "@/lib/api/quote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import AddressInput from "@/components/address/AddressInput";
 import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -39,8 +41,24 @@ type FormValues = {
   fullName: string;
   email: string;
   phone: string;
+  sameAsPickup: boolean;
   billingLine1: string;
   billingPostcode: string;
+  billingCity: string;
+  billingCountry: string;
+  billingFullAddress: string;
+  billingAddressNumber: string;
+  billingStreet: string;
+  billingNeighborhood: string;
+  billingDistrict: string;
+  billingRegion: string;
+  billingRegionCode: string;
+  billingCountryCode: string;
+  billingPlaceName: string;
+  billingAccuracy: string;
+  billingMapboxId: string;
+  billingLatitude: number;
+  billingLongitude: number;
 };
 
 const FLOOR_OPTIONS = [
@@ -122,12 +140,12 @@ export default function OriginDestinationPage() {
     }
   };
 
-  const setBillingAddress = (line1: string, postcode: string) => {
+  const setBillingAddress = (billingData: any) => {
     if (activeQuoteType) {
       updateQuote(activeQuoteType, { 
         customer: { 
           ...activeQuote?.customer, 
-          billingAddress: { line1, postcode } 
+          billingAddress: billingData
         } 
       });
     }
@@ -152,8 +170,24 @@ export default function OriginDestinationPage() {
       fullName: activeQuote?.customer?.fullName || "",
       email: activeQuote?.customer?.email || "",
       phone: activeQuote?.customer?.phone || "",
+      sameAsPickup: false,
       billingLine1: activeQuote?.customer?.billingAddress?.line1 || "",
       billingPostcode: activeQuote?.customer?.billingAddress?.postcode || "",
+      billingCity: activeQuote?.customer?.billingAddress?.city || "",
+      billingCountry: activeQuote?.customer?.billingAddress?.country || "GB",
+      billingFullAddress: activeQuote?.customer?.billingAddress?.fullAddress || "",
+      billingAddressNumber: activeQuote?.customer?.billingAddress?.addressNumber || "",
+      billingStreet: activeQuote?.customer?.billingAddress?.street || "",
+      billingNeighborhood: activeQuote?.customer?.billingAddress?.neighborhood || "",
+      billingDistrict: activeQuote?.customer?.billingAddress?.district || "",
+      billingRegion: activeQuote?.customer?.billingAddress?.region || "",
+      billingRegionCode: activeQuote?.customer?.billingAddress?.regionCode || "",
+      billingCountryCode: activeQuote?.customer?.billingAddress?.countryCode || "gb",
+      billingPlaceName: activeQuote?.customer?.billingAddress?.placeName || "",
+      billingAccuracy: activeQuote?.customer?.billingAddress?.accuracy || "",
+      billingMapboxId: activeQuote?.customer?.billingAddress?.mapboxId || "",
+      billingLatitude: activeQuote?.customer?.billingAddress?.latitude || 0,
+      billingLongitude: activeQuote?.customer?.billingAddress?.longitude || 0,
     },
     mode: "onChange",
   });
@@ -165,8 +199,10 @@ export default function OriginDestinationPage() {
     ((!o?.hasElevator && (o?.floor ?? 0) > 0) || (!d?.hasElevator && (d?.floor ?? 0) > 0));
 
   // Watch customer billing for readiness checks
+  const watchSameAsPickup = form.watch("sameAsPickup");
   const watchBillingLine1 = form.watch("billingLine1");
   const watchBillingPostcode = form.watch("billingPostcode");
+  const watchBillingFullAddress = form.watch("billingFullAddress");
   const watchFullName = form.watch("fullName");
   const watchEmail = form.watch("email");
   const watchPhone = form.watch("phone");
@@ -193,7 +229,53 @@ export default function OriginDestinationPage() {
     setCustomerName(values.fullName);
     setCustomerEmail(values.email);
     setCustomerPhone(values.phone);
-    setBillingAddress(values.billingLine1, values.billingPostcode);
+    
+    // Handle billing address - either copy from pickup or use entered values
+    const billingAddress = values.sameAsPickup ? {
+      line1: values.originLine1,
+      postcode: values.originPostcode,
+      city: origin?.city || "",
+      country: origin?.country || "GB",
+      floor: floorValueToNumber(values.originFloor),
+      hasElevator: values.originElevator,
+      // Extended Mapbox fields from pickup
+      fullAddress: origin?.fullAddress || "",
+      addressNumber: origin?.addressNumber || "",
+      street: origin?.street || "",
+      neighborhood: origin?.neighborhood || "",
+      district: origin?.district || "",
+      region: origin?.region || "",
+      regionCode: origin?.regionCode || "",
+      countryCode: origin?.countryCode || "gb",
+      placeName: origin?.placeName || "",
+      accuracy: origin?.accuracy || "",
+      mapboxId: origin?.mapboxId || "",
+      latitude: origin?.latitude || 0,
+      longitude: origin?.longitude || 0,
+    } : {
+      line1: values.billingLine1,
+      postcode: values.billingPostcode,
+      city: values.billingCity,
+      country: values.billingCountry,
+      floor: 0,
+      hasElevator: true,
+      // Extended Mapbox fields from billing
+      fullAddress: values.billingFullAddress,
+      addressNumber: values.billingAddressNumber,
+      street: values.billingStreet,
+      neighborhood: values.billingNeighborhood,
+      district: values.billingDistrict,
+      region: values.billingRegion,
+      regionCode: values.billingRegionCode,
+      countryCode: values.billingCountryCode,
+      placeName: values.billingPlaceName,
+      accuracy: values.billingAccuracy,
+      mapboxId: values.billingMapboxId,
+      latitude: values.billingLatitude,
+      longitude: values.billingLongitude,
+    };
+    
+    setBillingAddress(billingAddress);
 
     // Save customer data to backend via quote update
     try {
@@ -203,12 +285,7 @@ export default function OriginDestinationPage() {
             fullName: values.fullName,
             email: values.email,
             phone: values.phone,
-            billingAddress: {
-              line1: values.billingLine1,
-              postcode: values.billingPostcode,
-              hasElevator: true,
-              floor: 0
-            }
+            billingAddress: billingAddress
           }
         });
         console.log('Customer data saved successfully via quote update');
@@ -221,7 +298,7 @@ export default function OriginDestinationPage() {
     router.push("/summary");
   }
 
-  const hasBilling = (watchBillingPostcode?.trim().length ?? 0) > 0 && (watchBillingLine1?.trim().length ?? 0) > 0;
+  const hasBilling = watchSameAsPickup || ((watchBillingPostcode?.trim().length ?? 0) > 0 && (watchBillingLine1?.trim().length ?? 0) > 0);
 
   // Explicit validation for customer details to avoid edge cases where formState.isValid lags
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -251,6 +328,29 @@ export default function OriginDestinationPage() {
       form.setValue('destinationElevator', d.hasElevator);
     }
   }, [isHydrated, origin, destination]);
+
+  // Simple copy logic when checkbox is checked
+  React.useEffect(() => {
+    if (watchSameAsPickup && origin) {
+      form.setValue('billingLine1', origin.line1 || '');
+      form.setValue('billingPostcode', origin.postcode || '');
+      form.setValue('billingCity', origin.city || '');
+      form.setValue('billingCountry', origin.country || 'GB');
+      form.setValue('billingFullAddress', origin.fullAddress || '');
+      form.setValue('billingAddressNumber', origin.addressNumber || '');
+      form.setValue('billingStreet', origin.street || '');
+      form.setValue('billingNeighborhood', origin.neighborhood || '');
+      form.setValue('billingDistrict', origin.district || '');
+      form.setValue('billingRegion', origin.region || '');
+      form.setValue('billingRegionCode', origin.regionCode || '');
+      form.setValue('billingCountryCode', origin.countryCode || 'gb');
+      form.setValue('billingPlaceName', origin.placeName || '');
+      form.setValue('billingAccuracy', origin.accuracy || '');
+      form.setValue('billingMapboxId', origin.mapboxId || '');
+      form.setValue('billingLatitude', origin.latitude || 0);
+      form.setValue('billingLongitude', origin.longitude || 0);
+    }
+  }, [watchSameAsPickup, origin, form]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -338,9 +438,53 @@ export default function OriginDestinationPage() {
                     <CardTitle className="text-base">Billing Address</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {watchBillingLine1 ? (
+                    {/* Same as Pickup checkbox */}
+                    <FormField
+                      control={form.control}
+                      name="sameAsPickup"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-normal">
+                              Same as Pickup address
+                            </FormLabel>
+                            <FormDescription className="text-xs text-muted-foreground">
+                              Use the pickup address for billing purposes
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Show pickup address when same as pickup is checked */}
+                    {watchSameAsPickup && origin && (
+                      <div className="rounded-md border p-3 bg-emerald-50 border-emerald-200">
+                        <div className="flex items-start gap-3">
+                          <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0 text-emerald-600" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 break-words">
+                              {origin.fullAddress || `${origin.line1}, ${origin.postcode}`}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Using pickup address for billing
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Billing address input - only show when not same as pickup */}
+                    {!watchSameAsPickup && (
+                      <>
+                        {watchBillingFullAddress ? (
                       <div className="rounded-md border p-3 bg-muted/30">
-                        <div className="text-sm font-medium text-gray-900">{watchBillingLine1}</div>
+                        <div className="text-sm font-medium text-gray-900">{watchBillingFullAddress}</div>
                         {watchBillingPostcode && (
                           <div className="text-xs text-gray-600 mt-1">{watchBillingPostcode}</div>
                         )}
@@ -352,6 +496,21 @@ export default function OriginDestinationPage() {
                             onClick={() => {
                               form.setValue("billingLine1", "");
                               form.setValue("billingPostcode", "");
+                              form.setValue("billingCity", "");
+                              form.setValue("billingCountry", "GB");
+                              form.setValue("billingFullAddress", "");
+                              form.setValue("billingAddressNumber", "");
+                              form.setValue("billingStreet", "");
+                              form.setValue("billingNeighborhood", "");
+                              form.setValue("billingDistrict", "");
+                              form.setValue("billingRegion", "");
+                              form.setValue("billingRegionCode", "");
+                              form.setValue("billingCountryCode", "gb");
+                              form.setValue("billingPlaceName", "");
+                              form.setValue("billingAccuracy", "");
+                              form.setValue("billingMapboxId", "");
+                              form.setValue("billingLatitude", 0);
+                              form.setValue("billingLongitude", 0);
                             }}
                           >
                             Change
@@ -362,18 +521,35 @@ export default function OriginDestinationPage() {
                       <FormField
                         control={form.control}
                         name="billingPostcode"
-                        rules={{ required: "Postcode is required" }}
+                        rules={{ required: "Billing address is required" }}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Postcode</FormLabel>
+                            <FormLabel>Billing Address</FormLabel>
                             <FormControl>
-                              <PostcodeTypeahead
-                                postcode={field.value}
-                                onPostcodeChange={field.onChange}
-                                onAddressSelected={(addr) => {
-                                  form.setValue("billingLine1", addr);
+                              <AddressInput
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                onAddressSelected={(addressData) => {
+                                  form.setValue('billingLine1', addressData.line1);
+                                  form.setValue('billingPostcode', addressData.postcode);
+                                  form.setValue('billingCity', addressData.city);
+                                  form.setValue('billingCountry', addressData.country);
+                                  form.setValue('billingFullAddress', addressData.fullAddress);
+                                  form.setValue('billingAddressNumber', addressData.addressNumber);
+                                  form.setValue('billingStreet', addressData.street);
+                                  form.setValue('billingNeighborhood', addressData.neighborhood);
+                                  form.setValue('billingDistrict', addressData.district);
+                                  form.setValue('billingRegion', addressData.region);
+                                  form.setValue('billingRegionCode', addressData.regionCode);
+                                  form.setValue('billingCountryCode', addressData.countryCode);
+                                  form.setValue('billingPlaceName', addressData.placeName);
+                                  form.setValue('billingAccuracy', addressData.accuracy);
+                                  form.setValue('billingMapboxId', addressData.mapboxId);
+                                  form.setValue('billingLatitude', addressData.latitude);
+                                  form.setValue('billingLongitude', addressData.longitude);
                                 }}
-                                placeholder="e.g. EC1A 1BB"
+                                placeholder="Enter billing address..."
+                                label=""
                                 variant="pickup"
                               />
                             </FormControl>
@@ -381,6 +557,8 @@ export default function OriginDestinationPage() {
                           </FormItem>
                         )}
                       />
+                    )}
+                      </>
                     )}
                   </CardContent>
                 </Card>
