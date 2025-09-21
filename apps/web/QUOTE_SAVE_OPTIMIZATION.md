@@ -6,7 +6,7 @@ Optimize the quote data saving mechanism to prevent excessive backend API calls 
 ## 🏗️ **Architecture Change**
 
 ### **Before (Problematic)**
-- **Every page navigation** triggered a backend save via `POST /api/guest/quote`
+- **Every page navigation** triggered a backend save via `POST /api/v1/quote`
 - **Excessive API calls** to backend during user journey
 - **Performance issues** and unnecessary database writes
 - **ETag conflicts** during rapid navigation
@@ -86,7 +86,7 @@ User Action → createPaymentForOption() → Local State Update → IndexedDB Sa
 ## 🧪 **Testing Verification**
 
 ### **What to Test**
-1. **Navigate through all pages** - Verify no backend calls to `POST /api/guest/quote`
+1. **Navigate through all pages** - Verify no backend calls to `POST /api/v1/quote`
 2. **Check `/pay` page** - Verify backend save still works
 3. **Verify data persistence** - Data should still be saved locally and in IndexedDB
 4. **Check console logs** - Should see "saved to IndexedDB" but no backend calls

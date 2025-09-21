@@ -43,8 +43,10 @@ type FormValues = {
   phone: string;
   sameAsPickup: boolean;
   billingLine1: string;
+  billingLine2: string;
   billingPostcode: string;
   billingCity: string;
+  billingCounty: string;
   billingCountry: string;
   billingFullAddress: string;
   billingAddressNumber: string;
@@ -172,8 +174,10 @@ export default function OriginDestinationPage() {
       phone: activeQuote?.customer?.phone || "",
       sameAsPickup: false,
       billingLine1: activeQuote?.customer?.billingAddress?.line1 || "",
+      billingLine2: activeQuote?.customer?.billingAddress?.line2 || "",
       billingPostcode: activeQuote?.customer?.billingAddress?.postcode || "",
       billingCity: activeQuote?.customer?.billingAddress?.city || "",
+      billingCounty: activeQuote?.customer?.billingAddress?.county || "",
       billingCountry: activeQuote?.customer?.billingAddress?.country || "GB",
       billingFullAddress: activeQuote?.customer?.billingAddress?.fullAddress || "",
       billingAddressNumber: activeQuote?.customer?.billingAddress?.addressNumber || "",
@@ -214,8 +218,10 @@ export default function OriginDestinationPage() {
     // Preserve existing rich address data and only update floor/elevator
     const updatedOrigin: Address = {
       line1: origin?.line1 || "",
+      line2: origin?.line2 || "",
       postcode: origin?.postcode || "",
       city: origin?.city || "",
+      county: origin?.county || "",
       country: origin?.country || "GB",
       floor: floorValueToNumber(values.originFloor),
       hasElevator: values.originElevator,
@@ -236,8 +242,10 @@ export default function OriginDestinationPage() {
     };
     const updatedDestination: Address = {
       line1: destination?.line1 || "",
+      line2: destination?.line2 || "",
       postcode: destination?.postcode || "",
       city: destination?.city || "",
+      county: destination?.county || "",
       country: destination?.country || "GB",
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,
@@ -288,8 +296,10 @@ export default function OriginDestinationPage() {
       longitude: origin?.longitude || 0,
     } : {
       line1: values.billingLine1,
+      line2: values.billingLine2,
       postcode: values.billingPostcode,
       city: values.billingCity,
+      county: values.billingCounty,
       country: values.billingCountry,
       floor: 0,
       hasElevator: true,
@@ -565,8 +575,10 @@ export default function OriginDestinationPage() {
                                 onChange={field.onChange}
                                 onAddressSelected={(addressData) => {
                                   form.setValue('billingLine1', addressData.line1);
+                                  form.setValue('billingLine2', addressData.line2);
                                   form.setValue('billingPostcode', addressData.postcode);
                                   form.setValue('billingCity', addressData.city);
+                                  form.setValue('billingCounty', addressData.county);
                                   form.setValue('billingCountry', addressData.country);
                                   form.setValue('billingFullAddress', addressData.fullAddress);
                                   form.setValue('billingAddressNumber', addressData.addressNumber);

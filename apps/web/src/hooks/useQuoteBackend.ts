@@ -20,27 +20,55 @@ export function useQuoteBackend() {
       origin: quoteData.origin ? {
         id: null, // Will be set by backend
         userId: null, // Will be set by backend
+        fullAddress: quoteData.origin.fullAddress ?? '',
         line1: quoteData.origin.line1 ?? '',
         line2: quoteData.origin.line2 ?? '',
         city: quoteData.origin.city ?? '',
-        county: '',
+        county: quoteData.origin.county ?? '',
         postCode: quoteData.origin.postcode ?? '',
         country: quoteData.origin.country ?? '',
         hasElevator: quoteData.origin.hasElevator ?? true,
         floor: quoteData.origin.floor ?? 0,
+        // Extended Mapbox fields
+        addressNumber: quoteData.origin.addressNumber ?? '',
+        street: quoteData.origin.street ?? '',
+        neighborhood: quoteData.origin.neighborhood ?? '',
+        district: quoteData.origin.district ?? '',
+        region: quoteData.origin.region ?? '',
+        regionCode: quoteData.origin.regionCode ?? '',
+        countryCode: quoteData.origin.countryCode ?? '',
+        placeName: quoteData.origin.placeName ?? '',
+        accuracy: quoteData.origin.accuracy ?? '',
+        mapboxId: quoteData.origin.mapboxId ?? '',
+        latitude: quoteData.origin.latitude ?? 0,
+        longitude: quoteData.origin.longitude ?? 0,
       } : undefined,
       
       destination: quoteData.destination ? {
         id: null, // Will be set by backend
         userId: null, // Will be set by backend
+        fullAddress: quoteData.destination.fullAddress ?? '',
         line1: quoteData.destination.line1 ?? '',
         line2: quoteData.destination.line2 ?? '',
         city: quoteData.destination.city ?? '',
-        county: '',
+        county: quoteData.destination.county ?? '',
         postCode: quoteData.destination.postcode ?? '',
         country: quoteData.destination.country ?? '',
         hasElevator: quoteData.destination.hasElevator ?? true,
         floor: quoteData.destination.floor ?? 0,
+        // Extended Mapbox fields
+        addressNumber: quoteData.destination.addressNumber ?? '',
+        street: quoteData.destination.street ?? '',
+        neighborhood: quoteData.destination.neighborhood ?? '',
+        district: quoteData.destination.district ?? '',
+        region: quoteData.destination.region ?? '',
+        regionCode: quoteData.destination.regionCode ?? '',
+        countryCode: quoteData.destination.countryCode ?? '',
+        placeName: quoteData.destination.placeName ?? '',
+        accuracy: quoteData.destination.accuracy ?? '',
+        mapboxId: quoteData.destination.mapboxId ?? '',
+        latitude: quoteData.destination.latitude ?? 0,
+        longitude: quoteData.destination.longitude ?? 0,
       } : undefined,
       
       // Schedule
@@ -93,14 +121,28 @@ export function useQuoteBackend() {
         billingAddress: quoteData.customer.billingAddress ? {
           id: null,
           userId: null,
+          fullAddress: quoteData.customer.billingAddress.fullAddress ?? '',
           line1: quoteData.customer.billingAddress.line1,
           line2: quoteData.customer.billingAddress.line2 ?? '',
           city: quoteData.customer.billingAddress.city ?? '',
-          county: '',
+          county: quoteData.customer.billingAddress.county ?? '',
           postCode: quoteData.customer.billingAddress.postcode ?? '',
           country: quoteData.customer.billingAddress.country ?? '',
           hasElevator: quoteData.customer.billingAddress.hasElevator ?? true,
           floor: quoteData.customer.billingAddress.floor ?? 0,
+          // Extended Mapbox fields
+          addressNumber: quoteData.customer.billingAddress.addressNumber ?? '',
+          street: quoteData.customer.billingAddress.street ?? '',
+          neighborhood: quoteData.customer.billingAddress.neighborhood ?? '',
+          district: quoteData.customer.billingAddress.district ?? '',
+          region: quoteData.customer.billingAddress.region ?? '',
+          regionCode: quoteData.customer.billingAddress.regionCode ?? '',
+          countryCode: quoteData.customer.billingAddress.countryCode ?? '',
+          placeName: quoteData.customer.billingAddress.placeName ?? '',
+          accuracy: quoteData.customer.billingAddress.accuracy ?? '',
+          mapboxId: quoteData.customer.billingAddress.mapboxId ?? '',
+          latitude: quoteData.customer.billingAddress.latitude ?? 0,
+          longitude: quoteData.customer.billingAddress.longitude ?? 0,
         } : undefined
       } : undefined,
       

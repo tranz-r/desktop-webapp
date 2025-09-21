@@ -78,8 +78,10 @@ export default function CollectionDeliveryPage() {
   const form = useForm<CollectionDeliveryFormValues>({
     defaultValues: {
       originLine1: origin?.line1 || "",
+      originLine2: origin?.line2 || "",
       originPostcode: origin?.postcode || "",
       originCity: origin?.city || "",
+      originCounty: origin?.county || "",
       originCountry: origin?.country || "GB",
       originFloor:
         (origin?.floor ?? 0) === 0
@@ -89,8 +91,10 @@ export default function CollectionDeliveryPage() {
           : String(origin?.floor ?? "ground"),
       originElevator: origin?.hasElevator ?? true,
       destinationLine1: destination?.line1 || "",
+      destinationLine2: destination?.line2 || "",
       destinationPostcode: destination?.postcode || "",
       destinationCity: destination?.city || "",
+      destinationCounty: destination?.county || "",
       destinationCountry: destination?.country || "GB",
       destinationFloor:
         (destination?.floor ?? 0) === 0
@@ -202,8 +206,10 @@ export default function CollectionDeliveryPage() {
 
     setOrigin({
       line1: values.originLine1,
+      line2: values.originLine2,
       postcode: values.originPostcode,
       city: values.originCity,
+      county: values.originCounty,
       country: values.originCountry,
       floor: floorValueToNumber(values.originFloor),
       hasElevator: values.originElevator,
@@ -226,8 +232,10 @@ export default function CollectionDeliveryPage() {
 
     setDestination({
       line1: values.destinationLine1,
+      line2: values.destinationLine2,
       postcode: values.destinationPostcode,
       city: values.destinationCity,
+      county: values.destinationCounty,
       country: values.destinationCountry,
       floor: floorValueToNumber(values.destinationFloor),
       hasElevator: values.destinationElevator,

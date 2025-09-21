@@ -253,19 +253,49 @@ function PayPageContent() {
             line1: origin.line1 || '',
             line2: origin.line2 || '',
             city: origin.city || '',
+            county: origin.county || '',
             postCode: origin.postcode || '',
             country: origin.country || 'United Kingdom',
             hasElevator: Boolean(origin.hasElevator),
-            floor: origin.floor ?? 0
+            floor: origin.floor ?? 0,
+            // Extended Mapbox fields
+            fullAddress: origin.fullAddress || '',
+            addressNumber: origin.addressNumber || '',
+            street: origin.street || '',
+            neighborhood: origin.neighborhood || '',
+            district: origin.district || '',
+            region: origin.region || '',
+            regionCode: origin.regionCode || '',
+            countryCode: origin.countryCode || '',
+            placeName: origin.placeName || '',
+            accuracy: origin.accuracy || '',
+            mapboxId: origin.mapboxId || '',
+            latitude: origin.latitude || 0,
+            longitude: origin.longitude || 0,
           } : undefined,
           destination: destination ? {
             line1: destination.line1 || '',
             line2: destination.line2 || '',
             city: destination.city || '',
+            county: destination.county || '',
             postCode: destination.postcode || '',
             country: destination.country || 'United Kingdom',
             hasElevator: Boolean(destination.hasElevator),
-            floor: destination.floor ?? 0
+            floor: destination.floor ?? 0,
+            // Extended Mapbox fields
+            fullAddress: destination.fullAddress || '',
+            addressNumber: destination.addressNumber || '',
+            street: destination.street || '',
+            neighborhood: destination.neighborhood || '',
+            district: destination.district || '',
+            region: destination.region || '',
+            regionCode: destination.regionCode || '',
+            countryCode: destination.countryCode || '',
+            placeName: destination.placeName || '',
+            accuracy: destination.accuracy || '',
+            mapboxId: destination.mapboxId || '',
+            latitude: destination.latitude || 0,
+            longitude: destination.longitude || 0,
           } : undefined,
           schedule: {
             dateISO: scheduleDateISO || undefined,
@@ -302,10 +332,25 @@ function PayPageContent() {
             line1: customer.billingAddress.line1 || '',
             line2: customer.billingAddress.line2 || '',
             city: customer.billingAddress.city || '',
+            county: customer.billingAddress.county || '',
             postCode: customer.billingAddress.postcode || '',
             country: customer.billingAddress.country || 'United Kingdom',
             hasElevator: customer.billingAddress.hasElevator || false,
-            floor: customer.billingAddress.floor || 0
+            floor: customer.billingAddress.floor || 0,
+            // Extended Mapbox fields
+            fullAddress: customer.billingAddress.fullAddress || '',
+            addressNumber: customer.billingAddress.addressNumber || '',
+            street: customer.billingAddress.street || '',
+            neighborhood: customer.billingAddress.neighborhood || '',
+            district: customer.billingAddress.district || '',
+            region: customer.billingAddress.region || '',
+            regionCode: customer.billingAddress.regionCode || '',
+            countryCode: customer.billingAddress.countryCode || '',
+            placeName: customer.billingAddress.placeName || '',
+            accuracy: customer.billingAddress.accuracy || '',
+            mapboxId: customer.billingAddress.mapboxId || '',
+            latitude: customer.billingAddress.latitude || 0,
+            longitude: customer.billingAddress.longitude || 0,
           } : undefined
         } : undefined,
         ETag: currentEtag || "0" // Use stored ETag or default to "0"
@@ -369,117 +414,6 @@ function PayPageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated]);
 
-  // Save quote to backend when page loads and required data is available
-  React.useEffect(() => {
-    if (!isHydrated) return;
-    if (!activeQuote?.vanType || !origin || !destination) {
-      console.log('[pay] Waiting for required data before saving quote...');
-      return;
-    }
-    
-    console.log('[pay] Page loaded with required data, saving quote to backend...');
-    
-    // Save quote data directly without creating payment intents
-    const saveQuoteData = async () => {
-      try {
-        const currentEtag = getCurrentEtag();
-        console.log('[pay] Using ETag for backend save:', currentEtag || 'none (new quote)');
-        
-        const quotePayload = {
-          quote: {
-            id: activeQuote.quoteId || null,
-            sessionId: activeQuote.sessionId || null,
-            quoteReference: activeQuote.quoteReference || null,
-            type: activeQuoteType === 'send' ? 'Send' : activeQuoteType === 'receive' ? 'Receive' : 'Removals',
-            vanType: toBackendVanType(activeQuote.vanType as string),
-            driverCount: driverCount ?? 1,
-            distanceMiles: Math.max(0, distanceMiles ?? 0),
-            numberOfItemsToDismantle: activeQuote.numberOfItemsToDismantle || 0,
-            numberOfItemsToAssemble: activeQuote.numberOfItemsToAssemble || 0,
-            origin: origin ? {
-              line1: origin.line1 || '',
-              line2: origin.line2 || '',
-              city: origin.city || '',
-              postCode: origin.postcode || '',
-              country: origin.country || 'United Kingdom',
-              hasElevator: Boolean(origin.hasElevator),
-              floor: origin.floor ?? 0
-            } : undefined,
-            destination: destination ? {
-              line1: destination.line1 || '',
-              line2: destination.line2 || '',
-              city: destination.city || '',
-              postCode: destination.postcode || '',
-              country: destination.country || 'United Kingdom',
-              hasElevator: Boolean(destination.hasElevator),
-              floor: destination.floor ?? 0
-            } : undefined,
-            schedule: {
-              dateISO: scheduleDateISO || undefined,
-              deliveryDateISO: activeQuote.deliveryDate || undefined,
-              hours: activeQuote.hours || undefined,
-              flexibleTime: activeQuote.flexibleTime || undefined,
-              timeSlot: activeQuote.timeSlot || undefined
-            },
-            pricing: {
-              pricingTier: toBackendPricingTier(pricingTier),
-              totalCost: totalCost || undefined,
-              pickUpDropOffPrice: activeQuote.pickUpDropOffPrice || undefined
-            },
-            items: (activeQuote.items || []).map(item => ({
-              name: item.name || '',
-              width: item.widthCm || undefined,
-              height: item.heightCm || undefined,
-              depth: item.lengthCm || undefined,
-              quantity: item.quantity || 1
-            })),
-            payment: {
-              status: 'pending',
-              paymentType: 'Full',
-              depositAmount: undefined
-            },
-            version: currentEtag ? parseInt(currentEtag) : 0
-          },
-          customer: customer ? {
-            fullName: customer.fullName || '',
-            email: customer.email || '',
-            phoneNumber: customer.phone || '',
-            role: null,
-            billingAddress: customer.billingAddress ? {
-              line1: customer.billingAddress.line1 || '',
-              line2: customer.billingAddress.line2 || '',
-              city: customer.billingAddress.city || '',
-              postCode: customer.billingAddress.postcode || '',
-              country: customer.billingAddress.country || 'United Kingdom',
-              hasElevator: customer.billingAddress.hasElevator || false,
-              floor: customer.billingAddress.floor || 0
-            } : undefined
-          } : undefined,
-          ETag: currentEtag || "0"
-        };
-
-        const saveResponse = await fetch(`${API_BASE_URL}/api/guest/quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(quotePayload)
-        });
-
-        if (!saveResponse.ok) {
-          console.error('[pay] Failed to save quote to backend:', saveResponse.status, saveResponse.statusText);
-          return;
-        }
-
-        const saveResult = await saveResponse.json();
-        console.log('[pay] Quote saved successfully to backend:', saveResult);
-      } catch (error) {
-        console.error('[pay] Error saving quote to backend:', error);
-      }
-    };
-
-    saveQuoteData();
-  }, [isHydrated, activeQuote?.vanType, origin, destination, activeQuoteType, driverCount, distanceMiles, pricingTier, scheduleDateISO, customer, totalCost, getCurrentEtag]);
-
   // Reset selected option if 'Pay later' is selected but move date is now less than 72 hours away
   React.useEffect(() => {
     if (selectedOption === 'later' && !isMoveDateMoreThan72Hours) {
@@ -532,7 +466,7 @@ function PayPageContent() {
     if (!clientSecret) return undefined;
     return {
       clientSecret,
-      appearance: { theme: 'stripe' },
+      appearance: { theme: 'stripe' }
     };
   }, [clientSecret]);
 

@@ -166,6 +166,7 @@ export interface Address {
   line1: string;
   line2?: string;
   city?: string;
+  county?: string;           // County/state (matches backend)
   postcode?: string;
   country?: string;
   floor?: number;         // 0 = ground, 1+ floors

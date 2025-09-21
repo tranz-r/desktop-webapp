@@ -11,8 +11,10 @@ interface AddressInputProps {
   onChange: (value: string) => void;
   onAddressSelected?: (addressData: {
     line1: string;
+    line2: string;
     postcode: string;
     city: string;
+    county: string;
     country: string;
     fullAddress: string;
     addressNumber: string;
@@ -68,8 +70,10 @@ export default function AddressInput({
       // Extract comprehensive address data from the feature
       const addressData = {
         line1: properties.address_line1 || properties.full_address || '',
+        line2: properties.address_line2 || '', // Capture address_line2 (empty if no value)
         postcode: properties.postcode || '',
         city: properties.place || properties.address_level2 || '',
+        county: properties.county || properties.address_level1 || '', // Capture county/state
         country: properties.country_code || 'GB',
         fullAddress: properties.full_address || '',
         addressNumber: properties.address_number || '',
@@ -122,7 +126,7 @@ export default function AddressInput({
   if (!accessToken) {
     return (
       <div className={cn("space-y-2", className)}>
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        {/* <label className="text-sm font-medium text-gray-700">{label}</label> */}
         <input
           type="text"
           value={value || ""}
@@ -143,7 +147,7 @@ export default function AddressInput({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      {/* <label className="text-sm font-medium text-gray-700">{label}</label> */}
       
       {isAddressSelected && selectedAddressData ? (
         // Show selected address with change button

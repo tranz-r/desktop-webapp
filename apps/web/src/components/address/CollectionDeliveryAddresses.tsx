@@ -27,14 +27,18 @@ import { Loader2 } from "lucide-react";
 
 export type CollectionDeliveryFormValues = {
   originLine1: string;
+  originLine2: string;
   originPostcode: string;
   originCity: string;
+  originCounty: string;
   originCountry: string;
   originFloor: string;
   originElevator: boolean;
   destinationLine1: string;
+  destinationLine2: string;
   destinationPostcode: string;
   destinationCity: string;
+  destinationCounty: string;
   destinationCountry: string;
   destinationFloor: string;
   destinationElevator: boolean;
@@ -163,8 +167,10 @@ export default function CollectionDeliveryAddresses({
                   onAddressSelected={(addressData) => {
                     // Update form with all Mapbox data
                     form.setValue('originLine1', addressData.line1);
+                    form.setValue('originLine2', addressData.line2);
                     form.setValue('originPostcode', addressData.postcode);
                     form.setValue('originCity', addressData.city);
+                    form.setValue('originCounty', addressData.county);
                     form.setValue('originCountry', addressData.country);
                     
                     // Store all extended Mapbox fields
@@ -281,8 +287,10 @@ export default function CollectionDeliveryAddresses({
                   onAddressSelected={(addressData) => {
                     // Update form with all Mapbox data
                     form.setValue('destinationLine1', addressData.line1);
+                    form.setValue('destinationLine2', addressData.line2);
                     form.setValue('destinationPostcode', addressData.postcode);
                     form.setValue('destinationCity', addressData.city);
+                    form.setValue('destinationCounty', addressData.county);
                     form.setValue('destinationCountry', addressData.country);
                     
                     // Store all extended Mapbox fields
