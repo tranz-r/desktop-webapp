@@ -1,0 +1,2071 @@
+---
+alwaysApply: false
+---
+# Tranzr Admin App Requirements
+
+## Overview
+
+The Tranzr Admin App is a comprehensive administrative interface designed to manage all aspects of the Tranzr moving services platform. This document outlines the complete requirements for building a robust admin application that can effectively manage quotes, users, payments, drivers, and operational aspects of the business.
+
+## Architecture & Technology Stack
+
+### Frontend Requirements
+- **Framework**: Next.js 14+ with App Router
+- **UI Library**: shadcn/ui components with Tailwind CSS
+- **State Management**: React Query (TanStack Query) for server state
+- **Forms**: React Hook Form with Zod validation
+ - **Authentication**: Supabase Auth (basic authentication only for now)
+- **Charts**: Recharts for analytics and reporting
+- **Tables**: TanStack Table for data management
+- **Icons**: Lucide React
+- **TypeScript**: Strict mode enabled
+
+### Backend Integration
+- **API Base**: Existing .NET Core API (`tranzr-moves-services`)
+- **Database**: PostgreSQL via existing backend
+- **Authentication**: Supabase Auth integration (JWT bearer validation in .NET)
+- **File Storage**: Supabase Storage for document uploads
+- **Email**: Integration with existing email service
+- **Stripe**: Payment management integration
+
+## User Access (Initial)
+
+- Keep access simple for v1: any authenticated admin-app user can use the admin app.
+- No role-based feature gating in v1. Plan RBAC later without changing APIs.
+
+## Core Features & Modules
+
+### 1. Dashboard & Analytics
+
+#### Main Dashboard
+- **Real-time Metrics**:
+  - Total quotes today/week/month
+  - Revenue metrics (daily, weekly, monthly, annually)
+  - Active drivers count
+  - Pending quotes requiring attention
+  - Payment success/failure rates
+  - Customer satisfaction scores
+
+- **Charts & Visualizations**:
+  - Revenue trends (line charts)
+  - Quote volume by service type (pie charts)
+  - Geographic distribution of quotes (map integration)
+  - Driver performance metrics
+  - Payment method distribution
+  - Peak hours analysis
+
+- **Quick Actions**:
+  - Create new quote
+  - Assign driver to pending job
+  - Process refund
+  - Send customer notification
+  - Generate report
+
+#### Analytics Module
+- **Financial Reports**:
+  - Revenue by service type
+  - Payment method analysis
+  - Refund tracking
+  - Commission calculations
+  - Tax reporting
+
+- **Operational Reports**:
+  - Quote conversion rates
+  - Average quote value
+  - Service completion times
+  - Driver utilization rates
+  - Customer acquisition costs
+
+- **Custom Reports**:
+  - Date range selection
+  - Filter by service type, location, driver
+  - Export to CSV/PDF
+  - Scheduled report generation
+
+### 2. Quote Management
+
+#### Quote List & Search
+- **Advanced Filtering**:
+  - Quote status (pending, confirmed, completed, cancelled)
+  - Service type (Send, Receive, Removals)
+  - Date range
+  - Customer name/email
+  - Driver assignment
+  - Payment status
+  - Location (origin/destination)
+
+- **Bulk Operations**:
+  - Bulk status updates
+  - Bulk driver assignments
+  - Bulk email notifications
+  - Export selected quotes
+
+- **Typeahead Search**:
+  - Query quotes by `quoteReference` with typeahead/autocomplete
+  - Debounced input, top matches (e.g., last 10), highlight matched fragment
+  - Keyboard navigation (↑/↓, Enter) and accessible listbox
+
+#### Quote Details View
+- **Quote Information**:
+  - Quote reference and ID
+  - Service type and details
+  - Origin and destination addresses
+  - Inventory items with dimensions
+  - Pricing breakdown
+  - Customer information
+  - Payment details
+
+- **Timeline & Status Tracking**:
+  - Quote creation timestamp
+  - Payment confirmation
+  - Driver assignment
+  - Collection scheduled
+  - In transit
+  - Delivery completed
+  - Customer feedback
+
+- **Actions Available**:
+  - Edit quote details
+  - Assign/unassign driver(s)
+  - Change status (Pending/Confirmed/Completed/Cancelled)
+  - Add additional payment (adhoc/extra charge)
+  - Charge remaining balance (where applicable)
+  - Process refunds
+  - Send notifications
+  - Generate invoices
+  - Cancel quote
+
+#### Quote Creation/Editing
+- **Service Configuration**:
+  - Service type selection
+  - Van type and driver count
+  - Collection and delivery dates
+  - Time slots and flexibility
+  - Special requirements
+
+- **Address Management**:
+  - Origin and destination entry
+  - Address validation
+  - Distance calculation
+  - Special access instructions
+
+- **Inventory Management**:
+  - Item selection from catalog
+  - Custom item creation
+  - Dimensions and weight
+  - Special handling requirements
+  - Assembly/dismantling services
+
+- **Pricing Configuration**:
+  - Base pricing calculation
+  - Additional services pricing
+  - Discounts and promotions
+  - Tax calculations
+  - Payment terms
+
+### 3. User Management
+
+#### Customer Management
+- **Customer List**:
+  - Search by name, email, phone
+  - Filter by registration date, activity
+  - Customer status (active, inactive, blocked)
+  - Quote history and statistics
+
+- **Customer Profile**:
+  - Personal information
+  - Contact details
+  - Billing address
+  - Quote history
+  - Payment history
+  - Communication log
+  - Preferences and notes
+
+- **Customer Actions**:
+  - Create new customer
+  - Edit customer details
+  - Block/unblock customer
+  - Send communications
+  - View quote history
+  - Process refunds
+
+#### Driver Management
+- **Driver List**:
+  - Active/inactive drivers
+  - Performance metrics
+  - Availability status
+  - Location tracking
+  - Rating and reviews
+
+- **Driver Profile**:
+  - Personal information
+  - License and insurance details
+  - Vehicle information
+  - Service areas
+  - Performance metrics
+  - Earnings and payments
+  - Schedule and availability
+
+- **Driver Actions**:
+  - Onboard new driver
+  - Update driver information
+  - Assign to quotes
+  - Track performance
+  - Process payments
+  - Manage schedule
+
+### 4. Payment Management
+
+#### Payment Overview
+- **Payment Dashboard**:
+  - Total revenue metrics
+  - Pending payments
+  - Failed payments requiring attention
+  - Refund requests
+  - Payment method distribution
+
+#### Payment Processing
+- **Payment List**:
+  - Filter by status, date, amount
+  - Search by customer or quote reference
+  - Payment method breakdown
+  - Processing fees analysis
+
+- **Payment Details**:
+  - Payment information
+  - Customer details
+  - Quote reference
+  - Stripe transaction details
+  - Receipt generation
+  - Refund processing
+
+#### Refund Management
+- **Refund Requests**:
+  - Refund reason tracking
+  - Approval workflow
+  - Processing status
+  - Communication with customer
+
+- **Refund Processing**:
+  - Full or partial refunds
+  - Stripe integration
+  - Customer notification
+  - Accounting integration
+
+### 5. Driver & Job Management
+
+#### Job Assignment
+- **Available Jobs**:
+  - Pending quote assignments
+  - Driver availability matching
+  - Geographic optimization
+  - Skill requirements matching
+
+- **Assignment Process**:
+  - Manual driver assignment
+  - Automated assignment rules
+  - Driver notification system
+  - Confirmation tracking
+
+#### Driver Tracking
+- **Real-time Tracking**:
+  - Driver location updates
+  - Job progress tracking
+  - ETA calculations
+  - Customer notifications
+
+- **Performance Monitoring**:
+  - Completion rates
+  - Customer ratings
+  - On-time performance
+  - Revenue generation
+
+### 6. Communication & Notifications
+
+#### Email Management
+- **Template Management**:
+  - Email template editor
+  - Template versioning
+  - A/B testing capabilities
+  - Preview functionality
+
+- **Email Campaigns**:
+  - Customer segmentation
+  - Automated email sequences
+  - Delivery tracking
+  - Open/click analytics
+
+#### Notification System
+- **Customer Notifications**:
+  - Quote confirmations
+  - Payment receipts
+  - Driver assignments
+  - Service updates
+  - Feedback requests
+
+- **Driver Notifications**:
+  - Job assignments
+  - Schedule updates
+  - Payment notifications
+  - Performance updates
+
+### 7. Settings & Configuration
+
+#### System Settings
+- **Pricing Configuration**:
+  - Base pricing rates
+  - Additional service pricing
+  - Discount rules
+  - Tax settings
+  - Currency configuration
+
+- **Service Configuration**:
+  - Service types and descriptions
+  - Van types and capacities
+  - Time slots and availability
+  - Geographic service areas
+
+#### User Management
+- **Admin User Management**:
+  - Admin user creation
+  - Role assignment
+  - Permission management
+  - Activity logging
+
+- **Security Settings**:
+  - Password policies
+  - Session management
+  - Two-factor authentication
+  - Audit logging
+
+### 8. Reporting & Analytics
+
+#### Standard Reports
+- **Financial Reports**:
+  - Revenue reports
+  - Payment analysis
+  - Refund tracking
+  - Commission reports
+
+- **Operational Reports**:
+  - Quote volume analysis
+  - Service completion rates
+  - Driver performance
+  - Customer satisfaction
+
+#### Custom Reporting
+- **Report Builder**:
+  - Drag-and-drop interface
+  - Custom metrics and KPIs
+  - Data visualization options
+  - Export capabilities
+
+- **Scheduled Reports**:
+  - Automated report generation
+  - Email delivery
+  - Multiple format support
+  - Archive management
+
+## Data Models & API Integration
+
+### Core Data Entities
+
+#### Quote Entity
+```typescript
+interface AdminQuote {
+  id: string;
+  quoteReference: string;
+  sessionId: string;
+  type: 'Send' | 'Receive' | 'Removals';
+  
+  // Addresses
+  origin: Address;
+  destination: Address;
+  distanceMiles: number;
+  
+  // Service Details
+  vanType: VanType;
+  driverCount: number;
+  numberOfItemsToDismantle: number;
+  numberOfItemsToAssemble: number;
+  
+  // Schedule
+  collectionDate: string;
+  deliveryDate: string;
+  hours: number;
+  flexibleTime: boolean;
+  timeSlot: 'morning' | 'afternoon' | 'evening';
+  
+  // Pricing
+  pricingTier: PricingTier;
+  totalCost: number;
+  
+  // Items
+  inventoryItems: InventoryItem[];
+  
+  // Payment
+  paymentStatus: PaymentStatus;
+  paymentMethodId?: string;
+  paymentIntentId?: string;
+  paymentType: PaymentType;
+  depositAmount?: number;
+  receiptUrl?: string;
+  dueDate?: string;
+  stripeSessionId?: string;
+  
+  // Relationships
+  customerQuotes: CustomerQuote[];
+  driverQuotes: DriverQuote[];
+  quoteAdditionalPayments: QuoteAdditionalPayment[];
+  
+  // Audit
+  createdAt: string;
+  createdBy: string;
+  modifiedAt: string;
+  modifiedBy: string;
+  version: number;
+}
+```
+
+#### User Entity
+```typescript
+interface AdminUser {
+  id: string;
+  supabaseId?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  role: Role;
+  billingAddress?: Address;
+  
+  // Relationships
+  customerQuotes: CustomerQuote[];
+  driverQuotes: DriverQuote[];
+  
+  // Audit
+  createdAt: string;
+  createdBy: string;
+  modifiedAt: string;
+  modifiedBy: string;
+}
+```
+
+### API Integration Strategy
+
+#### Existing Endpoints (Leverage Current API)
+The admin app should primarily use existing endpoints with enhanced authorization policies rather than creating dedicated admin endpoints.
+
+**Current API Structure:**
+```typescript
+// Existing Quote Management
+GET    /api/v1/quote                          // Get quote by type (with admin filtering)
+POST   /api/v1/quote                          // Save quote (with admin permissions)
+DELETE /api/v1/quote                          // Delete quote (with admin permissions)
+GET    /api/v1/quote/checkout-session         // Get quote by Stripe session ID
+POST   /api/v1/quote/select-quote-type        // Select quote type
+GET    /api/v1/quote/customer/{quoteId}       // Get customer data for quote
+
+// Existing Checkout/Payment Management
+POST   /api/v1/checkout/session               // Create Stripe checkout session
+GET    /api/v1/checkout/session               // Get checkout session details
+POST   /api/v1/checkout/payment-sheet         // Create payment intent
+GET    /api/v1/checkout/payment-intent        // Get payment intent details
+POST   /api/v1/checkout/deposit-balance-payment // Process balance payment
+POST   /api/v1/checkout/pay-later-collection  // Process pay-later collection
+POST   /api/v1/checkout/create-payment-link   // Create payment link
+POST   /api/v1/checkout/webhook               // Stripe webhook handler
+
+// Existing Driver Management
+POST   /api/v1/driver-jobs/assign             // Assign driver to quote
+POST   /api/v1/driver-jobs/unassign           // Unassign driver from quote
+
+// Existing Customer Management
+GET    /api/v1/customer-jobs                  // List customer jobs with filtering
+
+// Existing Auth Management
+POST   /api/v1/auth/role                      // Assign user role
+GET    /api/v1/auth/role-permissions          // Get role permissions
+
+// Existing Pricing & Services
+POST   /api/v1/prices                         // Get pricing for removals
+GET    /api/v1/service-features               // Get service features
+GET    /api/v1/rate-cards                     // Get rate cards
+GET    /api/v1/additional-prices              // Get additional pricing
+```
+
+#### Authorization (Initial)
+
+- No RBAC in v1. Keep endpoints open to any authenticated admin-app user.
+- Design endpoints to be RBAC-ready later without breaking changes.
+
+#### Required Backend Enhancements
+
+**1. Enhanced Quote Endpoints (Extend Existing)**
+```typescript
+// Extend existing GET /api/v1/quote with admin filtering
+GET /api/v1/quote?admin=true&filters={...}    // Admin quote listing with filters
+GET /api/v1/quote/{id}                        // Get specific quote (admin access)
+PUT /api/v1/quote/{id}                        // Update quote (admin access)
+GET /api/v1/quote/{id}/timeline               // Get quote timeline/audit log
+
+// Bulk operations (new endpoints)
+POST /api/v1/quote/bulk-update                // Bulk status updates
+POST /api/v1/quote/bulk-assign                // Bulk driver assignments
+GET  /api/v1/quote/export                     // Export quotes to CSV/PDF
+```
+
+**2. Enhanced User Management (Extend Existing Auth)**
+```typescript
+// Extend existing auth endpoints
+GET /api/v1/auth/users                        // List users (admin access)
+GET /api/v1/auth/users/{id}                   // Get user details (admin access)
+PUT /api/v1/auth/users/{id}                   // Update user (admin access)
+DELETE /api/v1/auth/users/{id}                // Delete user (admin access)
+POST /api/v1/auth/users/{id}/block            // Block/unblock user
+GET /api/v1/auth/users/{id}/quotes            // Get user's quotes
+```
+
+**3. Enhanced Payment Management (Extend Existing Checkout)**
+```typescript
+// Extend existing checkout endpoints
+GET /api/v1/checkout/payments                 // List all payments (admin access)
+GET /api/v1/checkout/payments/{id}            // Get payment details (admin access)
+POST /api/v1/checkout/payments/{id}/refund    // Process refund (admin access)
+POST /api/v1/checkout/payments/{id}/void      // Void payment (admin access)
+GET /api/v1/checkout/payments/analytics       // Payment analytics
+// Existing endpoints (CheckoutController)
+POST /api/v1/checkout/session                 // One-off payment via Stripe Checkout Session
+POST /api/v1/checkout/deposit-balance-payment // Charge remaining (future) balance on a quote
+POST /api/v1/checkout/pay-later-collection    // Initiate a pay-later collection flow
+```
+
+**4. New Analytics Endpoints**
+```typescript
+// New analytics endpoints
+GET /api/v1/analytics/dashboard               // Dashboard metrics
+GET /api/v1/analytics/revenue                 // Revenue analytics
+GET /api/v1/analytics/quotes                   // Quote analytics
+GET /api/v1/analytics/drivers                  // Driver analytics
+GET /api/v1/analytics/customers                // Customer analytics
+GET /api/v1/analytics/reports                  // Custom reports
+```
+
+**5. Enhanced Driver Management (Extend Existing)**
+```typescript
+// Extend existing driver-jobs endpoints
+GET /api/v1/driver-jobs                        // List all driver jobs (admin access)
+GET /api/v1/driver-jobs/{id}                  // Get driver job details
+PUT /api/v1/driver-jobs/{id}                  // Update driver job
+GET /api/v1/driver-jobs/drivers               // List all drivers
+GET /api/v1/driver-jobs/drivers/{id}          // Get driver details
+PUT /api/v1/driver-jobs/drivers/{id}          // Update driver details
+GET /api/v1/driver-jobs/drivers/{id}/performance // Driver performance metrics
+POST /api/v1/driver-jobs/assign               // Assign driver to job (quote)
+POST /api/v1/driver-jobs/unassign             // Un-assign driver from job (quote)
+```
+
+#### Backend Implementation Requirements
+
+**1. Trust API Gateway Identity (no service-level JWT validation)**
+```csharp
+// Program.cs (minimal): trust gateway and parse forwarded identity headers
+// NOTE: Gateway handles AuthN/AuthZ; services consume identity via headers
+builder.Services.AddControllers();
+
+// Add standard ASP.NET Core authentication/authorization (see below)
+```
+
+**2. Enhanced Quote Controller**
+```csharp
+// Extend existing QuoteController.cs
+[HttpGet("admin")]
+public async Task<IActionResult> GetQuotesAdmin(
+    [FromQuery] QuoteStatus? status,
+    [FromQuery] QuoteType? type,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate,
+    [FromQuery] string? customerEmail,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for admin quote listing with filtering
+    // Read roles from gateway headers (e.g., X-User-Roles) if doing defense-in-depth
+}
+
+[HttpGet("{id}")]
+public async Task<IActionResult> GetQuoteById(Guid id, CancellationToken ct)
+{
+    // Implementation for getting specific quote by ID
+}
+
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdateQuote(Guid id, [FromBody] UpdateQuoteRequest request, CancellationToken ct)
+{
+    // Implementation for updating quote
+}
+```
+
+**3. Enhanced Auth Controller**
+```csharp
+// Extend existing AuthController.cs
+[HttpGet("users")]
+public async Task<IActionResult> GetUsers(
+    [FromQuery] string? search,
+    [FromQuery] Role? role,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for listing users
+}
+
+[HttpGet("users/{id}")]
+public async Task<IActionResult> GetUserById(Guid id, CancellationToken ct)
+{
+    // Implementation for getting user by ID
+}
+
+[HttpPut("users/{id}")]
+public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request, CancellationToken ct)
+{
+    // Implementation for updating user
+}
+```
+
+**4. Enhanced Checkout Controller**
+```csharp
+// Extend existing CheckoutController.cs
+[HttpGet("payments")]
+public async Task<IActionResult> GetPayments(
+    [FromQuery] PaymentStatus? status,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate,
+    [FromQuery] string? customerEmail,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for listing payments
+}
+
+[HttpPost("payments/{id}/refund")]
+public async Task<IActionResult> ProcessRefund(string id, [FromBody] RefundRequest request, CancellationToken ct)
+{
+    // Implementation for processing refunds
+}
+```
+
+**5. New Analytics Controller**
+```csharp
+// Create new AnalyticsController.cs
+[Route("api/v1/[controller]")]
+public class AnalyticsController : ApiControllerBase
+{
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboardMetrics(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        CancellationToken ct)
+    {
+        // Implementation for dashboard metrics
+    }
+
+    [HttpGet("revenue")]
+    public async Task<IActionResult> GetRevenueAnalytics(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] string? groupBy,
+        CancellationToken ct)
+    {
+        // Implementation for revenue analytics
+    }
+}
+```
+
+#### Required DTOs and Data Models
+
+**1. Admin Quote DTOs**
+```csharp
+// AdminQuoteListDto.cs
+public class AdminQuoteListDto
+{
+    public Guid Id { get; set; }
+    public string QuoteReference { get; set; }
+    public QuoteType Type { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
+    public decimal? TotalCost { get; set; }
+    public DateTime? CollectionDate { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerName { get; set; }
+    public string? DriverName { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset ModifiedAt { get; set; }
+}
+
+// AdminQuoteDetailDto.cs
+public class AdminQuoteDetailDto : AdminQuoteListDto
+{
+    public Address? Origin { get; set; }
+    public Address? Destination { get; set; }
+    public decimal? DistanceMiles { get; set; }
+    public VanType VanType { get; set; }
+    public int DriverCount { get; set; }
+    public List<InventoryItem> InventoryItems { get; set; }
+    public PaymentDetailsDto? Payment { get; set; }
+    public List<QuoteTimelineEventDto> Timeline { get; set; }
+}
+
+// QuoteTimelineEventDto.cs
+public class QuoteTimelineEventDto
+{
+    public DateTimeOffset Timestamp { get; set; }
+    public string Event { get; set; }
+    public string Description { get; set; }
+    public string? UserName { get; set; }
+}
+```
+
+**2. Admin User DTOs**
+```csharp
+// AdminUserListDto.cs
+public class AdminUserListDto
+{
+    public Guid Id { get; set; }
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public Role? Role { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastLoginAt { get; set; }
+    public int QuoteCount { get; set; }
+    public bool IsActive { get; set; }
+}
+
+// AdminUserDetailDto.cs
+public class AdminUserDetailDto : AdminUserListDto
+{
+    public Address? BillingAddress { get; set; }
+    public List<AdminQuoteListDto> Quotes { get; set; }
+    public List<UserActivityDto> Activities { get; set; }
+}
+```
+
+**3. Admin Payment DTOs**
+```csharp
+// AdminPaymentListDto.cs
+public class AdminPaymentListDto
+{
+    public string Id { get; set; }
+    public string QuoteReference { get; set; }
+    public decimal Amount { get; set; }
+    public PaymentStatus Status { get; set; }
+    public PaymentType Type { get; set; }
+    public string? CustomerEmail { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? ProcessedAt { get; set; }
+    public string? ReceiptUrl { get; set; }
+}
+
+// RefundRequest.cs
+public class RefundRequest
+{
+    public decimal Amount { get; set; }
+    public string Reason { get; set; }
+    public string? Notes { get; set; }
+}
+```
+
+**4. Analytics DTOs**
+```csharp
+// DashboardMetricsDto.cs
+public class DashboardMetricsDto
+{
+    public int TotalQuotesToday { get; set; }
+    public int TotalQuotesThisWeek { get; set; }
+    public int TotalQuotesThisMonth { get; set; }
+    public decimal RevenueToday { get; set; }
+    public decimal RevenueThisWeek { get; set; }
+    public decimal RevenueThisMonth { get; set; }
+    public int ActiveDrivers { get; set; }
+    public int PendingQuotes { get; set; }
+    public decimal PaymentSuccessRate { get; set; }
+    public decimal CustomerSatisfactionScore { get; set; }
+}
+
+// RevenueAnalyticsDto.cs
+public class RevenueAnalyticsDto
+{
+    public List<RevenueDataPoint> DataPoints { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal AverageOrderValue { get; set; }
+    public int TotalOrders { get; set; }
+}
+
+// RevenueDataPoint.cs
+public class RevenueDataPoint
+{
+    public DateTime Date { get; set; }
+    public decimal Revenue { get; set; }
+    public int OrderCount { get; set; }
+}
+```
+
+#### Implementation Approach
+
+**Phase 1: Authorization Middleware**
+- Implement JWT-based authorization middleware
+- Add role-based policy enforcement
+- Extend existing endpoints with admin query parameters
+
+**Phase 2: Enhanced Endpoints**
+- Add admin-specific query parameters to existing endpoints
+- Implement bulk operations
+- Add analytics and reporting endpoints
+
+**Phase 3: Advanced Features**
+- Real-time notifications
+- Advanced filtering and search
+- Export functionality
+- Audit logging
+
+## UI/UX Requirements
+
+### Design System
+- **Consistent with Web App**: Use same design tokens, colors, and typography
+- **Admin-Specific Components**: Enhanced data tables, advanced filters, bulk action interfaces
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Accessibility**: WCAG 2.1 AA compliance
+
+### Key UI Components
+1. **Advanced Data Tables**: Sortable, filterable, paginated tables with bulk actions
+2. **Dashboard Widgets**: Customizable metric cards and charts
+3. **Form Components**: Multi-step forms, validation, auto-save
+4. **Modal Dialogs**: Confirmation dialogs, quick edit forms
+5. **Navigation**: Sidebar navigation with role-based menu items
+6. **Search & Filters**: Global search with advanced filtering options
+
+### User Experience Principles
+- **Efficiency**: Minimize clicks and form fields for common tasks
+- **Clarity**: Clear visual hierarchy and information architecture
+- **Feedback**: Immediate feedback for all user actions
+- **Consistency**: Uniform patterns across all modules
+- **Performance**: Fast loading times and smooth interactions
+
+## Security Requirements
+
+### Authentication & Authorization
+- **Supabase Auth Integration**: Leverage existing authentication system
+- **RBAC Implementation**: Role-based access control with granular permissions
+- **Session Management**: Secure session handling with timeout
+- **API Security**: JWT token validation and rate limiting
+
+### Data Protection
+- **Data Encryption**: Encrypt sensitive data at rest and in transit
+- **Audit Logging**: Comprehensive logging of all admin actions
+- **Data Privacy**: GDPR compliance for customer data handling
+- **Backup & Recovery**: Regular backups with disaster recovery procedures
+
+### Access Control
+- **IP Whitelisting**: Restrict admin access to specific IP ranges
+- **Two-Factor Authentication**: Mandatory 2FA for admin users
+- **Permission Auditing**: Regular review of user permissions
+- **Activity Monitoring**: Real-time monitoring of admin activities
+
+## Performance Requirements
+
+### Response Times
+- **Dashboard Load**: < 2 seconds
+- **Data Table Rendering**: < 1 second for 1000+ records
+- **Search Results**: < 500ms
+- **Report Generation**: < 30 seconds for complex reports
+
+### Scalability
+- **Concurrent Users**: Support 50+ simultaneous admin users
+- **Data Volume**: Handle 100,000+ quotes and 10,000+ users
+- **Real-time Updates**: WebSocket integration for live data updates
+- **Caching Strategy**: Implement Redis caching for frequently accessed data
+
+## Integration Requirements
+
+### Existing System Integration
+- **Backend API**: Full integration with existing .NET Core API
+- **Database**: Direct access to PostgreSQL database
+- **Email Service**: Integration with existing email templates and service
+- **Stripe Integration**: Payment processing and refund management
+- **Supabase**: Authentication, storage, and real-time features
+
+### Third-Party Integrations
+- **Maps Integration**: Google Maps or Mapbox for location services
+- **Analytics**: Google Analytics or similar for usage tracking
+- **Monitoring**: Application performance monitoring
+- **Backup Services**: Automated backup solutions
+
+## Deployment & Infrastructure
+
+### Environment Setup
+- **Development**: Local development environment with hot reload
+- **Staging**: Staging environment for testing and QA
+- **Production**: Production environment with high availability
+
+### Deployment Strategy
+- **Containerization**: Docker containers for consistent deployment
+- **CI/CD Pipeline**: Automated testing and deployment
+- **Environment Variables**: Secure configuration management
+- **Health Checks**: Application health monitoring
+
+### Monitoring & Logging
+- **Application Monitoring**: Performance and error tracking
+- **User Analytics**: Admin user behavior analytics
+- **Security Monitoring**: Intrusion detection and prevention
+- **Log Management**: Centralized logging with search capabilities
+
+## Testing Requirements
+
+### Testing Strategy
+- **Unit Tests**: Component and utility function testing
+- **Integration Tests**: API integration and data flow testing
+- **E2E Tests**: Complete user workflow testing
+- **Performance Tests**: Load testing and optimization validation
+
+### Quality Assurance
+- **Code Quality**: ESLint, Prettier, and TypeScript strict mode
+- **Accessibility Testing**: Automated and manual accessibility testing
+- **Security Testing**: Vulnerability scanning and penetration testing
+- **User Acceptance Testing**: Stakeholder validation of features
+
+## Success Metrics
+
+### Key Performance Indicators
+- **Admin Efficiency**: Time to complete common tasks
+- **System Performance**: Response times and uptime metrics
+- **User Satisfaction**: Admin user feedback and adoption rates
+- **Data Accuracy**: Error rates in data management operations
+
+### Business Impact
+- **Operational Efficiency**: Reduction in manual processes
+- **Customer Service**: Improved response times and issue resolution
+- **Revenue Management**: Better payment processing and refund handling
+- **Driver Management**: Optimized job assignments and performance tracking
+
+## Implementation Phases
+
+### Phase 1: Core Infrastructure (Weeks 1-4)
+- Project setup and authentication
+- Basic dashboard and navigation
+- User management module
+- Quote listing and basic operations
+
+### Phase 2: Quote Management (Weeks 5-8)
+- Advanced quote management features
+- Driver assignment functionality
+- Payment processing integration
+- Communication system
+
+### Phase 3: Analytics & Reporting (Weeks 9-12)
+- Dashboard analytics and charts
+- Report generation system
+- Custom reporting capabilities
+- Export functionality
+
+### Phase 4: Advanced Features (Weeks 13-16)
+- Real-time tracking and notifications
+- Advanced search and filtering
+- Bulk operations and automation
+- Performance optimization
+
+### Phase 5: Testing & Deployment (Weeks 17-20)
+- Comprehensive testing
+- Security audit and hardening
+- Performance optimization
+- Production deployment
+
+## Key Implementation Strategy
+
+### Streamlined API Approach
+Instead of creating dedicated `/api/v1/admin/*` endpoints, this approach leverages existing endpoints with enhanced authorization policies:
+
+**Benefits:**
+- ✅ **Reduced Backend Complexity**: Extends existing controllers rather than duplicating logic
+- ✅ **Consistent Data Models**: Uses same DTOs and business logic as web app
+- ✅ **Easier Maintenance**: Single source of truth for business operations
+- ✅ **Faster Development**: Leverages existing, tested endpoints
+- ✅ **Better Security**: Centralized authorization policies
+
+**Implementation Pattern:**
+```typescript
+// Instead of: GET /api/v1/admin/quotes
+// Use: GET /api/v1/quote?admin=true&filters={...}
+
+// Instead of: GET /api/v1/admin/users  
+// Use: GET /api/v1/auth/users (with admin authorization)
+
+// Instead of: GET /api/v1/admin/payments
+// Use: GET /api/v1/checkout/payments (with finance authorization)
+```
+
+### Authorization Strategy (Lean)
+- **JWT-based Authentication**: Validate Supabase-issued JWTs in .NET
+- **No RBAC initially**: Treat any authenticated admin-app user as authorized
+- **Audit Logging**: Track admin actions for future RBAC enablement
+
+### Backend Enhancements Required
+1. **Authentication Middleware**: Add JWT bearer validation (no policies initially)
+2. **Enhanced Controllers**: Extend existing controllers with admin endpoints
+3. **New DTOs**: Create admin-specific DTOs for list views and analytics
+4. **Analytics Controller**: New controller for dashboard and reporting
+5. **Bulk Operations**: Add bulk update/assign endpoints
+
+### Frontend Integration
+- **Existing API Client**: Extend current API client with admin methods
+- **Role-based UI**: Show/hide features based on user permissions
+- **Consistent Design**: Use same design system as web app
+- **Real-time Updates**: WebSocket integration for live data
+
+## Conclusion
+
+This comprehensive requirements document provides the foundation for building a robust, scalable, and user-friendly admin application that will effectively manage all aspects of the Tranzr moving services platform. The admin app will serve as the central hub for operations, customer service, and business intelligence, enabling efficient management of quotes, users, payments, and drivers while providing valuable insights through analytics and reporting.
+
+The streamlined API approach ensures minimal backend changes while providing maximum functionality. The modular architecture and phased implementation approach ensure that the admin app can be built incrementally while maintaining high quality and security standards. Integration with existing systems and adherence to established design patterns will ensure consistency and maintainability across the entire Tranzr ecosystem.
+
+**Key Success Factors:**
+- Leverage existing API endpoints with enhanced authorization
+- Implement role-based access control with granular permissions
+- Maintain consistency with web app design and functionality
+- Focus on admin efficiency and operational insights
+- Ensure security and audit compliance throughout
+
+# Tranzr Admin App Requirements
+
+## Overview
+
+The Tranzr Admin App is a comprehensive administrative interface designed to manage all aspects of the Tranzr moving services platform. This document outlines the complete requirements for building a robust admin application that can effectively manage quotes, users, payments, drivers, and operational aspects of the business.
+
+## Architecture & Technology Stack
+
+### Frontend Requirements
+- **Framework**: Next.js 14+ with App Router
+- **UI Library**: shadcn/ui components with Tailwind CSS
+- **State Management**: React Query (TanStack Query) for server state
+- **Forms**: React Hook Form with Zod validation
+ - **Authentication**: Supabase Auth (basic authentication only for now)
+- **Charts**: Recharts for analytics and reporting
+- **Tables**: TanStack Table for data management
+- **Icons**: Lucide React
+- **TypeScript**: Strict mode enabled
+
+### Backend Integration
+- **API Base**: Existing .NET Core API (`tranzr-moves-services`)
+- **Database**: PostgreSQL via existing backend
+- **Authentication**: Supabase Auth integration (JWT bearer validation in .NET)
+- **File Storage**: Supabase Storage for document uploads
+- **Email**: Integration with existing email service
+- **Stripe**: Payment management integration
+
+## User Access (Initial)
+
+- Keep access simple for v1: any authenticated admin-app user can use the admin app.
+- No role-based feature gating in v1. Plan RBAC later without changing APIs.
+
+## Core Features & Modules
+
+### 1. Dashboard & Analytics
+
+#### Main Dashboard
+- **Real-time Metrics**:
+  - Total quotes today/week/month
+  - Revenue metrics (daily, weekly, monthly, annually)
+  - Active drivers count
+  - Pending quotes requiring attention
+  - Payment success/failure rates
+  - Customer satisfaction scores
+
+- **Charts & Visualizations**:
+  - Revenue trends (line charts)
+  - Quote volume by service type (pie charts)
+  - Geographic distribution of quotes (map integration)
+  - Driver performance metrics
+  - Payment method distribution
+  - Peak hours analysis
+
+- **Quick Actions**:
+  - Create new quote
+  - Assign driver to pending job
+  - Process refund
+  - Send customer notification
+  - Generate report
+
+#### Analytics Module
+- **Financial Reports**:
+  - Revenue by service type
+  - Payment method analysis
+  - Refund tracking
+  - Commission calculations
+  - Tax reporting
+
+- **Operational Reports**:
+  - Quote conversion rates
+  - Average quote value
+  - Service completion times
+  - Driver utilization rates
+  - Customer acquisition costs
+
+- **Custom Reports**:
+  - Date range selection
+  - Filter by service type, location, driver
+  - Export to CSV/PDF
+  - Scheduled report generation
+
+### 2. Quote Management
+
+#### Quote List & Search
+- **Advanced Filtering**:
+  - Quote status (pending, confirmed, completed, cancelled)
+  - Service type (Send, Receive, Removals)
+  - Date range
+  - Customer name/email
+  - Driver assignment
+  - Payment status
+  - Location (origin/destination)
+
+- **Bulk Operations**:
+  - Bulk status updates
+  - Bulk driver assignments
+  - Bulk email notifications
+  - Export selected quotes
+
+- **Typeahead Search**:
+  - Query quotes by `quoteReference` with typeahead/autocomplete
+  - Debounced input, top matches (e.g., last 10), highlight matched fragment
+  - Keyboard navigation (↑/↓, Enter) and accessible listbox
+
+#### Quote Details View
+- **Quote Information**:
+  - Quote reference and ID
+  - Service type and details
+  - Origin and destination addresses
+  - Inventory items with dimensions
+  - Pricing breakdown
+  - Customer information
+  - Payment details
+
+- **Timeline & Status Tracking**:
+  - Quote creation timestamp
+  - Payment confirmation
+  - Driver assignment
+  - Collection scheduled
+  - In transit
+  - Delivery completed
+  - Customer feedback
+
+- **Actions Available**:
+  - Edit quote details
+  - Assign/unassign driver(s)
+  - Change status (Pending/Confirmed/Completed/Cancelled)
+  - Add additional payment (adhoc/extra charge)
+  - Charge remaining balance (where applicable)
+  - Process refunds
+  - Send notifications
+  - Generate invoices
+  - Cancel quote
+
+#### Quote Creation/Editing
+- **Service Configuration**:
+  - Service type selection
+  - Van type and driver count
+  - Collection and delivery dates
+  - Time slots and flexibility
+  - Special requirements
+
+- **Address Management**:
+  - Origin and destination entry
+  - Address validation
+  - Distance calculation
+  - Special access instructions
+
+- **Inventory Management**:
+  - Item selection from catalog
+  - Custom item creation
+  - Dimensions and weight
+  - Special handling requirements
+  - Assembly/dismantling services
+
+- **Pricing Configuration**:
+  - Base pricing calculation
+  - Additional services pricing
+  - Discounts and promotions
+  - Tax calculations
+  - Payment terms
+
+### 3. User Management
+
+#### Customer Management
+- **Customer List**:
+  - Search by name, email, phone
+  - Filter by registration date, activity
+  - Customer status (active, inactive, blocked)
+  - Quote history and statistics
+
+- **Customer Profile**:
+  - Personal information
+  - Contact details
+  - Billing address
+  - Quote history
+  - Payment history
+  - Communication log
+  - Preferences and notes
+
+- **Customer Actions**:
+  - Create new customer
+  - Edit customer details
+  - Block/unblock customer
+  - Send communications
+  - View quote history
+  - Process refunds
+
+#### Driver Management
+- **Driver List**:
+  - Active/inactive drivers
+  - Performance metrics
+  - Availability status
+  - Location tracking
+  - Rating and reviews
+
+- **Driver Profile**:
+  - Personal information
+  - License and insurance details
+  - Vehicle information
+  - Service areas
+  - Performance metrics
+  - Earnings and payments
+  - Schedule and availability
+
+- **Driver Actions**:
+  - Onboard new driver
+  - Update driver information
+  - Assign to quotes
+  - Track performance
+  - Process payments
+  - Manage schedule
+
+### 4. Payment Management
+
+#### Payment Overview
+- **Payment Dashboard**:
+  - Total revenue metrics
+  - Pending payments
+  - Failed payments requiring attention
+  - Refund requests
+  - Payment method distribution
+
+#### Payment Processing
+- **Payment List**:
+  - Filter by status, date, amount
+  - Search by customer or quote reference
+  - Payment method breakdown
+  - Processing fees analysis
+
+- **Payment Details**:
+  - Payment information
+  - Customer details
+  - Quote reference
+  - Stripe transaction details
+  - Receipt generation
+  - Refund processing
+
+#### Refund Management
+- **Refund Requests**:
+  - Refund reason tracking
+  - Approval workflow
+  - Processing status
+  - Communication with customer
+
+- **Refund Processing**:
+  - Full or partial refunds
+  - Stripe integration
+  - Customer notification
+  - Accounting integration
+
+### 5. Driver & Job Management
+
+#### Job Assignment
+- **Available Jobs**:
+  - Pending quote assignments
+  - Driver availability matching
+  - Geographic optimization
+  - Skill requirements matching
+
+- **Assignment Process**:
+  - Manual driver assignment
+  - Automated assignment rules
+  - Driver notification system
+  - Confirmation tracking
+
+#### Driver Tracking
+- **Real-time Tracking**:
+  - Driver location updates
+  - Job progress tracking
+  - ETA calculations
+  - Customer notifications
+
+- **Performance Monitoring**:
+  - Completion rates
+  - Customer ratings
+  - On-time performance
+  - Revenue generation
+
+### 6. Communication & Notifications
+
+#### Email Management
+- **Template Management**:
+  - Email template editor
+  - Template versioning
+  - A/B testing capabilities
+  - Preview functionality
+
+- **Email Campaigns**:
+  - Customer segmentation
+  - Automated email sequences
+  - Delivery tracking
+  - Open/click analytics
+
+#### Notification System
+- **Customer Notifications**:
+  - Quote confirmations
+  - Payment receipts
+  - Driver assignments
+  - Service updates
+  - Feedback requests
+
+- **Driver Notifications**:
+  - Job assignments
+  - Schedule updates
+  - Payment notifications
+  - Performance updates
+
+### 7. Settings & Configuration
+
+#### System Settings
+- **Pricing Configuration**:
+  - Base pricing rates
+  - Additional service pricing
+  - Discount rules
+  - Tax settings
+  - Currency configuration
+
+- **Service Configuration**:
+  - Service types and descriptions
+  - Van types and capacities
+  - Time slots and availability
+  - Geographic service areas
+
+#### User Management
+- **Admin User Management**:
+  - Admin user creation
+  - Role assignment
+  - Permission management
+  - Activity logging
+
+- **Security Settings**:
+  - Password policies
+  - Session management
+  - Two-factor authentication
+  - Audit logging
+
+### 8. Reporting & Analytics
+
+#### Standard Reports
+- **Financial Reports**:
+  - Revenue reports
+  - Payment analysis
+  - Refund tracking
+  - Commission reports
+
+- **Operational Reports**:
+  - Quote volume analysis
+  - Service completion rates
+  - Driver performance
+  - Customer satisfaction
+
+#### Custom Reporting
+- **Report Builder**:
+  - Drag-and-drop interface
+  - Custom metrics and KPIs
+  - Data visualization options
+  - Export capabilities
+
+- **Scheduled Reports**:
+  - Automated report generation
+  - Email delivery
+  - Multiple format support
+  - Archive management
+
+## Data Models & API Integration
+
+### Core Data Entities
+
+#### Quote Entity
+```typescript
+interface AdminQuote {
+  id: string;
+  quoteReference: string;
+  sessionId: string;
+  type: 'Send' | 'Receive' | 'Removals';
+  
+  // Addresses
+  origin: Address;
+  destination: Address;
+  distanceMiles: number;
+  
+  // Service Details
+  vanType: VanType;
+  driverCount: number;
+  numberOfItemsToDismantle: number;
+  numberOfItemsToAssemble: number;
+  
+  // Schedule
+  collectionDate: string;
+  deliveryDate: string;
+  hours: number;
+  flexibleTime: boolean;
+  timeSlot: 'morning' | 'afternoon' | 'evening';
+  
+  // Pricing
+  pricingTier: PricingTier;
+  totalCost: number;
+  
+  // Items
+  inventoryItems: InventoryItem[];
+  
+  // Payment
+  paymentStatus: PaymentStatus;
+  paymentMethodId?: string;
+  paymentIntentId?: string;
+  paymentType: PaymentType;
+  depositAmount?: number;
+  receiptUrl?: string;
+  dueDate?: string;
+  stripeSessionId?: string;
+  
+  // Relationships
+  customerQuotes: CustomerQuote[];
+  driverQuotes: DriverQuote[];
+  quoteAdditionalPayments: QuoteAdditionalPayment[];
+  
+  // Audit
+  createdAt: string;
+  createdBy: string;
+  modifiedAt: string;
+  modifiedBy: string;
+  version: number;
+}
+```
+
+#### User Entity
+```typescript
+interface AdminUser {
+  id: string;
+  supabaseId?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  role: Role;
+  billingAddress?: Address;
+  
+  // Relationships
+  customerQuotes: CustomerQuote[];
+  driverQuotes: DriverQuote[];
+  
+  // Audit
+  createdAt: string;
+  createdBy: string;
+  modifiedAt: string;
+  modifiedBy: string;
+}
+```
+
+### API Integration Strategy
+
+#### Existing Endpoints (Leverage Current API)
+The admin app should primarily use existing endpoints with enhanced authorization policies rather than creating dedicated admin endpoints.
+
+**Current API Structure:**
+```typescript
+// Existing Quote Management
+GET    /api/v1/quote                          // Get quote by type (with admin filtering)
+POST   /api/v1/quote                          // Save quote (with admin permissions)
+DELETE /api/v1/quote                          // Delete quote (with admin permissions)
+GET    /api/v1/quote/checkout-session         // Get quote by Stripe session ID
+POST   /api/v1/quote/select-quote-type        // Select quote type
+GET    /api/v1/quote/customer/{quoteId}       // Get customer data for quote
+
+// Existing Checkout/Payment Management
+POST   /api/v1/checkout/session               // Create Stripe checkout session
+GET    /api/v1/checkout/session               // Get checkout session details
+POST   /api/v1/checkout/payment-sheet         // Create payment intent
+GET    /api/v1/checkout/payment-intent        // Get payment intent details
+POST   /api/v1/checkout/deposit-balance-payment // Process balance payment
+POST   /api/v1/checkout/pay-later-collection  // Process pay-later collection
+POST   /api/v1/checkout/create-payment-link   // Create payment link
+POST   /api/v1/checkout/webhook               // Stripe webhook handler
+
+// Existing Driver Management
+POST   /api/v1/driver-jobs/assign             // Assign driver to quote
+POST   /api/v1/driver-jobs/unassign           // Unassign driver from quote
+
+// Existing Customer Management
+GET    /api/v1/customer-jobs                  // List customer jobs with filtering
+
+// Existing Auth Management
+POST   /api/v1/auth/role                      // Assign user role
+GET    /api/v1/auth/role-permissions          // Get role permissions
+
+// Existing Pricing & Services
+POST   /api/v1/prices                         // Get pricing for removals
+GET    /api/v1/service-features               // Get service features
+GET    /api/v1/rate-cards                     // Get rate cards
+GET    /api/v1/additional-prices              // Get additional pricing
+```
+
+#### Authorization (Initial)
+
+- No RBAC in v1. Keep endpoints open to any authenticated admin-app user.
+- Design endpoints to be RBAC-ready later without breaking changes.
+
+#### Required Backend Enhancements
+
+**1. Enhanced Quote Endpoints (Extend Existing)**
+```typescript
+// Extend existing GET /api/v1/quote with admin filtering
+GET /api/v1/quote?admin=true&filters={...}    // Admin quote listing with filters
+GET /api/v1/quote/{id}                        // Get specific quote (admin access)
+PUT /api/v1/quote/{id}                        // Update quote (admin access)
+GET /api/v1/quote/{id}/timeline               // Get quote timeline/audit log
+
+// Bulk operations (new endpoints)
+POST /api/v1/quote/bulk-update                // Bulk status updates
+POST /api/v1/quote/bulk-assign                // Bulk driver assignments
+GET  /api/v1/quote/export                     // Export quotes to CSV/PDF
+```
+
+**2. Enhanced User Management (Extend Existing Auth)**
+```typescript
+// Extend existing auth endpoints
+GET /api/v1/auth/users                        // List users (admin access)
+GET /api/v1/auth/users/{id}                   // Get user details (admin access)
+PUT /api/v1/auth/users/{id}                   // Update user (admin access)
+DELETE /api/v1/auth/users/{id}                // Delete user (admin access)
+POST /api/v1/auth/users/{id}/block            // Block/unblock user
+GET /api/v1/auth/users/{id}/quotes            // Get user's quotes
+```
+
+**3. Enhanced Payment Management (Extend Existing Checkout)**
+```typescript
+// Extend existing checkout endpoints
+GET /api/v1/checkout/payments                 // List all payments (admin access)
+GET /api/v1/checkout/payments/{id}            // Get payment details (admin access)
+POST /api/v1/checkout/payments/{id}/refund    // Process refund (admin access)
+POST /api/v1/checkout/payments/{id}/void      // Void payment (admin access)
+GET /api/v1/checkout/payments/analytics       // Payment analytics
+// Existing endpoints (CheckoutController)
+POST /api/v1/checkout/session                 // One-off payment via Stripe Checkout Session
+POST /api/v1/checkout/deposit-balance-payment // Charge remaining (future) balance on a quote
+POST /api/v1/checkout/pay-later-collection    // Initiate a pay-later collection flow
+```
+
+**4. New Analytics Endpoints**
+```typescript
+// New analytics endpoints
+GET /api/v1/analytics/dashboard               // Dashboard metrics
+GET /api/v1/analytics/revenue                 // Revenue analytics
+GET /api/v1/analytics/quotes                   // Quote analytics
+GET /api/v1/analytics/drivers                  // Driver analytics
+GET /api/v1/analytics/customers                // Customer analytics
+GET /api/v1/analytics/reports                  // Custom reports
+```
+
+**5. Enhanced Driver Management (Extend Existing)**
+```typescript
+// Extend existing driver-jobs endpoints
+GET /api/v1/driver-jobs                        // List all driver jobs (admin access)
+GET /api/v1/driver-jobs/{id}                  // Get driver job details
+PUT /api/v1/driver-jobs/{id}                  // Update driver job
+GET /api/v1/driver-jobs/drivers               // List all drivers
+GET /api/v1/driver-jobs/drivers/{id}          // Get driver details
+PUT /api/v1/driver-jobs/drivers/{id}          // Update driver details
+GET /api/v1/driver-jobs/drivers/{id}/performance // Driver performance metrics
+POST /api/v1/driver-jobs/assign               // Assign driver to job (quote)
+POST /api/v1/driver-jobs/unassign             // Un-assign driver from job (quote)
+```
+
+#### Backend Implementation Requirements
+
+**1. Trust API Gateway Identity (no service-level JWT validation)**
+```csharp
+// Program.cs (minimal): trust gateway and parse forwarded identity headers
+// NOTE: Gateway handles AuthN/AuthZ; services consume identity via headers
+builder.Services.AddControllers();
+
+// Add standard ASP.NET Core authentication/authorization (see below)
+```
+
+**2. Enhanced Quote Controller**
+```csharp
+// Extend existing QuoteController.cs
+[HttpGet("admin")]
+public async Task<IActionResult> GetQuotesAdmin(
+    [FromQuery] QuoteStatus? status,
+    [FromQuery] QuoteType? type,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate,
+    [FromQuery] string? customerEmail,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for admin quote listing with filtering
+    // Read roles from gateway headers (e.g., X-User-Roles) if doing defense-in-depth
+}
+
+[HttpGet("{id}")]
+public async Task<IActionResult> GetQuoteById(Guid id, CancellationToken ct)
+{
+    // Implementation for getting specific quote by ID
+}
+
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdateQuote(Guid id, [FromBody] UpdateQuoteRequest request, CancellationToken ct)
+{
+    // Implementation for updating quote
+}
+```
+
+**3. Enhanced Auth Controller**
+```csharp
+// Extend existing AuthController.cs
+[HttpGet("users")]
+public async Task<IActionResult> GetUsers(
+    [FromQuery] string? search,
+    [FromQuery] Role? role,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for listing users
+}
+
+[HttpGet("users/{id}")]
+public async Task<IActionResult> GetUserById(Guid id, CancellationToken ct)
+{
+    // Implementation for getting user by ID
+}
+
+[HttpPut("users/{id}")]
+public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request, CancellationToken ct)
+{
+    // Implementation for updating user
+}
+```
+
+**4. Enhanced Checkout Controller**
+```csharp
+// Extend existing CheckoutController.cs
+[HttpGet("payments")]
+public async Task<IActionResult> GetPayments(
+    [FromQuery] PaymentStatus? status,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate,
+    [FromQuery] string? customerEmail,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken ct)
+{
+    // Implementation for listing payments
+}
+
+[HttpPost("payments/{id}/refund")]
+public async Task<IActionResult> ProcessRefund(string id, [FromBody] RefundRequest request, CancellationToken ct)
+{
+    // Implementation for processing refunds
+}
+```
+
+**5. New Analytics Controller**
+```csharp
+// Create new AnalyticsController.cs
+[Route("api/v1/[controller]")]
+public class AnalyticsController : ApiControllerBase
+{
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboardMetrics(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        CancellationToken ct)
+    {
+        // Implementation for dashboard metrics
+    }
+
+    [HttpGet("revenue")]
+    public async Task<IActionResult> GetRevenueAnalytics(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] string? groupBy,
+        CancellationToken ct)
+    {
+        // Implementation for revenue analytics
+    }
+}
+```
+
+#### Required DTOs and Data Models
+
+**1. Admin Quote DTOs**
+```csharp
+// AdminQuoteListDto.cs
+public class AdminQuoteListDto
+{
+    public Guid Id { get; set; }
+    public string QuoteReference { get; set; }
+    public QuoteType Type { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
+    public decimal? TotalCost { get; set; }
+    public DateTime? CollectionDate { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerName { get; set; }
+    public string? DriverName { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset ModifiedAt { get; set; }
+}
+
+// AdminQuoteDetailDto.cs
+public class AdminQuoteDetailDto : AdminQuoteListDto
+{
+    public Address? Origin { get; set; }
+    public Address? Destination { get; set; }
+    public decimal? DistanceMiles { get; set; }
+    public VanType VanType { get; set; }
+    public int DriverCount { get; set; }
+    public List<InventoryItem> InventoryItems { get; set; }
+    public PaymentDetailsDto? Payment { get; set; }
+    public List<QuoteTimelineEventDto> Timeline { get; set; }
+}
+
+// QuoteTimelineEventDto.cs
+public class QuoteTimelineEventDto
+{
+    public DateTimeOffset Timestamp { get; set; }
+    public string Event { get; set; }
+    public string Description { get; set; }
+    public string? UserName { get; set; }
+}
+```
+
+**2. Admin User DTOs**
+```csharp
+// AdminUserListDto.cs
+public class AdminUserListDto
+{
+    public Guid Id { get; set; }
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public Role? Role { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastLoginAt { get; set; }
+    public int QuoteCount { get; set; }
+    public bool IsActive { get; set; }
+}
+
+// AdminUserDetailDto.cs
+public class AdminUserDetailDto : AdminUserListDto
+{
+    public Address? BillingAddress { get; set; }
+    public List<AdminQuoteListDto> Quotes { get; set; }
+    public List<UserActivityDto> Activities { get; set; }
+}
+```
+
+**3. Admin Payment DTOs**
+```csharp
+// AdminPaymentListDto.cs
+public class AdminPaymentListDto
+{
+    public string Id { get; set; }
+    public string QuoteReference { get; set; }
+    public decimal Amount { get; set; }
+    public PaymentStatus Status { get; set; }
+    public PaymentType Type { get; set; }
+    public string? CustomerEmail { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? ProcessedAt { get; set; }
+    public string? ReceiptUrl { get; set; }
+}
+
+// RefundRequest.cs
+public class RefundRequest
+{
+    public decimal Amount { get; set; }
+    public string Reason { get; set; }
+    public string? Notes { get; set; }
+}
+```
+
+**4. Analytics DTOs**
+```csharp
+// DashboardMetricsDto.cs
+public class DashboardMetricsDto
+{
+    public int TotalQuotesToday { get; set; }
+    public int TotalQuotesThisWeek { get; set; }
+    public int TotalQuotesThisMonth { get; set; }
+    public decimal RevenueToday { get; set; }
+    public decimal RevenueThisWeek { get; set; }
+    public decimal RevenueThisMonth { get; set; }
+    public int ActiveDrivers { get; set; }
+    public int PendingQuotes { get; set; }
+    public decimal PaymentSuccessRate { get; set; }
+    public decimal CustomerSatisfactionScore { get; set; }
+}
+
+// RevenueAnalyticsDto.cs
+public class RevenueAnalyticsDto
+{
+    public List<RevenueDataPoint> DataPoints { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal AverageOrderValue { get; set; }
+    public int TotalOrders { get; set; }
+}
+
+// RevenueDataPoint.cs
+public class RevenueDataPoint
+{
+    public DateTime Date { get; set; }
+    public decimal Revenue { get; set; }
+    public int OrderCount { get; set; }
+}
+```
+
+#### Implementation Approach
+
+**Phase 1: Authorization Middleware**
+- Implement JWT-based authorization middleware
+- Add role-based policy enforcement
+- Extend existing endpoints with admin query parameters
+
+**Phase 2: Enhanced Endpoints**
+- Add admin-specific query parameters to existing endpoints
+- Implement bulk operations
+- Add analytics and reporting endpoints
+
+**Phase 3: Advanced Features**
+- Real-time notifications
+- Advanced filtering and search
+- Export functionality
+- Audit logging
+
+## UI/UX Requirements
+
+### Design System
+- **Consistent with Web App**: Use same design tokens, colors, and typography
+- **Admin-Specific Components**: Enhanced data tables, advanced filters, bulk action interfaces
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Accessibility**: WCAG 2.1 AA compliance
+
+### Key UI Components
+1. **Advanced Data Tables**: Sortable, filterable, paginated tables with bulk actions
+2. **Dashboard Widgets**: Customizable metric cards and charts
+3. **Form Components**: Multi-step forms, validation, auto-save
+4. **Modal Dialogs**: Confirmation dialogs, quick edit forms
+5. **Navigation**: Sidebar navigation with role-based menu items
+6. **Search & Filters**: Global search with advanced filtering options
+
+### User Experience Principles
+- **Efficiency**: Minimize clicks and form fields for common tasks
+- **Clarity**: Clear visual hierarchy and information architecture
+- **Feedback**: Immediate feedback for all user actions
+- **Consistency**: Uniform patterns across all modules
+- **Performance**: Fast loading times and smooth interactions
+
+## Security Requirements
+
+### Authentication & Authorization
+- **Supabase Auth Integration**: Leverage existing authentication system
+- **RBAC Implementation**: Role-based access control with granular permissions
+- **Session Management**: Secure session handling with timeout
+- **API Security**: JWT token validation and rate limiting
+
+### Data Protection
+- **Data Encryption**: Encrypt sensitive data at rest and in transit
+- **Audit Logging**: Comprehensive logging of all admin actions
+- **Data Privacy**: GDPR compliance for customer data handling
+- **Backup & Recovery**: Regular backups with disaster recovery procedures
+
+### Access Control
+- **IP Whitelisting**: Restrict admin access to specific IP ranges
+- **Two-Factor Authentication**: Mandatory 2FA for admin users
+- **Permission Auditing**: Regular review of user permissions
+- **Activity Monitoring**: Real-time monitoring of admin activities
+
+## Performance Requirements
+
+### Response Times
+- **Dashboard Load**: < 2 seconds
+- **Data Table Rendering**: < 1 second for 1000+ records
+- **Search Results**: < 500ms
+- **Report Generation**: < 30 seconds for complex reports
+
+### Scalability
+- **Concurrent Users**: Support 50+ simultaneous admin users
+- **Data Volume**: Handle 100,000+ quotes and 10,000+ users
+- **Real-time Updates**: WebSocket integration for live data updates
+- **Caching Strategy**: Implement Redis caching for frequently accessed data
+
+## Integration Requirements
+
+### Existing System Integration
+- **Backend API**: Full integration with existing .NET Core API
+- **Database**: Direct access to PostgreSQL database
+- **Email Service**: Integration with existing email templates and service
+- **Stripe Integration**: Payment processing and refund management
+- **Supabase**: Authentication, storage, and real-time features
+
+### Third-Party Integrations
+- **Maps Integration**: Google Maps or Mapbox for location services
+- **Analytics**: Google Analytics or similar for usage tracking
+- **Monitoring**: Application performance monitoring
+- **Backup Services**: Automated backup solutions
+
+## Deployment & Infrastructure
+
+### Environment Setup
+- **Development**: Local development environment with hot reload
+- **Staging**: Staging environment for testing and QA
+- **Production**: Production environment with high availability
+
+### Deployment Strategy
+- **Containerization**: Docker containers for consistent deployment
+- **CI/CD Pipeline**: Automated testing and deployment
+- **Environment Variables**: Secure configuration management
+- **Health Checks**: Application health monitoring
+
+### Monitoring & Logging
+- **Application Monitoring**: Performance and error tracking
+- **User Analytics**: Admin user behavior analytics
+- **Security Monitoring**: Intrusion detection and prevention
+- **Log Management**: Centralized logging with search capabilities
+
+## Testing Requirements
+
+### Testing Strategy
+- **Unit Tests**: Component and utility function testing
+- **Integration Tests**: API integration and data flow testing
+- **E2E Tests**: Complete user workflow testing
+- **Performance Tests**: Load testing and optimization validation
+
+### Quality Assurance
+- **Code Quality**: ESLint, Prettier, and TypeScript strict mode
+- **Accessibility Testing**: Automated and manual accessibility testing
+- **Security Testing**: Vulnerability scanning and penetration testing
+- **User Acceptance Testing**: Stakeholder validation of features
+
+## Success Metrics
+
+### Key Performance Indicators
+- **Admin Efficiency**: Time to complete common tasks
+- **System Performance**: Response times and uptime metrics
+- **User Satisfaction**: Admin user feedback and adoption rates
+- **Data Accuracy**: Error rates in data management operations
+
+### Business Impact
+- **Operational Efficiency**: Reduction in manual processes
+- **Customer Service**: Improved response times and issue resolution
+- **Revenue Management**: Better payment processing and refund handling
+- **Driver Management**: Optimized job assignments and performance tracking
+
+## Implementation Phases
+
+### Phase 1: Core Infrastructure (Weeks 1-4)
+- Project setup and authentication
+- Basic dashboard and navigation
+- User management module
+- Quote listing and basic operations
+
+### Phase 2: Quote Management (Weeks 5-8)
+- Advanced quote management features
+- Driver assignment functionality
+- Payment processing integration
+- Communication system
+
+### Phase 3: Analytics & Reporting (Weeks 9-12)
+- Dashboard analytics and charts
+- Report generation system
+- Custom reporting capabilities
+- Export functionality
+
+### Phase 4: Advanced Features (Weeks 13-16)
+- Real-time tracking and notifications
+- Advanced search and filtering
+- Bulk operations and automation
+- Performance optimization
+
+### Phase 5: Testing & Deployment (Weeks 17-20)
+- Comprehensive testing
+- Security audit and hardening
+- Performance optimization
+- Production deployment
+
+## Key Implementation Strategy
+
+### Streamlined API Approach
+Instead of creating dedicated `/api/v1/admin/*` endpoints, this approach leverages existing endpoints with enhanced authorization policies:
+
+**Benefits:**
+- ✅ **Reduced Backend Complexity**: Extends existing controllers rather than duplicating logic
+- ✅ **Consistent Data Models**: Uses same DTOs and business logic as web app
+- ✅ **Easier Maintenance**: Single source of truth for business operations
+- ✅ **Faster Development**: Leverages existing, tested endpoints
+- ✅ **Better Security**: Centralized authorization policies
+
+**Implementation Pattern:**
+```typescript
+// Instead of: GET /api/v1/admin/quotes
+// Use: GET /api/v1/quote?admin=true&filters={...}
+
+// Instead of: GET /api/v1/admin/users  
+// Use: GET /api/v1/auth/users (with admin authorization)
+
+// Instead of: GET /api/v1/admin/payments
+// Use: GET /api/v1/checkout/payments (with finance authorization)
+```
+
+### Authorization Strategy (Lean)
+- **JWT-based Authentication**: Validate Supabase-issued JWTs in .NET
+- **No RBAC initially**: Treat any authenticated admin-app user as authorized
+- **Audit Logging**: Track admin actions for future RBAC enablement
+
+### Backend Enhancements Required
+1. **Authentication Middleware**: Add JWT bearer validation (no policies initially)
+2. **Enhanced Controllers**: Extend existing controllers with admin endpoints
+3. **New DTOs**: Create admin-specific DTOs for list views and analytics
+4. **Analytics Controller**: New controller for dashboard and reporting
+5. **Bulk Operations**: Add bulk update/assign endpoints
+
+### Frontend Integration
+- **Existing API Client**: Extend current API client with admin methods
+- **Role-based UI**: Show/hide features based on user permissions
+- **Consistent Design**: Use same design system as web app
+- **Real-time Updates**: WebSocket integration for live data
+
+## Conclusion
+
+This comprehensive requirements document provides the foundation for building a robust, scalable, and user-friendly admin application that will effectively manage all aspects of the Tranzr moving services platform. The admin app will serve as the central hub for operations, customer service, and business intelligence, enabling efficient management of quotes, users, payments, and drivers while providing valuable insights through analytics and reporting.
+
+The streamlined API approach ensures minimal backend changes while providing maximum functionality. The modular architecture and phased implementation approach ensure that the admin app can be built incrementally while maintaining high quality and security standards. Integration with existing systems and adherence to established design patterns will ensure consistency and maintainability across the entire Tranzr ecosystem.
+
+**Key Success Factors:**
+- Leverage existing API endpoints with enhanced authorization
+- Implement role-based access control with granular permissions
+- Maintain consistency with web app design and functionality
+- Focus on admin efficiency and operational insights
+- Ensure security and audit compliance throughout
+

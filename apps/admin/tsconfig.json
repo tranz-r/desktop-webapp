@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "preserve",
     "isolatedModules": true,
+    "moduleResolution": "bundler",
     "paths": {
       "@/*": [
         "./src/*"

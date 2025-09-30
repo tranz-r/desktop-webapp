@@ -7,9 +7,9 @@
 
 ### Features
 
-- [ ] Project setup with Next.js 14+ and TypeScript `M`
+- [x] Project setup with Next.js 14+ and TypeScript `M`
 - [ ] Supabase authentication integration `M`
-- [ ] Basic layout with sidebar navigation `S`
+- [x] Basic layout with sidebar navigation `S` ✅ **COMPLETED**
 - [ ] User management module (list users) `L`
 - [ ] Basic dashboard with placeholder metrics `S`
 - [ ] Quote listing with basic filtering `L`

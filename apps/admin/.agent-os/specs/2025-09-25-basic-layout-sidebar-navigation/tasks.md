@@ -12,15 +12,15 @@
   - [x] 1.7 Set up basic project structure (app/, components/, lib/)
   - [x] 1.8 Verify all tests pass
 
-- [ ] 2. **Core Layout Components**
-  - [ ] 2.1 Write tests for layout components
-  - [ ] 2.2 Create root layout component (app/layout.tsx)
-  - [ ] 2.3 Create header component with logo and mobile menu trigger
-  - [ ] 2.4 Create sidebar component with navigation menu
-  - [ ] 2.5 Create mobile navigation component (Sheet-based)
-  - [ ] 2.6 Create navigation item component
-  - [ ] 2.7 Implement responsive layout structure
-  - [ ] 2.8 Verify all tests pass
+- [x] 2. **Core Layout Components**
+  - [x] 2.1 Write tests for layout components
+  - [x] 2.2 Create root layout component (app/layout.tsx)
+  - [x] 2.3 Create header component with logo and mobile menu trigger
+  - [x] 2.4 Create sidebar component with navigation menu
+  - [x] 2.5 Create mobile navigation component (Sheet-based)
+  - [x] 2.6 Create navigation item component
+  - [x] 2.7 Implement responsive layout structure
+  - [x] 2.8 Verify all tests pass
 
 - [ ] 3. **Navigation System**
   - [ ] 3.1 Write tests for navigation functionality
