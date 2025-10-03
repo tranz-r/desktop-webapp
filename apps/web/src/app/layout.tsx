@@ -18,8 +18,57 @@ const quicksand = Quicksand({
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Tranzr Moves",
-  description: "Tranzr Moves, removals, house moves, and storage services",
+  title: {
+    default: "Tranzr Moves - Professional Moving Services in Northamptonshire",
+    template: "%s | Tranzr Moves"
+  },
+  description: "Professional moving services in Northamptonshire. 24/7 moving, house removals, office moves, packing services, and storage solutions.",
+  keywords: "moving services, house removals, office moves, packing services, storage, Northamptonshire, 24/7 moving, professional movers",
+  authors: [{ name: "Tranzr Moves" }],
+  creator: "Tranzr Moves",
+  publisher: "Tranzr Moves",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://tranzrmoves.com'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_GB',
+    url: 'https://tranzrmoves.com',
+    siteName: 'Tranzr Moves',
+    title: 'Tranzr Moves - Professional Moving Services in Northamptonshire',
+    description: 'Professional moving services in Northamptonshire. 24/7 moving, house removals, office moves, packing services, and storage solutions.',
+    images: [
+      {
+        url: '/images/tranzr-van-express.png',
+        width: 1200,
+        height: 630,
+        alt: 'Tranzr Moves Professional Moving Services',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Tranzr Moves - Professional Moving Services in Northamptonshire',
+    description: 'Professional moving services in Northamptonshire. 24/7 moving, house removals, office moves, packing services, and storage solutions.',
+    images: ['/images/tranzr-van-express.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 // Suppress specific React warnings in development

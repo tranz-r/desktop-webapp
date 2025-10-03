@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import PostcodeTypeahead from "@/components/address/PostcodeTypeahead";
+import AddressInput from "@/components/address/AddressInput";
 import {
   Select,
   SelectContent,
@@ -26,13 +27,51 @@ import { Loader2 } from "lucide-react";
 
 export type CollectionDeliveryFormValues = {
   originLine1: string;
+  originLine2: string;
   originPostcode: string;
+  originCity: string;
+  originCounty: string;
+  originCountry: string;
   originFloor: string;
   originElevator: boolean;
   destinationLine1: string;
+  destinationLine2: string;
   destinationPostcode: string;
+  destinationCity: string;
+  destinationCounty: string;
+  destinationCountry: string;
   destinationFloor: string;
   destinationElevator: boolean;
+  
+  // Extended Mapbox fields for origin
+  originFullAddress?: string;
+  originAddressNumber?: string;
+  originStreet?: string;
+  originNeighborhood?: string;
+  originDistrict?: string;
+  originRegion?: string;
+  originRegionCode?: string;
+  originCountryCode?: string;
+  originPlaceName?: string;
+  originAccuracy?: string;
+  originMapboxId?: string;
+  originLatitude?: number;
+  originLongitude?: number;
+  
+  // Extended Mapbox fields for destination
+  destinationFullAddress?: string;
+  destinationAddressNumber?: string;
+  destinationStreet?: string;
+  destinationNeighborhood?: string;
+  destinationDistrict?: string;
+  destinationRegion?: string;
+  destinationRegionCode?: string;
+  destinationCountryCode?: string;
+  destinationPlaceName?: string;
+  destinationAccuracy?: string;
+  destinationMapboxId?: string;
+  destinationLatitude?: number;
+  destinationLongitude?: number;
 };
 
 const FLOOR_OPTIONS = [
@@ -116,24 +155,55 @@ export default function CollectionDeliveryAddresses({
                 <>
                   <FormField
                     control={form.control}
-                    name="originPostcode"
-                    rules={{ required: "Postcode is required" }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Postcode</FormLabel>
-                        <FormControl>
-                          <PostcodeTypeahead
-                            postcode={field.value}
-                            onPostcodeChange={field.onChange}
-                            onAddressSelected={(addr) => form.setValue("originLine1", addr)}
-                            placeholder="e.g. EC1A 1BB"
-                            variant="pickup"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    name="originPlaceName"
+                    rules={{ required: "Address is required" }}
+        render={({ field }) => {
+          return (
+                        <FormItem>
+                          <FormControl>
+                <AddressInput
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onAddressSelected={(addressData) => {
+                    // Update form with all Mapbox data
+                    form.setValue('originLine1', addressData.line1);
+                    form.setValue('originLine2', addressData.line2);
+                    form.setValue('originPostcode', addressData.postcode);
+                    form.setValue('originCity', addressData.city);
+                    form.setValue('originCounty', addressData.county);
+                    form.setValue('originCountry', addressData.country);
+                    
+                    // Store all extended Mapbox fields
+                    form.setValue('originFullAddress', addressData.fullAddress);
+                    form.setValue('originAddressNumber', addressData.addressNumber);
+                    form.setValue('originStreet', addressData.street);
+                    form.setValue('originNeighborhood', addressData.neighborhood);
+                    form.setValue('originDistrict', addressData.district);
+                    form.setValue('originRegion', addressData.region);
+                    form.setValue('originRegionCode', addressData.regionCode);
+                    form.setValue('originCountryCode', addressData.countryCode);
+                    form.setValue('originPlaceName', addressData.placeName);
+                    form.setValue('originAccuracy', addressData.accuracy);
+                    form.setValue('originMapboxId', addressData.mapboxId);
+                    form.setValue('originLatitude', addressData.latitude);
+                    form.setValue('originLongitude', addressData.longitude);
+                  }}
+                  placeholder="Enter pickup address..."
+                  label="Pickup Address"
+                  variant="pickup"
+                />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
+                  
+                  {/* Hidden fields for structured address data - Mapbox will populate these automatically */}
+                  <input type="hidden" autoComplete="address-line1" name="originLine1" />
+                  <input type="hidden" autoComplete="address-level2" name="originCity" />
+                  <input type="hidden" autoComplete="postal-code" name="originPostcode" />
+                  <input type="hidden" autoComplete="country" name="originCountry" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -142,7 +212,7 @@ export default function CollectionDeliveryAddresses({
                         <FormItem>
                           <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
                           <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Floor" />
                               </SelectTrigger>
@@ -183,7 +253,7 @@ export default function CollectionDeliveryAddresses({
                 </>
               ) : (
                 <ReadonlyAddress
-                  addressLine1={origin?.line1 || ""}
+                  addressLine1={origin?.fullAddress || ""}
                   postcode={origin?.postcode || ""}
                   floor={origin?.floor}
                   hasElevator={origin?.hasElevator}
@@ -206,24 +276,53 @@ export default function CollectionDeliveryAddresses({
                 <>
                   <FormField
                     control={form.control}
-                    name="destinationPostcode"
-                    rules={{ required: "Postcode is required" }}
+                    name="destinationPlaceName"
+                    rules={{ required: "Address is required" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Postcode</FormLabel>
                         <FormControl>
-                          <PostcodeTypeahead
-                            postcode={field.value}
-                            onPostcodeChange={field.onChange}
-                            onAddressSelected={(addr) => form.setValue("destinationLine1", addr)}
-                            placeholder="e.g. SW1A 1AA"
-                            variant="delivery"
-                          />
+                <AddressInput
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onAddressSelected={(addressData) => {
+                    // Update form with all Mapbox data
+                    form.setValue('destinationLine1', addressData.line1);
+                    form.setValue('destinationLine2', addressData.line2);
+                    form.setValue('destinationPostcode', addressData.postcode);
+                    form.setValue('destinationCity', addressData.city);
+                    form.setValue('destinationCounty', addressData.county);
+                    form.setValue('destinationCountry', addressData.country);
+                    
+                    // Store all extended Mapbox fields
+                    form.setValue('destinationFullAddress', addressData.fullAddress);
+                    form.setValue('destinationAddressNumber', addressData.addressNumber);
+                    form.setValue('destinationStreet', addressData.street);
+                    form.setValue('destinationNeighborhood', addressData.neighborhood);
+                    form.setValue('destinationDistrict', addressData.district);
+                    form.setValue('destinationRegion', addressData.region);
+                    form.setValue('destinationRegionCode', addressData.regionCode);
+                    form.setValue('destinationCountryCode', addressData.countryCode);
+                    form.setValue('destinationPlaceName', addressData.placeName);
+                    form.setValue('destinationAccuracy', addressData.accuracy);
+                    form.setValue('destinationMapboxId', addressData.mapboxId);
+                    form.setValue('destinationLatitude', addressData.latitude);
+                    form.setValue('destinationLongitude', addressData.longitude);
+                  }}
+                  placeholder="Enter delivery address..."
+                  label="Delivery Address"
+                  variant="delivery"
+                />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Hidden fields for structured address data - Mapbox will populate these automatically */}
+                  <input type="hidden" autoComplete="address-line1" name="destinationLine1" />
+                  <input type="hidden" autoComplete="address-level2" name="destinationCity" />
+                  <input type="hidden" autoComplete="postal-code" name="destinationPlaceName" />
+                  <input type="hidden" autoComplete="country" name="destinationCountry" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -232,7 +331,7 @@ export default function CollectionDeliveryAddresses({
                         <FormItem>
                           <FormLabel className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Floor</FormLabel>
                           <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Floor" />
                               </SelectTrigger>
@@ -273,7 +372,7 @@ export default function CollectionDeliveryAddresses({
                 </>
               ) : (
                 <ReadonlyAddress
-                  addressLine1={destination?.line1 || ""}
+                  addressLine1={destination?.fullAddress || ""}
                   postcode={destination?.postcode || ""}
                   floor={destination?.floor}
                   hasElevator={destination?.hasElevator}

@@ -108,8 +108,8 @@ export default function SummaryPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between"><span className="text-gray-600">Collection</span><span className="font-semibold">{formatDateShort(collectionDate)}</span></div>
                   <div className="flex items-center justify-between"><span className="text-gray-600">Delivery</span><span className="font-semibold">{formatDateShort(deliveryDate)}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-gray-600">From</span><span className="font-semibold truncate max-w-[60%]" title={origin?.line1 || ''}>{origin?.line1 || '—'}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-gray-600">To</span><span className="font-semibold truncate max-w-[60%]" title={destination?.line1 || ''}>{destination?.line1 || '—'}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-gray-600">From</span><span className="font-semibold truncate max-w-[60%]" title={`${origin?.line1 || ''}${origin?.line2 ? ', ' + origin.line2 : ''}`}>{origin?.line1 || '—'}{origin?.line2 ? ', ' + origin.line2 : ''}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-gray-600">To</span><span className="font-semibold truncate max-w-[60%]" title={`${destination?.line1 || ''}${destination?.line2 ? ', ' + destination.line2 : ''}`}>{destination?.line1 || '—'}{destination?.line2 ? ', ' + destination.line2 : ''}</span></div>
                 </div>
               </div>
 

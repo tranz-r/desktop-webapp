@@ -79,6 +79,7 @@ export interface BackendPayment {
 export interface BackendAddress {
   id: string | null;
   userId: string | null;
+  fullAddress?: string;
   line1: string;
   line2?: string;
   city?: string;
@@ -87,7 +88,19 @@ export interface BackendAddress {
   country?: string;
   hasElevator: boolean;
   floor: number;
-  // Note: Backend uses individual properties instead of nested address objects
+  // Extended Mapbox fields for complete address data
+  addressNumber?: string;
+  street?: string;
+  neighborhood?: string;
+  district?: string;
+  region?: string;
+  regionCode?: string;
+  countryCode?: string;
+  placeName?: string;
+  accuracy?: string;
+  mapboxId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface BackendInventoryItem {
@@ -149,7 +162,7 @@ export class QuoteApiClient {
       headers['If-None-Match'] = etag;
     }
 
-    const response = await fetch(`${this.baseUrl}/api/guest/quote`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote`, {
       method: 'GET',
       headers,
       credentials: 'include',
@@ -180,7 +193,7 @@ export class QuoteApiClient {
       headers['If-None-Match'] = etag;
     }
 
-    const response = await fetch(`${this.baseUrl}/api/guest/quote?type=${type}`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote?type=${type}`, {
       method: 'GET',
       headers,
       credentials: 'include',
@@ -209,7 +222,7 @@ export class QuoteApiClient {
       etag,
     };
 
-    const response = await fetch(`${this.baseUrl}/api/guest/quote`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -236,7 +249,7 @@ export class QuoteApiClient {
 
   // Delete quote
   async deleteQuote(type: QuoteType): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/guest/quote?type=${type}`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote?type=${type}`, {
       method: 'DELETE',
       credentials: 'include',
     });
@@ -248,7 +261,7 @@ export class QuoteApiClient {
 
   // Ensure guest session
   async ensureGuest(): Promise<{ guestId: string }> {
-    const response = await fetch(`${this.baseUrl}/api/guest/ensure`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote/ensure`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -264,7 +277,7 @@ export class QuoteApiClient {
 
   // Select quote type and create/get quote
   async selectQuoteType(type: QuoteType): Promise<QuoteTypeResponse> {
-    const response = await fetch(`${this.baseUrl}/api/guest/select-quote-type?quoteType=${type}`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote/select-quote-type?quoteType=${type}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -286,8 +299,8 @@ export class QuoteApiClient {
   // Get customer data for a quote
   async getCustomerData(quoteId: string): Promise<BackendCustomer | null> {
     try {
-      console.log(`Making API call to: ${this.baseUrl}/api/guest/customer/${quoteId}`);
-      const response = await fetch(`${this.baseUrl}/api/guest/customer/${quoteId}`, {
+      console.log(`Making API call to: ${this.baseUrl}/api/v1/quote/customer/${quoteId}`);
+      const response = await fetch(`${this.baseUrl}/api/v1/quote/customer/${quoteId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -319,7 +332,7 @@ export class QuoteApiClient {
 
   // Cleanup expired sessions (maintenance endpoint)
   async cleanupExpired(): Promise<{ expiredSessions: number }> {
-    const response = await fetch(`${this.baseUrl}/api/guest/cleanup-expired`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/quote/cleanup-expired`, {
       method: 'POST',
       credentials: 'include',
     });

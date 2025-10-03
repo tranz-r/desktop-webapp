@@ -4,6 +4,8 @@ import React from 'react';
 import { Separator } from '@/components/ui/separator';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import DOMPurify from 'dompurify';
 
 interface LegalDocumentRendererProps {
   markdownContent: string;
@@ -165,6 +167,11 @@ export default function LegalDocumentRenderer({
         {children}
       </blockquote>
     ),
+    u: ({ children, ...props }: any) => (
+      <u className="underline" {...props}>
+        {children}
+      </u>
+    ),
   };
 
   return (
@@ -172,8 +179,9 @@ export default function LegalDocumentRenderer({
       <ReactMarkdown 
         components={components}
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
       >
-        {markdownContent}
+        {DOMPurify.sanitize(markdownContent)}
       </ReactMarkdown>
     </div>
   );

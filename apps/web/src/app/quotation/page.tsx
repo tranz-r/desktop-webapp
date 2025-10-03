@@ -1,4 +1,28 @@
-"use client";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Get Free Moving Quote | Instant Quote | Tranzr Moves",
+  description: "Get your free, instant moving quote in minutes. Professional moving services with transparent pricing. No hidden fees, no surprises.",
+  keywords: "free moving quote, instant quote, moving estimate, transparent pricing, professional movers",
+  openGraph: {
+    title: "Get Free Moving Quote | Instant Quote | Tranzr Moves",
+    description: "Get your free, instant moving quote in minutes. Professional moving services with transparent pricing. No hidden fees, no surprises.",
+    images: ["/images/tranzr-van-express.png"],
+    url: "https://tranzrmoves.com/quotation",
+    siteName: "Tranzr Moves",
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Get Free Moving Quote | Instant Quote | Tranzr Moves",
+    description: "Get your free, instant moving quote in minutes. Professional moving services with transparent pricing. No hidden fees, no surprises.",
+    images: ["/images/tranzr-van-express.png"],
+  },
+  alternates: {
+    canonical: "https://tranzrmoves.com/quotation",
+  },
+};
 
 export const dynamic = 'force-dynamic';
 

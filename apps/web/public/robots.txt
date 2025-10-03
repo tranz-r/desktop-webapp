@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /test-*
+
+# Allow important pages
+Allow: /
+Allow: /moving/
+Allow: /services/
+Allow: /company/
+Allow: /resources/
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+
+# Sitemap location
+Sitemap: https://tranzrmoves.com/sitemap.xml

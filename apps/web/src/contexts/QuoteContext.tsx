@@ -470,7 +470,7 @@ export function QuoteProvider({ children }: { children: ReactNode }) {
     if (type === null || Object.values(QuoteOption).includes(type)) {
               if (type && !state.quotes[type]) {
           console.log('[QuoteContext] 🚀 CREATING NEW QUOTE - calling backend selectQuoteType...');
-          console.log('[QuoteContext] This will call POST /api/guest/select-quote-type?quoteType=' + type);
+          console.log('[QuoteContext] This will call POST /api/v1/quote/select-quote-type?quoteType=' + type);
         // If this quote type doesn't exist yet, create it via backend
         try {
           // Ensure guest session exists before creating quote
