@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import TranzrGroupLogo from '../../components/logo/TranzrGroupLogo';
 
 interface FooterProps {
@@ -12,37 +13,18 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
     {
       title: 'Company',
       links: [
-        { label: 'About Us', href: '#about' },
-        { label: 'Leadership', href: '#leadership' },
-        { label: 'Investor Relations', href: '#investors' },
-        { label: 'Careers', href: '#careers' },
+        { label: 'About Us', href: '/about' },
+        { label: 'Contact Us', href: '/contact' }
+        // { label: 'Leadership', href: '#leadership' },
+        // { label: 'Investor Relations', href: '#investors' },
+        // { label: 'Careers', href: '#careers' },
       ]
     },
     {
       title: 'Solutions',
       links: [
-        { label: 'Tranzr Moves', href: '#solutions' },
-        { label: 'Enterprise Solutions', href: '#enterprise' },
-        { label: 'API Documentation', href: '#api' },
-        { label: 'Integration Guide', href: '#integration' },
-      ]
-    },
-    {
-      title: 'Resources',
-      links: [
-        { label: 'News & Press', href: '#news' },
-        { label: 'Technical Blog', href: '#blog' },
-        { label: 'Help Center', href: '#help' },
-        { label: 'Contact Us', href: '#contact' },
-      ]
-    },
-    {
-      title: 'Legal',
-      links: [
-        { label: 'Privacy Policy', href: '#privacy' },
-        { label: 'Terms of Service', href: '#terms' },
-        { label: 'Cookie Policy', href: '#cookies' },
-        { label: 'Security', href: '#security' },
+        { label: 'Tranzr Moves', href: 'https://www.tranzrmoves.com' },
+        { label: 'Tranzr Recovery', href: '#recovery' }
       ]
     }
   ];
@@ -64,7 +46,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               </p>
             </div>
             {/* Social Links */}
-            <div className="flex space-x-4 mt-6">
+            {/* <div className="flex space-x-4 mt-6">
               <a
                 href="#linkedin"
                 className="text-slate-400 hover:text-white transition-colors duration-200"
@@ -92,12 +74,12 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.402-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Navigation Links - Stacked on the right */}
           <div className="w-full lg:w-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 gap-8 lg:gap-12">
               {navigationSections.map((section) => (
                 <div key={section.title}>
                   <h3 className="text-white font-semibold text-sm uppercase tracking-wide mb-4">
@@ -106,12 +88,12 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                   <ul className="space-y-3">
                     {section.links.map((link) => (
                       <li key={link.label}>
-                        <a
+                        <Link
                           href={link.href}
                           className="text-slate-300 hover:text-white text-sm transition-colors duration-200 block"
                         >
                           {link.label}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>

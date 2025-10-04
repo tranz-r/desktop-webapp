@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import TranzrGroupLogo from '../../components/logo/TranzrGroupLogo';
 
 interface HeaderProps {
@@ -11,11 +12,11 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigationItems = [
-    { label: 'About', href: '#about' },
-    { label: 'Solutions', href: '#solutions' },
-    { label: 'News', href: '#news' },
-    { label: 'Careers', href: '#careers' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'About Us', href: '/about' },
+    // { label: 'Solutions', href: '#solutions' },
+    // { label: 'News', href: '#news' },
+    // { label: 'Careers', href: '#careers' },
+    { label: 'Contact', href: '/contact' },
   ];
 
   return (
@@ -24,20 +25,22 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
         <div className="flex items-center justify-between h-20">
         {/* Logo - Prominently positioned on the left */}
         <div className="flex items-center pr-2">
-          <TranzrGroupLogo className="h-12 w-auto shrink-0 overflow-visible transition-transform hover:scale-105" />
+          <Link href="/">
+            <TranzrGroupLogo className="h-12 w-auto shrink-0 overflow-visible transition-transform hover:scale-105" />
+          </Link>
         </div>
 
           {/* Desktop Navigation - Right side */}
           <nav className="hidden md:flex items-center space-x-8">
             {navigationItems.map((item) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 className="text-slate-700 hover:text-blue-600 font-medium text-lg transition-colors duration-200 relative group"
               >
                 {item.label}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-200 group-hover:w-full"></span>
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -66,14 +69,14 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
           <div className="md:hidden border-t border-slate-200 bg-white">
             <nav className="py-4 space-y-4">
               {navigationItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
                   href={item.href}
                   className="block py-2 text-slate-700 hover:text-blue-600 font-medium text-lg transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
                ))}
             </nav>
           </div>
