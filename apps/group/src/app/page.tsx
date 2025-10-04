@@ -46,46 +46,46 @@ export default function HomePage() {
           </div>
         </div>
         
-        <div className="relative container mx-auto px-6 lg:px-8 py-20 lg:py-32 z-10">
-          <div className="text-center text-white space-y-8">
-            {/* Bold Split Headline with subtle animation */}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32 z-10">
+          <div className="text-center text-white space-y-6 sm:space-y-8">
+            {/* Bold Split Headline with subtle animation - Mobile responsive */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-tight">
               <span className="block text-white animate-fade-in-up">CONNECTING PEOPLE,</span>
               <span className="block text-teal-300 animate-fade-in-up" style={{animationDelay: '0.2s'}}>MOVING THE WORLD</span>
             </h1>
 
-            {/* Enhanced Value Proposition */}
-            <p className="text-xl md:text-2xl text-teal-100 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            {/* Enhanced Value Proposition - Mobile responsive */}
+            <p className="text-lg sm:text-xl md:text-2xl text-teal-100 max-w-4xl mx-auto leading-relaxed px-4 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
               Empowering communities through innovative transportation and logistics solutions – 
               we're your trusted mobility partner, delivering seamless experiences that connect 
               people and businesses.
             </p>
 
-            {/* Dual CTAs with hover animations */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+            {/* Dual CTAs with hover animations - Mobile responsive */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-6 sm:pt-8 px-4 animate-fade-in-up" style={{animationDelay: '0.6s'}}>
               <button 
-                className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg font-semibold shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105 hover:border-2 hover:border-white/30 rounded-md"
+                className="w-full sm:w-auto inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105 hover:border-2 hover:border-white/30 rounded-md"
                 onClick={() => window.open('https://www.tranzrmoves.com', '_blank')}
               >
                 Explore Our Services
               </button>
               <button 
-                className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg font-semibold shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105 hover:border-2 hover:border-white/30 rounded-md"
+                className="w-full sm:w-auto inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105 hover:border-2 hover:border-white/30 rounded-md"
                 onClick={() => window.open('/contact', '_self')}
               >
                 Partner With Us
               </button>
             </div>
 
-            {/* Trust Indicators with staggered animation */}
-            <div className="pt-12 border-t border-white/20 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
-              <p className="text-sm text-blue-200 mb-6">Trusted by businesses worldwide</p>
-              <div className="flex justify-center items-center space-x-8 opacity-60">
-                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors">Enterprise Ready</div>
-                <div className="w-1 h-1 bg-white/40 rounded-full"></div>
-                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors">24/7 Support</div>
-                <div className="w-1 h-1 bg-white/40 rounded-full"></div>
-                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors">Global Reach</div>
+            {/* Trust Indicators with staggered animation - Mobile responsive */}
+            <div className="pt-8 sm:pt-12 border-t border-white/20 animate-fade-in-up px-4" style={{animationDelay: '0.8s'}}>
+              <p className="text-xs sm:text-sm text-blue-200 mb-4 sm:mb-6">Trusted by businesses worldwide</p>
+              <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-8 opacity-60">
+                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors text-sm sm:text-base">Enterprise Ready</div>
+                <div className="hidden sm:block w-1 h-1 bg-white/40 rounded-full"></div>
+                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors text-sm sm:text-base">24/7 Support</div>
+                <div className="hidden sm:block w-1 h-1 bg-white/40 rounded-full"></div>
+                <div className="text-white/40 font-semibold hover:text-white/60 transition-colors text-sm sm:text-base">Global Reach</div>
               </div>
             </div>
           </div>
@@ -93,19 +93,19 @@ export default function HomePage() {
       </section>
 
       {/* Strategic Solutions Section - Inspired by Carro Group */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
+      <section className="py-16 sm:py-20 bg-slate-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-4 sm:mb-6">
               Strategic Mobility Solutions for Every Business Need
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto px-4">
               We are dedicated to connecting businesses with innovative transportation solutions 
               through tailored, efficient, and comprehensive mobility services.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
             {/* Enterprise Solutions */}
             <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-slate-50 to-slate-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full">
               <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -180,18 +180,18 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+      <section className="py-16 sm:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Products & Services
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-lg sm:text-xl text-muted-foreground px-4">
               Innovative solutions transforming how people move and connect
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
             {/* Tranzr Moves */}
             <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white to-slate-50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01]">
               <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

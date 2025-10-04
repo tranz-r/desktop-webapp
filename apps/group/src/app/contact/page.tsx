@@ -169,14 +169,15 @@ export default function ContactPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900/90 via-blue-900/90 to-slate-800/90 backdrop-blur-sm hero-moving-grid">
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative container mx-auto px-6 lg:px-8 py-20">
-          <div className="text-center text-white space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center text-white space-y-4 sm:space-y-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               Get in Touch
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
+            <div className="w-16 sm:w-24 h-1 bg-blue-400 mx-auto"></div>
+            <p className="text-lg sm:text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto px-4">
               We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </p>
           </div>
@@ -184,10 +185,10 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Content */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-6 lg:px-8">
+      <section className="py-16 sm:py-20 bg-slate-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
               {/* Contact Information */}
               <div className="space-y-8">
                 <div>

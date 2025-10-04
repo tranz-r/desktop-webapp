@@ -31,16 +31,16 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
 
   return (
     <footer className={`bg-gray-800 text-white ${className}`}>
-      <div className="container mx-auto px-6 lg:px-8 py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         {/* Main Footer Content */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 sm:mb-12">
           {/* Logo - Prominently positioned on the left */}
-          <div className="flex flex-col items-start mb-8 lg:mb-0">
+          <div className="flex flex-col items-start mb-6 sm:mb-8 lg:mb-0">
             <div className="mb-4">
-              <TranzrGroupLogo className="h-10 w-auto [&>g>text]:fill-white [&>g>path]:!fill-current" style={{ color: '#A855F7' }} />
+              <TranzrGroupLogo className="h-8 sm:h-10 w-auto [&>g>text]:fill-white [&>g>path]:!fill-current" style={{ color: '#A855F7' }} />
             </div>
             <div className="max-w-md">
-              <p className="text-slate-300 text-sm leading-relaxed">
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
                 Pioneering the future of smart mobility and transportation solutions globally
                 through innovative technology, sustainable practices, and strategic partnerships.
               </p>
@@ -79,13 +79,13 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
 
           {/* Navigation Links - Stacked on the right */}
           <div className="w-full lg:w-auto">
-            <div className="grid grid-cols-2 gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
               {navigationSections.map((section) => (
                 <div key={section.title}>
-                  <h3 className="text-white font-semibold text-sm uppercase tracking-wide mb-4">
+                  <h3 className="text-white font-semibold text-sm uppercase tracking-wide mb-3 sm:mb-4">
                     {section.title}
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-2 sm:space-y-3">
                     {section.links.map((link) => (
                       <li key={link.label}>
                         <Link
@@ -104,15 +104,15 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-700 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="border-t border-gray-700 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-4 md:space-y-0">
             {/* Copyright */}
-            <div className="text-slate-400 text-sm text-center md:text-left">
+            <div className="text-slate-400 text-xs sm:text-sm text-center sm:text-left">
               © {currentYear} TRANZR GROUP LIMITED. All rights reserved.
             </div>
             
             {/* Additional Links */}
-            <div className="flex flex-wrap justify-center md:justify-end gap-6 text-slate-400 text-sm">
+            <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6 text-slate-400 text-xs sm:text-sm">
               <a href="#accessibility" className="hover:text-white transition-colors">
                 Accessibility Statement
               </a>

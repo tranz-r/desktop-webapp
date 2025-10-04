@@ -8,14 +8,14 @@ export default function AboutPage() {
       <Header />
       
       {/* About Hero Section */}
-      <section className="py-20 bg-webflow-subtle-gradient">
-        <div className="container mx-auto px-6 lg:px-8">
+      <section className="py-16 sm:py-20 bg-webflow-subtle-gradient">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-slate-800 mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-slate-800 mb-4 sm:mb-6">
               About TRANZR Group Limited
             </h1>
-            <div className="w-24 h-1 bg-blue-600 mx-auto mb-8"></div>
-            <p className="text-xl md:text-2xl text-slate-600 leading-relaxed">
+            <div className="w-16 sm:w-24 h-1 bg-blue-600 mx-auto mb-6 sm:mb-8"></div>
+            <p className="text-lg sm:text-xl md:text-2xl text-slate-600 leading-relaxed px-4">
               We are building the infrastructure for tomorrow's connected world,
               creating seamless experiences that bridge the gap between people,
               places, and possibilities.
@@ -25,22 +25,22 @@ export default function AboutPage() {
       </section>
 
       {/* Company Overview */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 lg:px-8">
+      <section className="py-16 sm:py-20 lg:py-24 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               <div>
-                <h2 className="text-3xl md:text-4xl font-light text-slate-800 mb-6">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-slate-800 mb-4 sm:mb-6">
                   Pioneering Smart Mobility Solutions
                 </h2>
-                <div className="w-16 h-1 bg-blue-600 mb-8"></div>
-                <p className="text-lg text-slate-600 leading-relaxed mb-6">
+                <div className="w-12 sm:w-16 h-1 bg-blue-600 mb-6 sm:mb-8"></div>
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-4 sm:mb-6">
                   Established as a leading technology conglomerate, TRANZR Group Limited operates 
                   at the forefront of smart mobility solutions, delivering innovative transportation 
                   services that enhance urban connectivity and improve quality of life through 
                   sustainable technology.
                 </p>
-                <p className="text-lg text-slate-600 leading-relaxed">
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
                   Our comprehensive platform integrates ride-sharing, courier services, removal, 
                   collection, and delivery solutions, creating a unified ecosystem that serves 
                   both individual consumers and enterprise clients with unmatched efficiency and reliability.
