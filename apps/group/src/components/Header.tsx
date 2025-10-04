@@ -14,9 +14,9 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
   const navigationItems = [
     { label: 'About Us', href: '/about' },
-    { label: 'Products', href: '/products' },
-    { label: 'News', href: '/news' },
-    { label: 'Careers', href: '/careers' },
+    // { label: 'Products', href: '/products' },
+    // { label: 'News', href: '/news' },
+    // { label: 'Careers', href: '/careers' },
     { label: 'Contact', href: '/contact' },
   ];
 
