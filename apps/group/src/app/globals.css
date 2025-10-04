@@ -1,3 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220.0000 23.0769% 94.9020%;
+    --foreground: 233.7931 16.0221% 35.4902%;
+    --card: 0 0% 100%;
+    --card-foreground: 233.7931 16.0221% 35.4902%;
+    --popover: 222.8571 15.9091% 82.7451%;
+    --popover-foreground: 233.7931 16.0221% 35.4902%;
+    --primary: 276.8571 28.0000% 50.9804%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222.8571 15.9091% 82.7451%;
+    --secondary-foreground: 233.7931 16.0221% 35.4902%;
+    --muted: 220.0000 20.6897% 88.6275%;
+    --muted-foreground: 232.8000 10.3734% 47.2549%;
+    --accent: 197.0667 96.5665% 45.6863%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 347.0769 86.6667% 44.1176%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225.0000 13.5593% 76.8627%;
+    --input: 222.8571 15.9091% 82.7451%;
+    --ring: 266.0440 85.0467% 58.0392%;
+    --chart-1: 266.0440 85.0467% 58.0392%;
+    --chart-2: 197.0667 96.5665% 45.6863%;
+    --chart-3: 109.2308 57.6355% 39.8039%;
+    --chart-4: 21.9753 99.1837% 51.9608%;
+    --chart-5: 10.8000 58.8235% 66.6667%;
+    --font-sans: Inter, sans-serif;
+    --font-serif: Georgia, serif;
+    --font-mono: Fira Code, monospace;
+    --radius: 0.35rem;
+    --shadow-sm: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 1px 2px -1px hsl(240 30% 25% / 0.12);
+    --shadow: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 1px 2px -1px hsl(240 30% 25% / 0.12);
+    --shadow-md: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 2px 4px -1px hsl(240 30% 25% / 0.12);
+    --shadow-lg: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 4px 6px -1px hsl(240 30% 25% / 0.12);
+    --shadow-xl: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 8px 10px -1px hsl(240 30% 25% / 0.12);
+    --shadow-2xl: 0px 4px 6px 0px hsl(240 30% 25% / 0.30);
+  }
+  
+  .dark {
+    --background: 240 21.3115% 11.9608%;
+    --foreground: 226.1538 63.9344% 88.0392%;
+    --card: 240 21.0526% 14.9020%;
+    --card-foreground: 226.1538 63.9344% 88.0392%;
+    --popover: 234.2857 13.2075% 31.1765%;
+    --popover-foreground: 226.1538 63.9344% 88.0392%;
+    --primary: 267.4074 83.5052% 80.9804%;
+    --primary-foreground: 240 21.0526% 14.9020%;
+    --secondary: 232.5000 12% 39.2157%;
+    --secondary-foreground: 226.1538 63.9344% 88.0392%;
+    --muted: 230.5263 18.8119% 19.8039%;
+    --muted-foreground: 227.6471 23.6111% 71.7647%;
+    --accent: 189.1837 71.0145% 72.9412%;
+    --accent-foreground: 240 21.0526% 14.9020%;
+    --destructive: 343.2692 81.2500% 74.9020%;
+    --destructive-foreground: 240 21.0526% 14.9020%;
+    --border: 236.8421 16.2393% 22.9412%;
+    --input: 236.8421 16.2393% 22.9412%;
+    --ring: 267.4074 83.5052% 80.9804%;
+    --chart-1: 267.4074 83.5052% 80.9804%;
+    --chart-2: 189.1837 71.0145% 72.9412%;
+    --chart-3: 115.4545 54.0984% 76.0784%;
+    --chart-4: 22.9565 92.0000% 75.4902%;
+    --chart-5: 9.6000 55.5556% 91.1765%;
+    --font-sans: Inter, sans-serif;
+    --font-serif: Georgia, serif;
+    --font-mono: Fira Code, monospace;
+    --radius: 0.35rem;
+    --shadow-sm: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 1px 2px -1px hsl(240 30% 25% / 0.12);
+    --shadow: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 1px 2px -1px hsl(240 30% 25% / 0.12);
+    --shadow-md: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 2px 4px -1px hsl(240 30% 25% / 0.12);
+    --shadow-lg: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 4px 6px -1px hsl(240 30% 25% / 0.12);
+    --shadow-xl: 0px 4px 6px 0px hsl(240 30% 25% / 0.12), 0px 8px 10px -1px hsl(240 30% 25% / 0.12);
+    --shadow-2xl: 0px 4px 6px 0px hsl(240 30% 25% / 0.30);
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 { @apply text-4xl lg:text-5xl; }
+  h2 { @apply text-3xl lg:text-4xl; }
+  h3 { @apply text-2xl lg:text-3xl; }
+  h4 { @apply text-xl lg:text-2xl; }  
+  h5 { @apply text-lg lg:text-xl; }
+  h6 { @apply text-base lg:text-lg; }
+
+  /* Corporate Typography Utility Classes */
+  @layer utilities {
+    /* Corporate Heading Hierarchy */
+    .corporate-hero {
+      @apply text-corporate-hero-mobile md:text-corporate-hero font-corporate-bold tracking-corporate-tight leading-corporate-heading;
+    }
+    
+    .corporate-display {
+      @apply text-corporate-display-mobile md:text-corporate-display font-corporate-extrabold tracking-corporate-tight leading-corporate-heading;
+    }
+    
+    .corporate-h1 {
+      @apply text-corporate-h1-mobile md:text-corporate-h1 font-corporate-bold tracking-corporate-tight leading-corporate-heading;
+    }
+    
+    .corporate-h2 {
+      @apply text-corporate-h2-mobile md:text-corporate-h2 font-corporate-semibold tracking-corporate-tight leading-corporate-heading;
+    }
+    
+    .corporate-h3 {
+      @apply text-corporate-h3-mobile md:text-corporate-h3 font-corporate-semibold tracking-corporate-normal leading-corporate-heading;
+    }
+    
+    .corporate-h4 {
+      @apply text-corporate-h4-mobile md:text-corporate-h4 font-corporate-medium tracking-corporate-normal leading-corporate-heading;
+    }
+    
+    .corporate-h5 {
+      @apply text-corporate-h5-mobile md:text-corporate-h5 font-corporate-medium tracking-corporate-normal leading-corporate-heading;
+    }
+    
+    .corporate-h6 {
+      @apply text-corporate-h6-mobile md:text-corporate-h6 font-corporate-medium tracking-corporate-normal leading-corporate-heading;
+    }
+    
+    /* Corporate Body Text Hierarchy */
+    .corporate-body-lg {
+      @apply text-corporate-body-lg-mobile md:text-corporate-body-lg font-corporate-normal leading-corporate-body tracking-corporate-normal;
+    }
+    
+    .corporate-body {
+      @apply text-corporate-body-mobile md:text-corporate-body font-corporate-normal leading-corporate-body tracking-corporate-normal;
+    }
+    
+    .corporate-body-sm {
+      @apply text-corporate-body-sm-mobile md:text-corporate-body-sm font-corporate-normal leading-corporate-body tracking-corporate-normal;
+    }
+    
+    /* Corporate Caption and Small Text */
+    .corporate-caption {
+      @apply text-corporate-caption-mobile md:text-corporate-caption font-corporate-normal leading-corporate-normal tracking-corporate-wide;
+    }
+    
+    .corporate-micro {
+      @apply text-corporate-micro-mobile md:text-corporate-micro font-corporate-normal leading-corporate-snug tracking-corporate-wider;
+    }
+    
+    /* Corporate Text Emphasis */
+    .corporate-emphasis {
+      @apply font-corporate-semibold;
+    }
+    
+    .corporate-strong {
+      @apply font-corporate-bold;
+    }
+    
+    .corporate-light {
+      @apply font-corporate-light;
+    }
+    
+    /* Corporate Text Colors */
+    .corporate-text-primary {
+      @apply text-foreground;
+    }
+    
+    .corporate-text-secondary {
+      @apply text-muted-foreground;
+    }
+    
+    .corporate-text-accent {
+      @apply text-accent;
+    }
+    
+    .corporate-text-muted {
+      @apply text-muted-foreground;
+    }
+    
+    /* Corporate Text Alignment */
+    .corporate-text-center {
+      @apply text-center;
+    }
+    
+    .corporate-text-left {
+      @apply text-left;
+    }
+    
+    .corporate-text-right {
+      @apply text-right;
+    }
+    
+    /* Corporate Text Transform */
+    .corporate-uppercase {
+      @apply uppercase tracking-corporate-wider;
+    }
+    
+    .corporate-lowercase {
+      @apply lowercase;
+    }
+    
+    .corporate-capitalize {
+      @apply capitalize;
+    }
+    
+    /* Corporate Line Height Utilities */
+    .corporate-leading-tight {
+      @apply leading-corporate-tight;
+    }
+    
+    .corporate-leading-normal {
+      @apply leading-corporate-normal;
+    }
+    
+    .corporate-leading-relaxed {
+      @apply leading-corporate-relaxed;
+    }
+    
+    .corporate-leading-loose {
+      @apply leading-corporate-loose;
+    }
+    
+    /* Corporate Letter Spacing Utilities */
+    .corporate-tracking-tight {
+      @apply tracking-corporate-tight;
+    }
+    
+    .corporate-tracking-normal {
+      @apply tracking-corporate-normal;
+    }
+    
+    .corporate-tracking-wide {
+      @apply tracking-corporate-wide;
+    }
+    
+    .corporate-tracking-wider {
+      @apply tracking-corporate-wider;
+    }
+  }
+
+  /* Webflow-style animated gradient */
+  .bg-webflow-animated-gradient {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(129, 70, 178, 0.8) 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(15, 118, 110, 0.8) 0%, transparent 40%),
+      radial-gradient(circle at 40% 40%, rgba(75, 85, 99, 0.6) 0%, transparent 40%),
+      radial-gradient(circle at 60% 20%, rgba(168, 85, 247, 0.7) 0%, transparent 35%),
+      linear-gradient(135deg, rgba(129, 70, 178, 1) 0%, rgba(15, 118, 110, 0.8) 30%, rgba(75, 85, 99, 0.6) 70%, rgba(168, 85, 247, 0.8) 100%);
+    background-size: 600% 600%;
+    animation: webflowMoveAndFlow 15s ease-in-out infinite;
+    will-change: background-position;
+  }
+
+  /* Webflow-style subtle animated gradient */
+  .bg-webflow-subtle-gradient {
+    background: 
+      radial-gradient(circle at 30% 70%, rgba(129, 70, 178, 0.2) 0%, transparent 35%),
+      radial-gradient(circle at 70% 30%, rgba(15, 118, 110, 0.2) 0%, transparent 35%),
+      radial-gradient(circle at 50% 50%, rgba(75, 85, 99, 0.15) 0%, transparent 35%),
+      radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 30%),
+      linear-gradient(135deg, rgba(248, 250, 252, 1) 0%, rgba(241, 245, 249, 0.95) 50%, rgba(235, 238, 244, 1) 100%);
+    background-size: 400% 400%;
+    animation: webflowFlow 30s ease-in-out infinite;
+    will-change: background-position;
+  }
+
+  .animate-webflow-gradient-flow {
+    background-size: 400% 400%;
+    will-change: background-position;
+  }
+
+  /* Webflow animation keyframes */
+  @keyframes webflowFlow {
+    0%, 100% {
+      background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%;
+    }
+    25% {
+      background-position: 25% 25%, 75% 75%, 25% 75%, 25% 25%;
+    }
+    50% {
+      background-position: 50% 50%, 50% 50%, 50% 50%, 50% 50%;
+    }
+    75% {
+      background-position: 75% 75%, 25% 25%, 75% 25%, 75% 75%;
+    }
+  }
+
+  /* Enhanced moving gradient animation */
+  @keyframes webflowMoveAndFlow {
+    0% {
+      background-position: 0% 0%, 100% 100%, 50% 50%, 80% 20%, 0% 0%;
+    }
+    16% {
+      background-position: 25% 15%, 75% 85%, 25% 75%, 60% 40%, 20% 80%;
+    }
+    32% {
+      background-position: 50% 30%, 50% 70%, 75% 25%, 40% 60%, 40% 60%;
+    }
+    48% {
+      background-position: 75% 45%, 25% 55%, 25% 75%, 20% 80%, 60% 40%;
+    }
+    64% {
+      background-position: 100% 60%, 0% 40%, 75% 25%, 60% 20%, 80% 80%;
+    }
+    80% {
+      background-position: 85% 75%, 15% 25%, 50% 50%, 80% 40%, 20% 60%;
+    }
+    100% {
+      background-position: 0% 0%, 100% 100%, 50% 50%, 80% 20%, 0% 0%;
+    }
+  }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .bg-webflow-animated-gradient,
+    .bg-webflow-subtle-gradient,
+    .animate-webflow-gradient-flow {
+      animation: none !important;
+      background-size: 200% 200% !important;
+    }
+  }
+}
