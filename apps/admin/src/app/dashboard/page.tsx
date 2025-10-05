@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { DateRange } from "react-day-picker";
@@ -11,6 +11,8 @@ import { DateRangePicker } from "../../components/ui/date-range-picker";
 import { ChartContainer, ChartTooltip, ChartLegend, ChartTooltipContent, ChartConfig, ChartLegendContent } from "../../components/ui/chart";
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { getDashboardMetrics, DashboardMetrics } from "../../lib/api";
+
+const SUPABASE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
