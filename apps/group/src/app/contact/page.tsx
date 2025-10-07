@@ -211,7 +211,7 @@ export default function ContactPage() {
                       <p className="text-slate-600">
                         26 Sandy Hill Lane<br />
                         Moulton<br />
-                        Northampton, NN3 6LA<br />
+                        Northampton, NN3 7AW<br />
                         United Kingdom
                       </p>
                     </div>
