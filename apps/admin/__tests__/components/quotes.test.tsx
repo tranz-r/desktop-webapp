@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import QuotesPage from '../../src/app/quotes/page';
+import QuotesPage from '../../src/app/(admin)/quotes/page';
 
 describe('Quotes Page', () => {
   it('renders the Quotes heading and description', () => {

@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react';
-import { Skeleton } from '../../components/ui/skeleton';
-import { getAdminQuotesPaged, getQuoteReferenceSuggestions } from '../../lib/api';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { getAdminQuotesPaged, getQuoteReferenceSuggestions } from '../../../lib/api';
 import { useRouter } from 'next/navigation';
 
 interface AdminQuoteRow {

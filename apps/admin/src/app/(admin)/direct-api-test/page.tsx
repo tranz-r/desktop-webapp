@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAdminQuotesPaged } from '../../lib/api';
+import { getAdminQuotesPaged } from '../../../lib/api';
 
 export default function DirectApiTest() {
   const [result, setResult] = useState<any>(null);

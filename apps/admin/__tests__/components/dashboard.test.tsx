@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import DashboardPage from '../../src/app/dashboard/page';
+import DashboardPage from '../../src/app/(admin)/dashboard/page';
 
 describe('Dashboard Page', () => {
   it('renders the Dashboard heading', () => {

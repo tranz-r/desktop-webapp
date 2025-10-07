@@ -211,7 +211,7 @@ export default function ContactPage() {
                       <p className="text-slate-600">
                         26 Sandy Hill Lane<br />
                         Moulton<br />
-                        Northampton, NN3 6LA<br />
+                        Northampton, NN3 7AW<br />
                         United Kingdom
                       </p>
                     </div>
@@ -256,7 +256,7 @@ export default function ContactPage() {
                 <CardHeader className="space-y-2">
                   <CardTitle className="text-2xl font-semibold text-slate-800">Send us a Message</CardTitle>
                   <CardDescription className="text-slate-600">
-                    Fill out the form below and we'll get back to you within 24 hours.
+                    Fill out the form below and we'll get back to you as soon as possible.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Skeleton } from '../../components/ui/skeleton';
-import { getAdminDriversPaged } from '../../lib/api';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { getAdminDriversPaged } from '../../../lib/api';
 
 interface AdminDriverRow {
   id: string;

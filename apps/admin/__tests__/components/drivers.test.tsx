@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import DriversPage from '../../src/app/drivers/page';
+import DriversPage from '../../src/app/(admin)/drivers/page';
 
 describe('Drivers Page', () => {
   it('renders the Drivers heading and description', () => {

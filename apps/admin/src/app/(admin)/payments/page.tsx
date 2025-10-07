@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getAdminPaymentsPaged, type AdminPaymentRow } from '../../lib/api';
-import { Skeleton } from '../../components/ui/skeleton';
+import { getAdminPaymentsPaged, type AdminPaymentRow } from '../../../lib/api';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 type SortKey = 'id' | 'quoteReference' | 'amount' | 'status';
 
