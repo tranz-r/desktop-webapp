@@ -26,8 +26,9 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOtp({ email });
       if (error) throw error;
-      setSent(true);
-      setInfoMsg("We sent a 6-digit code to your email.");
+      // Redirect to new OTP page with email param
+      router.replace(`/otp?email=${encodeURIComponent(email)}`);
+      return;
     } catch (err) {
       console.error(err);
       setErrorMsg("Unable to send code. Ensure the admin account exists and try again.");
