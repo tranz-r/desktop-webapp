@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import QuoteDetailPage from '../../src/app/quotes/[id]/page';
+import QuoteDetailPage from '../../src/app/(admin)/quotes/[id]/page';
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'demo-id' })

@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { DateRange } from "react-day-picker";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { TrendingUp, TrendingDown, Users, DollarSign, Package, Truck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Skeleton } from "../../components/ui/skeleton";
-import { DateRangePicker } from "../../components/ui/date-range-picker";
-import { ChartContainer, ChartTooltip, ChartLegend, ChartTooltipContent, ChartConfig, ChartLegendContent } from "../../components/ui/chart";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Skeleton } from "../../../components/ui/skeleton";
+import { DateRangePicker } from "../../../components/ui/date-range-picker";
+import { ChartContainer, ChartTooltip, ChartLegend, ChartTooltipContent, ChartConfig, ChartLegendContent } from "../../../components/ui/chart";
 import { Area, AreaChart, Bar, BarChart, Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
-import { getDashboardMetrics, DashboardMetrics } from "../../lib/api";
+import { getDashboardMetrics, DashboardMetrics } from "../../../lib/api";
 
 const SUPABASE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
@@ -275,7 +275,7 @@ export default function DashboardPage() {
                 />
                 <ChartTooltip
                   cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
+                  content={<ChartTooltipContent />}
                 />
                 <defs>
                   <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">

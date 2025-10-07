@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Skeleton } from '../../components/ui/skeleton';
-import { getAdminUsersPaged } from '../../lib/api';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { getAdminUsersPaged } from '../../../lib/api';
 
 interface AdminUserRow {
   id: string;
