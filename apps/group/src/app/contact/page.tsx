@@ -256,7 +256,7 @@ export default function ContactPage() {
                 <CardHeader className="space-y-2">
                   <CardTitle className="text-2xl font-semibold text-slate-800">Send us a Message</CardTitle>
                   <CardDescription className="text-slate-600">
-                    Fill out the form below and we'll get back to you within 24 hours.
+                    Fill out the form below and we'll get back to you as soon as possible.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
