@@ -1,4 +1,5 @@
 import { TempoInit } from "@/components/tempo-init";
+import ChatwootWidget from "@/components/ChatwootWidget";
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import Script from "next/script";
@@ -100,6 +101,7 @@ export default function RootLayout({
           {children}
           <RouteLoadingOverlay />
           <TempoInit />
+          <ChatwootWidget />
         </Providers>
       </body>
     </html>
