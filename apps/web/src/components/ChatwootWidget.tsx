@@ -9,6 +9,7 @@ export default function ChatwootWidget() {
       strategy="afterInteractive"
       dangerouslySetInnerHTML={{
         __html: `
+          window.chatwootSettings = {"position":"right","type":"expanded_bubble","launcherTitle":"Chat with Us Live"};
           (function(d,t) {
             var BASE_URL="https://chat.tranzrmoves.com";
             var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
