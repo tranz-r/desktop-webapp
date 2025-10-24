@@ -333,10 +333,10 @@ export default function ClaimsPage() {
                 <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
                   <Users className="h-8 w-8 text-primary-600" />
                 </div>
-                <CardTitle>Online Form</CardTitle>
+                <CardTitle>Live Chat</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Submit claims online</p>
+                <p className="text-gray-600">Submit claims online to our agent or bot</p>
                 <p className="text-sm text-gray-500">Fast processing</p>
               </CardContent>
             </Card>

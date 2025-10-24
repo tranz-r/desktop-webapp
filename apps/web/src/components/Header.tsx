@@ -85,7 +85,7 @@ export default function Header({ sticky = true }: HeaderProps) {
     { name: "About us", href: "/company/about" },
     { name: "Quality Assurance", href: "/company/quality-assurance" },
     { name: "Our moving experience", href: "/company/experience" },
-    { name: "Our Movers", href: "/company/movers" },
+    // { name: "Our Movers", href: "/company/movers" },
     { name: "Our Truck Fleet", href: "/company/truck-fleet" },
     { name: "Insurance and credentials", href: "/company/licenses" },
     { name: "Safety", href: "/company/safety" },

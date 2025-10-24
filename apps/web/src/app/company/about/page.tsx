@@ -43,7 +43,7 @@ export default function AboutPage() {
                 Building Trust Through Excellence Since 2008
               </h2>
               <p className="text-lg text-gray-600">
-                Founded in 2008, Tranzr Moves began with a simple mission: to provide 
+                Tranzr Moves is part of the <a href="https://www.tranzrgroup.com" target="_blank" className="text-primary-600 hover:text-primary-700">TRANZR GROUP LIMITED</a> family, delivering removal and moving services across the UK. Founded in 2008, Tranzr Moves began with a simple mission: to provide 
                 exceptional moving services that put our customers first. What started as 
                 a small local moving company has grown into one of Northamptonshire's 
                 most trusted moving and storage providers.

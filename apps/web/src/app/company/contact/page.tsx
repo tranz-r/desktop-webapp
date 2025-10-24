@@ -134,7 +134,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <Card className="border-0 shadow-lg">
+            {/* <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle>Contact Form</CardTitle>
                 <CardDescription>
@@ -200,7 +200,7 @@ export default function ContactPage() {
                   Send Message <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </section>

@@ -11,19 +11,19 @@ export default function Footer() {
             </h3>
             <div className="flex flex-col space-y-2">
               <Link
-                href="#"
+                href="/moving/local-residential"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Residential Moving
               </Link>
               <Link
-                href="#"
+                href="/moving/commercial"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Commercial Moving
               </Link>
               <Link
-                href="#"
+                href="/services/full-packing"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Packing Services
@@ -35,7 +35,7 @@ export default function Footer() {
                 Storage Solutions
               </Link>
               <Link
-                href="#"
+                href="/moving/long-distance"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Long Distance Moving
@@ -46,17 +46,17 @@ export default function Footer() {
             <h3 className="text-lg lg:text-xl font-bold mb-4">Company</h3>
             <div className="flex flex-col space-y-2">
               <Link
-                href="#"
+                href="/company/about"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 About Us
               </Link>
-              <Link
+              {/* <Link
                 href="#"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Our Team
-              </Link>
+              </Link> */}
               <Link
                 href="#"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
@@ -81,13 +81,13 @@ export default function Footer() {
             <h3 className="text-lg lg:text-xl font-bold mb-4">Support</h3>
             <div className="flex flex-col space-y-2">
               <Link
-                href="#"
+                href="/resources/faq"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 FAQs
               </Link>
               <Link
-                href="#"
+                href="/company/contact"
                 className="text-gray-300 hover:text-white text-sm lg:text-base transition-colors"
               >
                 Contact Us
@@ -167,6 +167,9 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 lg:mt-12 pt-6 lg:pt-8 border-t border-gray-800 text-center text-gray-400">
+          <p className="text-sm lg:text-base mb-2">
+            Tranzr Moves is a product of TRANZR GROUP LIMITED.
+          </p>
           <p className="text-sm lg:text-base">
             © {new Date().getFullYear()} Tranzr Moving & Storage. All rights
             reserved.
