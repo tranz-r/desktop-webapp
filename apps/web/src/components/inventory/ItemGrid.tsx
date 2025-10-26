@@ -131,7 +131,7 @@ export function ItemGrid({ selectedCategory, onAddItem }: ItemGridProps) {
           <div className="flex-1">
             <span className="text-sm font-medium">{item.name}</span>
             <div className="text-xs text-muted-foreground">
-              {item.length}x{item.width}x{item.height}cm • {item.volume_m3.toFixed(2)}m³
+              {/* {item.length}x{item.width}x{item.height}cm • {item.volume_m3.toFixed(2)}m³ */}
             </div>
           </div>
           

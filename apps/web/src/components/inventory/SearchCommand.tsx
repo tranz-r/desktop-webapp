@@ -193,7 +193,7 @@ export function SearchCommand({ onAddItem }: SearchCommandProps) {
                 <div className="flex-1">
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {item.length}x{item.width}x{item.height}cm • {item.volume_m3.toFixed(2)}m³
+                    {/* {item.length}x{item.width}x{item.height}cm • {item.volume_m3.toFixed(2)}m³ */}
                   </div>
                 </div>
                 

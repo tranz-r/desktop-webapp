@@ -1,13 +1,44 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ChatwootWidget() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    // Listen for cart modal state changes
+    const handleCartModalState = (event: CustomEvent) => {
+      setIsCartOpen(event.detail.isOpen);
+    };
+
+    window.addEventListener('cartModalState' as any, handleCartModalState);
+    
+    return () => {
+      window.removeEventListener('cartModalState' as any, handleCartModalState);
+    };
+  }, []);
+
   useEffect(() => {
     // Add CSS animations for Chatwoot widget
     const style = document.createElement('style');
     style.textContent = `
+      /* Smooth transition for Chatwoot container */
+      #woot-widget-holder,
+      .woot--bubble-holder,
+      #woot-widget-bubble {
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out !important;
+      }
+      
+      /* Hide Chatwoot when cart is open */
+      body.cart-open #woot-widget-holder,
+      body.cart-open .woot--bubble-holder,
+      body.cart-open #woot-widget-bubble {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      
       /* Chatwoot Widget Animations */
       .woot-widget-bubble {
         animation: chatwoot-pulse 1.2s ease-in-out infinite;
@@ -114,6 +145,19 @@ export default function ChatwootWidget() {
       }
     };
   }, []);
+
+  // Toggle body class when cart is open
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.classList.add('cart-open');
+    } else {
+      document.body.classList.remove('cart-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('cart-open');
+    };
+  }, [isCartOpen]);
 
   return (
     <Script

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus, Trash2 } from "lucide-react"
@@ -16,12 +16,21 @@ import { CartIcon } from "./CartIcon"
 
 export function CartModal() {
   const { activeQuoteType, quotes, updateQuote } = useQuote()
+  const [isOpen, setIsOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<number | null>(null)
   const [editDimensions, setEditDimensions] = useState<{
     heightCm: number
     widthCm: number
     lengthCm: number
   } | null>(null)
+  
+  // Notify Chatwoot widget when cart is open/closed
+  useEffect(() => {
+    const event = new CustomEvent('cartModalState', {
+      detail: { isOpen }
+    })
+    window.dispatchEvent(event)
+  }, [isOpen])
   
   // Get items from active quote
   const items = activeQuoteType ? quotes[activeQuoteType]?.items || [] : []
@@ -95,7 +104,7 @@ export function CartModal() {
   }
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <div className="cursor-pointer transform hover:scale-105 transition-transform duration-200">
           <CartIcon />
