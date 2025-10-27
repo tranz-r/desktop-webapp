@@ -210,7 +210,10 @@ function ConfirmationContent() {
       setTimeout(() => {
         console.log('[confirmation] Redirecting to home page...');
         if (typeof window !== 'undefined' && window.location) {
-          window.location.replace('/');
+          // Clear history stack by replacing state and navigating
+          window.history.replaceState(null, '', '/');
+          window.history.pushState(null, '', '/');
+          window.location.href = '/';
         } else {
           router.replace('/');
         }
@@ -221,7 +224,10 @@ function ConfirmationContent() {
       // Still redirect even if clearing fails
       setTimeout(() => {
         if (typeof window !== 'undefined' && window.location) {
-          window.location.replace('/');
+          // Clear history stack by replacing state and navigating
+          window.history.replaceState(null, '', '/');
+          window.history.pushState(null, '', '/');
+          window.location.href = '/';
         } else {
           router.replace('/');
         }

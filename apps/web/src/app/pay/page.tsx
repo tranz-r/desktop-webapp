@@ -540,9 +540,11 @@ function PayPageContent() {
                           // Clear IndexedDB before navigating home
                           console.log('[pay] Return Home button clicked - clearing IndexedDB');
                           resetAllQuotes();
-                          // Use window.location.replace to prevent back navigation
+                          // Clear history stack by replacing state and navigating
                           setTimeout(() => {
-                            window.location.replace('/');
+                            window.history.replaceState(null, '', '/');
+                            window.history.pushState(null, '', '/');
+                            window.location.href = '/';
                           }, 100);
                         }}
                       >
