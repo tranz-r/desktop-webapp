@@ -164,6 +164,10 @@ function ConfirmationContent() {
   // Check for Stripe redirect parameters (payment_intent_client_secret)
   const paymentIntentClientSecret = params.get('payment_intent_client_secret');
   
+  // Check for payment data from /pay page navigation
+  const paymentIntentIdFromUrl = params.get('paymentIntentId');
+  const clientSecretFromUrl = params.get('clientSecret');
+  
   const [clientSecret, setClientSecret] = React.useState<string>('');
   const [isFetchingClientSecret, setIsFetchingClientSecret] = React.useState(false);
   const [isPaymentAlreadyCompleted, setIsPaymentAlreadyCompleted] = React.useState(false);
@@ -206,7 +210,10 @@ function ConfirmationContent() {
       setTimeout(() => {
         console.log('[confirmation] Redirecting to home page...');
         if (typeof window !== 'undefined' && window.location) {
-          window.location.replace('/');
+          // Clear history stack by replacing state and navigating
+          window.history.replaceState(null, '', '/');
+          window.history.pushState(null, '', '/');
+          window.location.href = '/';
         } else {
           router.replace('/');
         }
@@ -217,7 +224,10 @@ function ConfirmationContent() {
       // Still redirect even if clearing fails
       setTimeout(() => {
         if (typeof window !== 'undefined' && window.location) {
-          window.location.replace('/');
+          // Clear history stack by replacing state and navigating
+          window.history.replaceState(null, '', '/');
+          window.history.pushState(null, '', '/');
+          window.location.href = '/';
         } else {
           router.replace('/');
         }
@@ -286,7 +296,8 @@ function ConfirmationContent() {
   const effectiveQuoteType = quoteWithPayment?.type || activeQuoteType;
 
   const payment = effectiveQuote?.payment;
-  const paymentIntentId = payment?.paymentIntentId;
+  // Use paymentIntentId from URL if available (when navigating from /pay page)
+  const paymentIntentId = paymentIntentIdFromUrl || payment?.paymentIntentId;
 
   // Determine the effective payment status - prioritize Stripe redirect status
   const effectivePaymentStatus = stripeRedirectStatus || status;
@@ -355,6 +366,15 @@ function ConfirmationContent() {
       updateQuote(effectiveQuoteType, { payment: { ...effectiveQuote?.payment, ...paymentData } });
     }
   }, [effectiveQuoteType, effectiveQuote?.payment, updateQuote]);
+
+  // Initialize clientSecret from URL params if available (from /pay page navigation)
+  React.useEffect(() => {
+    if (clientSecretFromUrl && !clientSecret) {
+      console.log('[confirmation] Setting clientSecret from URL params:', clientSecretFromUrl.substring(0, 20) + '...');
+      setClientSecret(clientSecretFromUrl);
+      setIsPaymentAlreadyCompleted(true); // If we have clientSecret from URL, payment is likely completed
+    }
+  }, [clientSecretFromUrl, clientSecret]);
 
   // Fetch client secret using stored PaymentIntentId
   React.useEffect(() => {
@@ -501,9 +521,9 @@ function ConfirmationContent() {
   React.useEffect(() => {
     if (!hasPaymentSucceeded) return;
     const onPopState = () => {
-      if (typeof window !== 'undefined' && window.location) {
-        window.location.replace('/');
-      }
+      console.log('[confirmation] Browser back button detected after successful payment - clearing IndexedDB and redirecting');
+      // Use the same cleanup function as the "Return Home Now" button
+      clearContextAndRedirect();
     };
     // Push a marker state so the immediate back lands here and triggers popstate
     if (typeof window !== 'undefined') {
@@ -517,7 +537,7 @@ function ConfirmationContent() {
         window.removeEventListener('popstate', onPopState);
       }
     };
-  }, [hasPaymentSucceeded]);
+  }, [hasPaymentSucceeded, clearContextAndRedirect]);
 
   // UI for each payment state
   let mainContent;

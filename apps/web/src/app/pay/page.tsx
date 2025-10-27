@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 function PayPageContent() {
-  const { activeQuoteType, quotes, updateQuote, isHydrated, getCurrentEtag } = useQuote();
+  const { activeQuoteType, quotes, updateQuote, isHydrated, getCurrentEtag, resetAllQuotes } = useQuote();
   const router = useRouter();
   
   // Get data from active quote and shared data
@@ -444,6 +444,9 @@ function PayPageContent() {
 
           const handlePopState = (event: PopStateEvent) => {
         if (isPaymentCompleted) {
+          console.log('[pay] Browser back button detected after completed payment - clearing IndexedDB and redirecting');
+          // Clear IndexedDB before redirecting
+          resetAllQuotes();
           // If user navigates back and payment is completed, redirect to confirmation with replace
           const confirmationUrl = `/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`;
           window.history.pushState(null, '', confirmationUrl);
@@ -460,7 +463,7 @@ function PayPageContent() {
         window.removeEventListener('popstate', handlePopState);
       };
     }
-  }, [isPaymentCompleted, payment?.bookingId, router]);
+  }, [isPaymentCompleted, payment?.bookingId, router, resetAllQuotes]);
 
   const options = React.useMemo<StripeElementsOptions | undefined>(() => {
     if (!clientSecret) return undefined;
@@ -518,14 +521,32 @@ function PayPageContent() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button 
-                        onClick={() => router.replace(`/confirmation${payment?.bookingId ? `?ref=${encodeURIComponent(payment.bookingId)}` : ''}`)}
+                        onClick={() => {
+                          // Build confirmation URL with all necessary payment data
+                          const params = new URLSearchParams();
+                          if (payment?.bookingId) params.append('ref', payment.bookingId);
+                          if (paymentIntentId) params.append('paymentIntentId', paymentIntentId);
+                          if (clientSecret) params.append('clientSecret', clientSecret);
+                          const queryString = params.toString();
+                          router.replace(`/confirmation${queryString ? `?${queryString}` : ''}`);
+                        }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         View Confirmation
                       </Button>
                       <Button 
                         variant="outline"
-                        onClick={() => router.replace('/')}
+                        onClick={() => {
+                          // Clear IndexedDB before navigating home
+                          console.log('[pay] Return Home button clicked - clearing IndexedDB');
+                          resetAllQuotes();
+                          // Clear history stack by replacing state and navigating
+                          setTimeout(() => {
+                            window.history.replaceState(null, '', '/');
+                            window.history.pushState(null, '', '/');
+                            window.location.href = '/';
+                          }, 100);
+                        }}
                       >
                         Return Home
                       </Button>
