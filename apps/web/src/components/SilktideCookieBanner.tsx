@@ -1,6 +1,7 @@
 'use client';
 
 import Script from 'next/script';
+import { useEffect } from 'react';
 
 // Declare gtag and dataLayer types for TypeScript
 declare global {
@@ -14,6 +15,25 @@ declare global {
 }
 
 export default function SilktideCookieBanner() {
+  useEffect(() => {
+    // Force Silktide banner to the absolute top of the stacking context
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Raise Silktide cookie banner above any third-party widgets (e.g., Chatwoot) */
+      #silktide-wrapper { z-index: 2147483600 !important; position: fixed !important; }
+      #silktide-backdrop-global { z-index: 2147483600 !important; }
+      #silktide-banner { z-index: 2147483600 !important; }
+      #silktide-modal { z-index: 2147483600 !important; }
+      #silktide-cookie-icon { z-index: 2147483600 !important; }
+      [id^="silktide-"] { z-index: 2147483600 !important; }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      if (document.head.contains(style)) document.head.removeChild(style);
+    };
+  }, []);
+
   // Configuration function
   const initializeSilktide = () => {
     if (typeof window !== 'undefined' && window.silktideCookieBannerManager) {
