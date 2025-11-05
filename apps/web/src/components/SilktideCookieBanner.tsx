@@ -88,6 +88,7 @@ export default function SilktideCookieBanner() {
             id: "advertising",
             name: "Advertising",
             description: "<p>These cookies provide extra features and personalization to improve your experience. They may be set by us or by partners whose services we use.</p>",
+            defaultValue: true,
             onAccept: function() {
               if (typeof window !== 'undefined' && window.gtag) {
                 window.gtag('consent', 'update', {
