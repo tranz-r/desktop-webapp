@@ -1,5 +1,6 @@
 import { TempoInit } from "@/components/tempo-init";
 import ChatwootWidget from "@/components/ChatwootWidget";
+import SilktideCookieBanner from "@/components/SilktideCookieBanner";
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import Script from "next/script";
@@ -96,6 +97,14 @@ export default function RootLayout({
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Silktide Cookie Banner CSS */}
+        <link
+          rel="stylesheet"
+          id="silktide-consent-manager-css"
+          href="/cookie-banner/silktide-consent-manager.css"
+        />
+      </head>
       {/* <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" /> */}
       <body className={`${quicksand.variable} font-quicksand`}>
         {/* Google Tag Manager (noscript) */}
@@ -114,6 +123,7 @@ export default function RootLayout({
           <RouteLoadingOverlay />
           <TempoInit />
           <ChatwootWidget />
+          <SilktideCookieBanner />
         </Providers>
 
         {/* Google Tag Manager */}
